@@ -17,8 +17,14 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    protected $table = 'User';
+
+    protected $primaryKey = 'idUser';
+
+    public $timestamps = false;
+
     protected $fillable = [
-        'name',
+        'usuario',
         'email',
         'password',
     ];
@@ -41,8 +47,17 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Rol::class)->withPivot('RolUser');
+    }
+
+    public function permisos()
+    {
+        return $this->belongsToMany(Permiso::class)->withPivot('UserPermiso');
     }
 }

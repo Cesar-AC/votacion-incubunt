@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('UserPermiso', function (Blueprint $table) {
+            $table->integer('idUser');
+            $table->integer('idPermiso');
+            
+            $table->primary(['idUser', 'idPermiso']);
+            
+            $table->foreign('idUser')->references('idUser')->on('User');
+            $table->foreign('idPermiso')->references('idPermiso')->on('Permiso');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('UserPermiso');
+    }
+};
