@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('Voto', function (Blueprint $table) {
-            $table->integer('idVoto')->autoIncrement()->primary();
-            $table->integer('idCandidato');
-            $table->integer('idElecciones');
+            $table->increments('idVoto');
+            $table->unsignedInteger('idCandidato');
+            $table->unsignedInteger('idElecciones');
             $table->dateTime('fechaVoto');
             
             $table->foreign('idCandidato')->references('idCandidato')->on('Candidato');

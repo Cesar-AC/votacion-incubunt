@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('RolPermiso', function (Blueprint $table) {
-            $table->integer('idPermiso');
-            $table->integer('idRol');
+            $table->unsignedInteger('idPermiso');
+            $table->unsignedInteger('idRol');
             
             $table->primary(['idPermiso', 'idRol']);
             
