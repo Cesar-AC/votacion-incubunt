@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('Elecciones', function (Blueprint $table) {
-            $table->integer('idElecciones')->autoIncrement()->primary();
+            $table->increments('idElecciones');
             $table->string('titulo', 255);
             $table->text('descripcion');
             $table->dateTime('fecha_inicio');
             $table->dateTime('fecha_cierre');
-            $table->integer('estado');
+            $table->unsignedInteger('estado');
             
             $table->foreign('estado')->references('idEstado')->on('EstadoElecciones');
         });

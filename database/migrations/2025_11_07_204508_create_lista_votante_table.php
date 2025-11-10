@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ListaVotante', function (Blueprint $table) {
-            $table->integer('idListaVotante')->autoIncrement()->primary();
-            $table->integer('idUser');
-            $table->integer('idElecciones');
+            $table->increments('idListaVotante');
+            $table->unsignedInteger('idUser');
+            $table->unsignedInteger('idElecciones');
             $table->dateTime('fechaVoto');
-            $table->integer('idTipoVoto');
+            $table->unsignedInteger('idTipoVoto');
             
             $table->foreign('idUser')->references('idUser')->on('User');
             $table->foreign('idElecciones')->references('idElecciones')->on('Elecciones');

@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('Partido', function (Blueprint $table) {
-            $table->integer('idPartido')->autoIncrement()->primary();
-            $table->integer('idElecciones');
+            $table->increments('idPartido');
+            $table->unsignedInteger('idElecciones');
             $table->string('partido', 255);
             $table->text('urlPartido');
             $table->text('descripcion');

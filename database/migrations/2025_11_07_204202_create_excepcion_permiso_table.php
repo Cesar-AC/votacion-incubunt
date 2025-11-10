@@ -14,8 +14,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ExcepcionPermiso', function (Blueprint $table) {
-            $table->integer('idUser');
-            $table->integer('idPermiso');
+            $table->unsignedInteger('idUser');
+            $table->unsignedInteger('idPermiso');
             
             $table->primary(['idUser', 'idPermiso']);
             

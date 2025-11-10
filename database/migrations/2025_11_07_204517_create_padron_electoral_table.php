@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('PadronElectoral', function (Blueprint $table) {
-            $table->integer('idPadronElectoral')->autoIncrement()->primary();
-            $table->integer('idElecciones');
-            $table->integer('idUser');
-            $table->integer('idEstadoParticipante');
+            $table->increments('idPadronElectoral');
+            $table->unsignedInteger('idElecciones');
+            $table->unsignedInteger('idUser');
+            $table->unsignedInteger('idEstadoParticipante');
             
             $table->foreign('idElecciones')->references('idElecciones')->on('Elecciones');
             $table->foreign('idUser')->references('idUser')->on('User');
