@@ -18,11 +18,11 @@ class Rol extends Model
 
     public function permisos()
     {
-        return $this->belongsToMany(Permiso::class)->withPivot('RolPermiso');
+        return $this->belongsToMany(Permiso::class, 'RolPermiso', 'idRol', 'idPermiso');
     }
 
     public function users()
     {
-        return $this->belongsToMany(User::class)->withPivot('RolUser');
+        return $this->belongsToMany(User::class, 'RolUser', 'idRol', 'idUser');
     }
 }
