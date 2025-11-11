@@ -53,11 +53,11 @@ class User extends Authenticatable
 
     public function roles()
     {
-        return $this->belongsToMany(Rol::class)->withPivot('RolUser');
+        return $this->belongsToMany(Rol::class, 'RolUser', 'idUser', 'idRol');
     }
 
     public function permisos()
     {
-        return $this->belongsToMany(Permiso::class)->withPivot('UserPermiso');
+        return $this->belongsToMany(Permiso::class, 'UserPermiso', 'idUser', 'idPermiso');
     }
 }
