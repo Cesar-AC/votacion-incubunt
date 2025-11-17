@@ -92,6 +92,57 @@ class PadronElectoralController extends Controller
         ]);
     }
 
+    public function importForm()
+    {
+        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
+        return view('crud.padron_electoral.importar');
+    }
+
+    public function import(Request $request)
+    {
+        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
+        $data = $request->validate([
+            'idElecciones' => 'required|integer',
+            'idEstadoParticipante' => 'required|integer',
+            'usuarios' => 'required|array',
+            'usuarios.*' => 'integer',
+        ]);
+
+        $created = [];
+        $skipped = [];
+        foreach ($data['usuarios'] as $idUser) {
+            $exists = PadronElectoral::query()
+                ->where('idElecciones', $data['idElecciones'])
+                ->where('idUser', $idUser)
+                ->exists();
+            if ($exists) {
+                $skipped[] = $idUser;
+                continue;
+            }
+            $p = new PadronElectoral([
+                'idElecciones' => $data['idElecciones'],
+                'idUser' => $idUser,
+                'idEstadoParticipante' => $data['idEstadoParticipante'],
+            ]);
+            $p->save();
+            $created[] = [
+                'id' => $p->getKey(),
+                'idUser' => $idUser,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Importación de padrón completada',
+            'data' => [
+                'idElecciones' => $data['idElecciones'],
+                'idEstadoParticipante' => $data['idEstadoParticipante'],
+                'creados' => $created,
+                'omitidos' => $skipped,
+            ],
+        ], Response::HTTP_CREATED);
+    }
+
     public function destroy($id)
     {
         if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }

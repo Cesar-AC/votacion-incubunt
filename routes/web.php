@@ -77,6 +77,9 @@ Route::get('/padron-electoral/{id}/editar', [PadronElectoralController::class, '
 Route::post('/padron-electoral/{id}/editar', [PadronElectoralController::class, 'update'])->name('crud.padron_electoral.editar');
 Route::delete('/padron-electoral/{id}', [PadronElectoralController::class, 'destroy'])->name('crud.padron_electoral.eliminar');
 Route::get('/padron-electoral/{id}', [PadronElectoralController::class, 'show'])->name('crud.padron_electoral.ver_datos');
+// Importación de padrón
+Route::get('/padron/import', [PadronElectoralController::class, 'importForm'])->name('crud.padron_electoral.importar');
+Route::post('/padron/import', [PadronElectoralController::class, 'import'])->name('crud.padron_electoral.importar');
 
 // User
 Route::get('/users', [UserController::class, 'index'])->name('crud.user.ver');

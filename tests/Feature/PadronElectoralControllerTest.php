@@ -230,4 +230,58 @@ class PadronElectoralControllerTest extends TestCase
             ],
         ]);
     }
+
+    public function test_cargar_vista_importar_padron_electoral()
+    {
+        $user = $this->usuarioConPermiso();
+        $this->actingAs($user);
+
+        $response = $this->get(route('crud.padron_electoral.importar'));
+        $response->assertViewIs('crud.padron_electoral.importar');
+        $response->assertOk();
+    }
+
+    public function test_importar_padron_electoral_crea_y_omite_duplicados()
+    {
+        $user = $this->usuarioConPermiso();
+        $this->actingAs($user);
+
+        $eleccion = $this->crearEleccion();
+        $ep = $this->crearEstadoParticipante();
+
+        $u1 = \App\Models\User::factory()->create();
+        $u2 = \App\Models\User::factory()->create();
+        $u3 = \App\Models\User::factory()->create();
+
+        // Pre-existente para forzar omisión
+        $pre = new \App\Models\PadronElectoral([
+            'idElecciones' => $eleccion->getKey(),
+            'idUser' => $u1->getKey(),
+            'idEstadoParticipante' => $ep->getKey(),
+        ]);
+        $pre->save();
+
+        $payload = [
+            'idElecciones' => $eleccion->getKey(),
+            'idEstadoParticipante' => $ep->getKey(),
+            'usuarios' => [
+                $u1->getKey(), // duplicado
+                $u2->getKey(), // nuevo
+                $u3->getKey(), // nuevo
+            ],
+        ];
+
+        $response = $this->post(route('crud.padron_electoral.importar'), $payload);
+        $response->assertCreated();
+        $response->assertJsonStructure([
+            'success',
+            'message',
+            'data' => [
+                'idElecciones',
+                'idEstadoParticipante',
+                'creados',
+                'omitidos',
+            ],
+        ]);
+    }
 }
