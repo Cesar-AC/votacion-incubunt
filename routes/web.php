@@ -24,6 +24,39 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Dashboard - Temporal sin autenticación para testing
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->name('dashboard');
+
+Route::get('/admin/dashboard', function () {
+    return view('admin.dashboard'); // Esto carga el archivo 'resources/views/admin/dashboard.blade.php'
+})->name('admin.dashboard');
+
+// Rutas de autenticación
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
+
+Route::post('/login', function (\Illuminate\Http\Request $request) {
+    // Validar credenciales
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    // Intentar autenticar
+    if (\Illuminate\Support\Facades\Auth::attempt($credentials)) {
+        $request->session()->regenerate();
+        return redirect()->intended('dashboard');
+    }
+
+    // Si falla la autenticación
+    return back()->withErrors([
+        'email' => 'Las credenciales proporcionadas no coinciden con nuestros registros.',
+    ])->onlyInput('email');
+})->name('login');
+
 // Area
 Route::get('/areas', [AreaController::class, 'index'])->name('crud.area.ver');
 Route::get('/areas/crear', [AreaController::class, 'create'])->name('crud.area.crear');

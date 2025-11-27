@@ -1,11 +1,148 @@
-@import 'tailwindcss';
+/* Bootstrap 4 CSS - necesario para responsive */
+@import "../../node_modules/bootstrap/dist/css/bootstrap.min.css";
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+/* ============================== */
+/* 2. ESTILOS DE PANTALLA (LOGIN) */
+/* ============================== */
+
+body {
+    background-color: #f4f4f4;
+    font-family: "Poppins", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.login-card {
+    border-radius: 25px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.login-illustration-panel {
+    background-color: #f1f2f6;
+    min-height: 650px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url("/img/VOTAINCUBI_placeholder.png");
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-content: space-around;
+}
+
+.login-illustration-panel img {
+    max-height: 90%;
+    -o-object-fit: contain;
+    object-fit: contain;
+}
+
+.bg-login-image-custom {
+    background-color: #f4f4f4;
+    min-height: 500px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url("/img/VOTAINCUBI.png");
+    background-size: 85%;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.login-panel {
+    background-color: #ffffff;
+    box-shadow: -28px 0px 50.4863px rgba(0, 0, 0, 0.05);
+    padding: 5rem 3rem !important;
+}
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 2rem;
+    width: 100%;
+}
+
+.logo-container img {
+    width: 180px;
+    height: auto;
+    display: inline-block;
+    margin: 0 auto;
+}
+
+/* --- ESTILOS DE INPUTS CON ICONO --- */
+
+.input-icon-group {
+    position: relative;
+}
+
+.input-icon-group .form-control {
+    background-color: #eeeeee;
+    border: none;
+    border-radius: 8.07781px;
+    padding-right: 60px;
+    height: 50px;
+    font-size: 14.1362px;
+}
+
+.input-icon-group .icon-box {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 50px;
+    width: 50px;
+    background-color: #1e2772;
+    border-radius: 0 8.07781px 8.07781px 0;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* --- ESTILOS DE TEXTO Y BOTÓN --- */
+.form-group label {
+    font-size: 16.1556px;
+    color: #555555;
+    margin-bottom: 0.5rem;
+    font-weight: 400;
+}
+
+.custom-control-label,
+.forgot-password-link {
+    font-size: 14.1362px;
+}
+
+.forgot-password-link {
+    color: #1e2772;
+    text-decoration: underline;
+}
+
+.btn-login {
+    background-color: #1e2772;
+    border-color: #1e2772;
+    font-weight: 600;
+    height: 50px;
+    border-radius: 8.07781px;
+    box-shadow: 0px 12.1167px 24.2334px rgba(1, 11, 253, 0.12);
+    font-size: 16.1556px;
+}
+
+.btn-login:hover {
+    background-color: #151b5c;
+    border-color: #151b5c;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 991.98px) {
+    .bg-login-image-custom {
+        display: none !important;
+    }
 }
