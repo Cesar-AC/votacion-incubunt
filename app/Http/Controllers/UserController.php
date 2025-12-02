@@ -9,29 +9,18 @@ use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) { return view('auth.login'); }
-        $user = Auth::user();
-        if (!$user->permisos()->where('permiso', $permiso)->exists()) { abort(404); }
-        return null;
-    }
-
     public function index()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.user.*')) { return $r; }
         return view('crud.user.ver');
     }
 
     public function create()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.user.*')) { return $r; }
         return view('crud.user.crear');
     }
 
     public function store(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.user.*')) { return $r; }
         $data = $request->validate([
             'usuario' => 'required|string|max:255',
             'email' => 'required|email|unique:User,email',
@@ -52,7 +41,6 @@ class UserController extends Controller
 
     public function show($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.user.*')) { return $r; }
         $u = User::findOrFail($id);
         return response()->json([
             'success' => true,
@@ -66,13 +54,11 @@ class UserController extends Controller
 
     public function edit($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.user.*')) { return $r; }
         return view('crud.user.editar');
     }
 
     public function update(Request $request, $id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.user.*')) { return $r; }
         $u = User::findOrFail($id);
         $data = $request->validate([
             'usuario' => 'required|string|max:255',
@@ -92,7 +78,6 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.user.*')) { return $r; }
         $u = User::findOrFail($id);
         $u->delete();
         return response()->json([

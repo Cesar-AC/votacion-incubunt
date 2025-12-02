@@ -9,29 +9,18 @@ use Illuminate\Support\Facades\Auth;
 
 class PadronElectoralController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) { return view('auth.login'); }
-        $user = Auth::user();
-        if (!$user->permisos()->where('permiso', $permiso)->exists()) { abort(404); }
-        return null;
-    }
-
     public function index()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         return view('crud.padron_electoral.ver');
     }
 
     public function create()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         return view('crud.padron_electoral.crear');
     }
 
     public function store(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         $data = $request->validate([
             'idElecciones' => 'required|integer',
             'idUser' => 'required|integer',
@@ -53,7 +42,6 @@ class PadronElectoralController extends Controller
 
     public function show($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         $p = PadronElectoral::findOrFail($id);
         return response()->json([
             'success' => true,
@@ -68,13 +56,11 @@ class PadronElectoralController extends Controller
 
     public function edit($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         return view('crud.padron_electoral.editar');
     }
 
     public function update(Request $request, $id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         $p = PadronElectoral::findOrFail($id);
         $data = $request->validate([
             'idEstadoParticipante' => 'required|integer',
@@ -94,13 +80,11 @@ class PadronElectoralController extends Controller
 
     public function importForm()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         return view('crud.padron_electoral.importar');
     }
 
     public function import(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         $data = $request->validate([
             'idElecciones' => 'required|integer',
             'idEstadoParticipante' => 'required|integer',
@@ -145,7 +129,6 @@ class PadronElectoralController extends Controller
 
     public function destroy($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         $p = PadronElectoral::findOrFail($id);
         $p->delete();
         return response()->json([

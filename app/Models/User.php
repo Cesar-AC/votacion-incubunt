@@ -60,4 +60,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Permiso::class, 'UserPermiso', 'idUser', 'idPermiso');
     }
+
+    public function excepciones_permisos()
+    {
+        return $this->belongsToMany(Permiso::class, 'ExcepcionPermiso', 'idUser', 'idPermiso');
+    }
 }

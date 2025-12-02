@@ -12,34 +12,13 @@ use Illuminate\Support\Facades\Auth;
 
 class EleccionesController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) {
-            return view('auth.login');
-        }
-
-        /** @var Usuario $user */
-        $user = Auth::user();
-        $hasPerm = $user->permisos()->where('permiso', $permiso)->exists();
-        if (!$hasPerm) {
-            abort(404);
-        }
-        return null;
-    }
-
     public function index()
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
         return view('crud.elecciones.ver');
     }
 
     public function show($id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
         $e = Elecciones::findOrFail($id);
         return response()->json([
             'success' => true,
@@ -56,9 +35,6 @@ class EleccionesController extends Controller
 
     public function create()
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
         return view('crud.elecciones.crear');
     }
 
@@ -83,9 +59,6 @@ class EleccionesController extends Controller
 
     public function store(Request $request)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
         // Normalizar fechas a string para que pase la validación aunque el test envíe Carbon
         $fi = $request->input('fecha_inicio');
         $fc = $request->input('fecha_cierre');
@@ -147,17 +120,11 @@ class EleccionesController extends Controller
 
     public function edit($id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
         return view('crud.elecciones.editar');
     }
 
     public function update(Request $request, $id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
         $e = Elecciones::findOrFail($id);
         // Normalizar fechas a string para que pase la validación aunque el test envíe Carbon
         $fi = $request->input('fecha_inicio');
@@ -212,9 +179,6 @@ class EleccionesController extends Controller
 
     public function destroy($id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
         $e = Elecciones::findOrFail($id);
         $e->delete();
         return response()->json([

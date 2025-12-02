@@ -9,29 +9,18 @@ use Illuminate\Support\Facades\Auth;
 
 class PartidoController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) { return view('auth.login'); }
-        $user = Auth::user();
-        if (!$user->permisos()->where('permiso', $permiso)->exists()) { abort(404); }
-        return null;
-    }
-
     public function index()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.partido.*')) { return $r; }
         return view('crud.partido.ver');
     }
 
     public function create()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.partido.*')) { return $r; }
         return view('crud.partido.crear');
     }
 
     public function store(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.partido.*')) { return $r; }
         $data = $request->validate([
             'idElecciones' => 'required|integer',
             'partido' => 'required|string|max:255',
@@ -55,7 +44,6 @@ class PartidoController extends Controller
 
     public function show($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.partido.*')) { return $r; }
         $p = Partido::findOrFail($id);
         return response()->json([
             'success' => true,
@@ -71,13 +59,11 @@ class PartidoController extends Controller
 
     public function edit($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.partido.*')) { return $r; }
         return view('crud.partido.editar');
     }
 
     public function update(Request $request, $id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.partido.*')) { return $r; }
         $p = Partido::findOrFail($id);
         $data = $request->validate([
             'idElecciones' => 'required|integer',
@@ -101,7 +87,6 @@ class PartidoController extends Controller
 
     public function destroy($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.partido.*')) { return $r; }
         $p = Partido::findOrFail($id);
         $p->delete();
         return response()->json([

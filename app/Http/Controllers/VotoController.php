@@ -9,29 +9,18 @@ use Illuminate\Support\Facades\Auth;
 
 class VotoController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) { return view('auth.login'); }
-        $user = Auth::user();
-        if (!$user->permisos()->where('permiso', $permiso)->exists()) { abort(404); }
-        return null;
-    }
-
     public function index()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
         return view('crud.voto.ver');
     }
 
     public function create()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
         return view('crud.voto.crear');
     }
 
     public function store(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
         $data = $request->validate([
             'idCandidato' => 'required|integer',
             'idElecciones' => 'required|integer',
@@ -53,7 +42,6 @@ class VotoController extends Controller
 
     public function show($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
         $v = Voto::findOrFail($id);
         return response()->json([
             'success' => true,
@@ -68,13 +56,11 @@ class VotoController extends Controller
 
     public function edit($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
         return view('crud.voto.editar');
     }
 
     public function update(Request $request, $id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
         $v = Voto::findOrFail($id);
         $data = $request->validate([
             'fechaVoto' => 'required|date',
@@ -94,7 +80,6 @@ class VotoController extends Controller
 
     public function destroy($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
         $v = Voto::findOrFail($id);
         $v->delete();
         return response()->json([

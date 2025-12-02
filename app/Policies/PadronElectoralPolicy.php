@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\PadronElectoral;
+use App\Models\User;
+use App\Policies\Utils\ValidadorPermisos;
+use Illuminate\Auth\Access\Response;
+
+class PadronElectoralPolicy
+{
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function viewAny(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'padron_electoral:crud:ver:*',
+            'padron_electoral:crud:*',
+            'padron_electoral:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can view the model.
+     */
+    public function view(User $user, PadronElectoral $padronElectoral): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            "padron_electoral:crud:ver:{$padronElectoral->id}",
+            'padron_electoral:crud:ver:*',
+            'padron_electoral:crud:*',
+            'padron_electoral:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can create models.
+     */
+    public function create(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'padron_electoral:crud:agregar',
+            'padron_electoral:crud:*',
+            'padron_electoral:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can update the model.
+     */
+    public function update(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'padron_electoral:crud:editar',
+            'padron_electoral:crud:*',
+            'padron_electoral:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can delete the model.
+     */
+    public function delete(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'padron_electoral:crud:eliminar',
+            'padron_electoral:crud:*',
+            'padron_electoral:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can restore the model.
+     */
+    public function restore(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'padron_electoral:crud:agregar',
+            'padron_electoral:crud:*',
+            'padron_electoral:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can permanently delete the model.
+     */
+    public function forceDelete(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'padron_electoral:crud:eliminar',
+            'padron_electoral:crud:*',
+            'padron_electoral:*'
+        ]);
+    }
+}

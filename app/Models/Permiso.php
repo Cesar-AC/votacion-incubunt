@@ -25,4 +25,9 @@ class Permiso extends Model
     {
         return $this->belongsToMany(User::class, 'UserPermiso', 'idPermiso', 'idUser');
     }
+
+    public function excepciones()
+    {
+        return $this->belongsToMany(User::class, 'ExcepcionPermiso', 'idPermiso', 'idUser');
+    }
 }

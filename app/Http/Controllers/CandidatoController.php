@@ -9,34 +9,18 @@ use Illuminate\Support\Facades\Auth;
 
 class CandidatoController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) {
-            return view('auth.login');
-        }
-        $user = Auth::user();
-        $hasPerm = $user->permisos()->where('permiso', $permiso)->exists();
-        if (!$hasPerm) {
-            abort(404);
-        }
-        return null;
-    }
-
     public function index()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.candidato.*')) { return $r; }
         return view('crud.candidato.ver');
     }
 
     public function create()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.candidato.*')) { return $r; }
         return view('crud.candidato.crear');
     }
 
     public function store(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.candidato.*')) { return $r; }
         $data = $request->validate([
             'idParticipante' => 'required|integer',
             'idCargo' => 'required|integer',
@@ -58,7 +42,6 @@ class CandidatoController extends Controller
 
     public function show($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.candidato.*')) { return $r; }
         $c = Candidato::findOrFail($id);
         return response()->json([
             'success' => true,
@@ -73,13 +56,11 @@ class CandidatoController extends Controller
 
     public function edit($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.candidato.*')) { return $r; }
         return view('crud.candidato.editar');
     }
 
     public function update(Request $request, $id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.candidato.*')) { return $r; }
         $c = Candidato::findOrFail($id);
         $data = $request->validate([
             'idParticipante' => 'required|integer',
@@ -101,7 +82,6 @@ class CandidatoController extends Controller
 
     public function destroy($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.candidato.*')) { return $r; }
         $c = Candidato::findOrFail($id);
         $c->delete();
         return response()->json([
