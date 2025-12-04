@@ -52,6 +52,20 @@ class PermisoSeeder extends Seeder
         }
     }
 
+    private function obtenerPermisosVotante(){
+        // Por implementar.
+        return [];
+    }
+
+    private function crearPermisosVotante(){
+        $permisos = $this->obtenerPermisosVotante();
+        foreach ($permisos as $permiso){
+            Permiso::create([
+                'permiso' => $permiso,
+            ]);
+        }
+    }
+
     private function obtenerEntidades(){
         $entidades = [
             'area',
@@ -82,6 +96,7 @@ class PermisoSeeder extends Seeder
 
         $this->crearPermisosCRUD($entidades);
         $this->crearPermisosComodin($entidades);
+        $this->crearPermisosVotante();
         $this->crearPermisosDashboard();
     }
 
@@ -100,14 +115,26 @@ class PermisoSeeder extends Seeder
 
         $entidades = $this->obtenerEntidades();
 
+        $rolAdministrador->permisos()->attach(Permiso::where('permiso', '=', 'dashboard:administrador')->first());
         foreach ($entidades as $entidad){
             $permiso = join(':', [$entidad, self::INDICATIVO_COMODIN]);
             $rolAdministrador->permisos()->attach(Permiso::where('permiso', $permiso)->first());
         }
     }
+
+    private function asignarPermisosVotante(){
+        $rolVotante = Rol::where('rol', 'votante')->first();
+
+        $rolVotante->permisos()->attach(Permiso::where('permiso', '=', 'dashboard:votante')->first());
+        $permisos = $this->obtenerPermisosVotante();
+        foreach ($permisos as $permiso){
+            $rolVotante->permisos()->attach(Permiso::where('permiso', '=', $permiso)->first());
+        }   
+    }
     
     private function asignarPermisosARoles(){
         $this->asignarPermisosAdministrador();
+        $this->asignarPermisosVotante();
     }
 
     private function asignarRolAUsuario($rol, $usuario){
@@ -126,6 +153,18 @@ class PermisoSeeder extends Seeder
 
         $this->asignarRolAUsuario('administrador', $usuario);
     }
+
+    private function crearUsuarioVotante(){
+        $usuario = new User([
+            'usuario' => 'votante',
+            'email' => 'votante@incubunt.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $usuario->save();
+
+        $this->asignarRolAUsuario('votante', $usuario);
+    }
     
     public function run(): void
     {
@@ -133,5 +172,6 @@ class PermisoSeeder extends Seeder
         $this->crearRoles();
         $this->asignarPermisosARoles();
         $this->crearUsuarioAdministrador();
+        $this->crearUsuarioVotante();
     }
 }

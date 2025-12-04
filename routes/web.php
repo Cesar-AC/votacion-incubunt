@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AutenticacionController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\CarreraController;
@@ -32,13 +33,7 @@ Route::middleware(['auth', 'throttle:login'])->group(function () {
 });
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/', function(){
-        return view('dashboard');
-    })->name('dashboard');
-
-    Route::get('/admin', function(){
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 });
 
 // Area
