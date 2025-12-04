@@ -13,7 +13,7 @@ class ValidadorPermisos
     }
 
     public static function obtenerExcepcionesPermisosDeUsuario(User $usuario){
-        $excepciones = $usuario->excepciones_permisos()->pluck('nombre');
+        $excepciones = $usuario->excepciones_permisos()->pluck('permiso');
         return $excepciones
             ->unique()
             ->values()
@@ -23,26 +23,25 @@ class ValidadorPermisos
     public static function obtenerPermisosDeRolesDeUsuario(User $usuario){
         $roles = $usuario->roles()->with('permisos')->get();
         return $roles
-            ->flatMap(function ($rol) { return $rol->permisos->pluck('nombre'); })
+            ->flatMap(function ($rol) { return $rol->permisos->pluck('permiso'); })
             ->unique()
             ->values()
             ->all();
     }
 
     public static function obtenerTodosLosPermisosDeUsuario(User $usuario){
-        $permisos_usuario = $usuario->permisos()->pluck('nombre');
+        $permisos_usuario = $usuario->permisos()->pluck('permiso');
         $permisos_roles = collect(self::obtenerPermisosDeRolesDeUsuario($usuario));
         $permisos_excepciones = collect(self::obtenerExcepcionesPermisosDeUsuario($usuario));
 
         $permisos = $permisos_usuario
             ->merge($permisos_roles)
             ->unique()
-            ->values()
-            ->all();
+            ->values();
 
         $permisos = $permisos->diff($permisos_excepciones);
 
-        return $permisos;
+        return $permisos->all();
     }
 
     public static function usuarioTienePermiso(User $usuario, string $permiso){
