@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AutenticacionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\CarreraController;
@@ -20,42 +21,25 @@ use App\Http\Controllers\PropuestaCandidatoController;
 use App\Http\Controllers\PropuestaPartidoController;
 use App\Http\Controllers\RolController;
 
-Route::get('/', function () {
-    return view('welcome');
+Route::get('/login', [AutenticacionController::class, 'verInicioSesion'])->name('vistaLogin');
+
+Route::middleware(['throttle:login'])->group(function () {
+    Route::post('/login', [AutenticacionController::class, 'iniciarSesion'])->name('login');
 });
 
-// Dashboard - Temporal sin autenticación para testing
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->name('dashboard');
+Route::middleware(['auth', 'throttle:login'])->group(function () {
+    Route::post('/logout', [AutenticacionController::class, 'cerrarSesion'])->name('logout');
+});
 
-Route::get('/admin/dashboard', function () {
-    return view('admin.dashboard'); // Esto carga el archivo 'resources/views/admin/dashboard.blade.php'
-})->name('admin.dashboard');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/', function(){
+        return view('dashboard');
+    })->name('dashboard');
 
-// Rutas de autenticación
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
-
-Route::post('/login', function (\Illuminate\Http\Request $request) {
-    // Validar credenciales
-    $credentials = $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-    ]);
-
-    // Intentar autenticar
-    if (\Illuminate\Support\Facades\Auth::attempt($credentials)) {
-        $request->session()->regenerate();
-        return redirect()->intended('dashboard');
-    }
-
-    // Si falla la autenticación
-    return back()->withErrors([
-        'email' => 'Las credenciales proporcionadas no coinciden con nuestros registros.',
-    ])->onlyInput('email');
-})->name('login');
+    Route::get('/admin', function(){
+        return view('admin.dashboard');
+    })->name('admin.dashboard');
+});
 
 // Area
 Route::middleware(['auth'])->group(function () {
