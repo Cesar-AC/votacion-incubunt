@@ -20,11 +20,11 @@ class DashboardController extends Controller
         return ValidadorPermisos::usuarioTienePermiso($user, 'dashboard:votante');
     }
 
-    public function index()
+    public function index(Request $request)
     {
         return match (true) {
-            $this->esAdministrador(request()) => view('admin.dashboard'),
-            $this->esVotante(request()) => view('dashboard'),
+            $this->esAdministrador($request) => view('admin.dashboard'),
+            $this->esVotante($request) => view('dashboard'),
             default => abort(403, 'No tienes permiso para acceder al dashboard. Contacta a un administrador.'),
         };
     }
