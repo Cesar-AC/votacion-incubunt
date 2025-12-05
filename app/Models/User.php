@@ -65,4 +65,14 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Permiso::class, 'ExcepcionPermiso', 'idUser', 'idPermiso');
     }
+
+    public function perfil()
+    {
+        return $this->hasOne(PerfilUsuario::class, 'idUser');
+    }
+
+    public function participante()
+    {
+        return $this->hasMany(Participante::class, 'idUser');
+    }
 }

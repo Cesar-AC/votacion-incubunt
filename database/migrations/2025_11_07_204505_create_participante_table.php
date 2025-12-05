@@ -13,14 +13,13 @@ return new class extends Migration
     {
         Schema::create('Participante', function (Blueprint $table) {
             $table->increments('idParticipante');
-            $table->string('nombre', 60);
-            $table->string('apellidos', 60);
+            $table->text('biografia')->nullable();
+            $table->text('experiencia')->nullable();
             $table->unsignedInteger('idUser');
             $table->unsignedInteger('idCarrera');
-            $table->text('biografia');
-            $table->text('experiencia');
-            $table->integer('estado');
+            $table->unsignedInteger('idEstadoParticipante');
             
+            $table->foreign('idEstadoParticipante')->references('idEstadoParticipante')->on('EstadoParticipante');
             $table->foreign('idUser')->references('idUser')->on('User');
             $table->foreign('idCarrera')->references('idCarrera')->on('Carrera');
         });

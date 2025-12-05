@@ -14,13 +14,11 @@ class Participante extends Model
 
     protected $fillable = [
         'idParticipante',
-        'nombre',
-        'apellidos',
-        'idUser',
-        'idCarrera',
         'biografia',
         'experiencia',
-        'estado'
+        'idUser',
+        'idCarrera',
+        'idEstadoParticipante'
     ];
 
     public function user()
@@ -31,6 +29,11 @@ class Participante extends Model
     public function carrera()
     {
         return $this->belongsTo(Carrera::class, 'idCarrera');
+    }
+
+    public function estadoParticipante()
+    {
+        return $this->belongsTo(EstadoParticipante::class, 'idEstadoParticipante');
     }
 
     public function candidatos()

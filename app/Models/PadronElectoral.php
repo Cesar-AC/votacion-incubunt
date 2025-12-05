@@ -15,8 +15,7 @@ class PadronElectoral extends Model
     protected $fillable = [
         'idPadronElectoral',
         'idElecciones',
-        'idUser',
-        'idEstadoParticipante'
+        'idParticipante'
     ];
 
     public function elecciones()
@@ -27,10 +26,5 @@ class PadronElectoral extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'idUser');
-    }
-
-    public function estadoParticipante()
-    {
-        return $this->belongsTo(EstadoParticipante::class, 'idEstadoParticipante');
     }
 }
