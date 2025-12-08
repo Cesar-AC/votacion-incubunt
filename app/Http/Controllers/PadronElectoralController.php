@@ -180,9 +180,19 @@ class PadronElectoralController extends Controller
     public static function importFromFile(Elecciones $eleccion, string $path) {
         $registros = self::readFile($path);
 
-        $datosOmitidos = [];
-        $correosRegistrados = [];
-        $dniRegistrados = [];
+        $correosExistentes = PadronElectoral::query()
+            ->where('idElecciones', '=', $eleccion->getKey())
+            ->join('User', 'PadronElectoral.idUsuario', '=', 'User.idUser')
+            ->get()
+            ->pluck('correo');
+
+        $dniExistentes = PadronElectoral::query()
+            ->where('idElecciones', '=', $eleccion->getKey())
+            ->join('User', 'PadronElectoral.idUsuario', '=', 'User.idUser')
+            ->join('PerfilUsuario', 'User.idUser', '=', 'PerfilUsuario.idUser')
+            ->get()
+            ->pluck('dni');
+
         foreach ($registros as $indice => $registro) {
             $correo = (string) $registro[0];
             /* Area por implementar */
@@ -192,8 +202,8 @@ class PadronElectoralController extends Controller
             $dni = (string) $registro[4];
             $telefono = (string) $registro[5];
 
-            $correoDuplicado = isset($correosRegistrados[$correo]);
-            $dniDuplicado = isset($dniRegistrados[$dni]);
+            $correoDuplicado = $correosExistentes->contains($correo);
+            $dniDuplicado = $dniExistentes->contains($dni);
 
             if ($correoDuplicado || $dniDuplicado) {
                 $datosOmitidos[] = [
@@ -209,10 +219,10 @@ class PadronElectoralController extends Controller
                 continue;
             }
 
-            $correosRegistrados[$correo] = true;
-            $dniRegistrados[$dni] = true;
+            $correosExistentes->push($correo);
+            $dniExistentes->push($dni);
 
-            $user = User::create([
+            $user = User::createOrFirst([
                 'correo' => $correo,
                 'contraseña' => bcrypt($dni),
                 'idEstadoUsuario' => 1, // Activo
@@ -220,7 +230,7 @@ class PadronElectoralController extends Controller
 
             $user->save();
 
-            $perfil = $user->perfil()->create([
+            $perfil = $user->perfil()->createOrFirst([
                 'apellidoPaterno' => $apellidos[0] ?? '',
                 'apellidoMaterno' => $apellidos[1] ?? '',
                 'nombre' => $nombres[0] ?? '',
@@ -233,13 +243,13 @@ class PadronElectoralController extends Controller
 
             $perfil->save();
 
-            $padron = new PadronElectoral([
+            $registroEnPadron = PadronElectoral::createOrFirst([
                 'idElecciones' => $eleccion->getKey(),
                 'idUsuario' => $user->getKey(),
                 'fechaVoto' => Carbon::now(),
             ]);
 
-            $padron->save();
+            $registroEnPadron->save();
         }
 
         $message = 'Importación completada';

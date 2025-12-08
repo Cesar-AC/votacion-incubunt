@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\PadronElectoralController;
+use App\Models\Participante;
 use App\Models\Permiso;
 use App\Models\User;
 use App\Models\EstadoElecciones;
@@ -10,6 +12,8 @@ use App\Models\EstadoParticipante;
 use App\Models\PadronElectoral;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use League\Csv\Reader;
+use Aspera\Spreadsheet\XLSX\Reader as XLSXReader;
 use Tests\TestCase;
 
 class PadronElectoralControllerTest extends TestCase
@@ -49,9 +53,9 @@ class PadronElectoralControllerTest extends TestCase
         $e = new Elecciones([
             'titulo' => 'Elecciones ' . fake()->words(2, true),
             'descripcion' => fake()->sentence(8),
-            'fecha_inicio' => $inicio,
-            'fecha_cierre' => (clone $inicio)->addMonth(),
-            'estado' => $estado->getKey(),
+            'fechaInicio' => $inicio,
+            'fechaCierre' => (clone $inicio)->addMonth(),
+            'idEstado' => $estado->getKey(),
         ]);
         $e->save();
         return $e;
@@ -283,5 +287,95 @@ class PadronElectoralControllerTest extends TestCase
                 'omitidos',
             ],
         ]);
+    }
+
+    public function test_importar_desde_csv(){
+        $this->seed();
+
+        $ruta = base_path('tests/TestFiles/prueba_padron.csv');
+        $eleccion = $this->crearEleccion();
+
+        $respuesta = PadronElectoralController::importFromFile($eleccion, $ruta);
+
+        $filas = Reader::createFromPath($ruta, 'r');
+        $filas->setHeaderOffset(0);
+        $registros = $filas->getRecords();
+
+        foreach($registros as $registro){
+            $correo = (string) $registro['correo'];
+            /* Area por implementar */
+            // $area = (int) $registro['area'];
+            $nombres = explode(' ',(string) $registro['nombres']);
+            $apellidos = explode(' ', (string) $registro['apellidos']);
+            $dni = (string) $registro['dni'];
+            $telefono = (string) $registro['telefono'];
+
+            $this->assertDatabaseHas('User', [
+                'correo' => $correo
+            ]);
+
+            $user = User::where('correo', $correo)->first();
+
+            $this->assertDatabaseHas('PerfilUsuario', [
+                'apellidoPaterno' => $apellidos[0] ?? '',
+                'apellidoMaterno' => $apellidos[1] ?? '',
+                'nombre' => $nombres[0] ?? '',
+                'otrosNombres' => join(' ', array_slice($nombres, 1)) ?? '',
+                'dni' => $dni,
+                'telefono' => $telefono
+            ]);
+
+            $this->assertDatabaseHas('PadronElectoral', [
+                'idElecciones' => $eleccion->getKey(),
+                'idUsuario' => $user->getKey(),
+            ]);
+        }
+    }
+
+    public function test_importar_desde_xlsx(){
+        $this->seed();
+
+        $ruta = base_path('tests/TestFiles/prueba_padron.xlsx');
+        $eleccion = $this->crearEleccion();
+
+        $respuesta = PadronElectoralController::importFromFile($eleccion, $ruta);
+
+        $lector = new XLSXReader();
+        $lector->open($ruta);
+        $lector->changeSheet(0);
+
+        foreach ($lector as $indice => $registro) {
+            if ($indice == 0) {
+                continue;
+            }
+
+            $correo = (string) $registro[0];
+            /* Area por implementar */
+            // $area = (int) $row[1];
+            $nombres = explode(' ',(string) $registro[2]);
+            $apellidos = explode(' ', (string) $registro[3]);
+            $dni = (string) $registro[4];
+            $telefono = (string) $registro[5];
+
+            $this->assertDatabaseHas('User', [
+                'correo' => $correo
+            ]);
+
+            $user = User::where('correo', $correo)->first();
+
+            $this->assertDatabaseHas('PerfilUsuario', [
+                'apellidoPaterno' => $apellidos[0] ?? '',
+                'apellidoMaterno' => $apellidos[1] ?? '',
+                'nombre' => $nombres[0] ?? '',
+                'otrosNombres' => join(' ', array_slice($nombres, 1)) ?? '',
+                'dni' => $dni,
+                'telefono' => $telefono
+            ]);
+
+            $this->assertDatabaseHas('PadronElectoral', [
+                'idElecciones' => $eleccion->getKey(),
+                'idUsuario' => $user->getKey(),
+            ]);
+        }
     }
 }
