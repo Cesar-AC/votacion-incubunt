@@ -10,8 +10,6 @@ class Carrera extends Model
 
     protected $primaryKey = 'idCarrera';
 
-    public $incrementing = false;
-
     public $timestamps = false;
 
     protected $fillable = [

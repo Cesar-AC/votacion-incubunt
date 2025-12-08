@@ -24,9 +24,9 @@ class User extends Authenticatable
     public $timestamps = false;
 
     protected $fillable = [
-        'usuario',
-        'email',
-        'password',
+        'correo',
+        'contraseña',
+        'idEstadoUsuario',
     ];
 
     /**
@@ -35,7 +35,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'password',
+        'contraseña',
         'remember_token',
     ];
 
@@ -47,7 +47,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password' => 'hashed',
+            'contraseña' => 'hashed',
         ];
     }
 
@@ -74,5 +74,15 @@ class User extends Authenticatable
     public function participante()
     {
         return $this->hasMany(Participante::class, 'idUser');
+    }
+
+    public function estadoUsuario()
+    {
+        return $this->belongsTo(EstadoUsuario::class, 'idEstadoUsuario');
+    }
+
+    public function padronElectoral()
+    {
+        return $this->hasMany(PadronElectoral::class, 'idUsuario', 'idUser');
     }
 }

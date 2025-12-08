@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('Logs', function (Blueprint $table) {
-            $table->increments('idLog');
-            $table->integer('idUser');
-            $table->integer('idPermiso');
-            $table->dateTime('fecha_log');
-            $table->text('descripcion');
+        Schema::create('EstadoUsuario', function (Blueprint $table) {
+            $table->increments('idEstadoUsuario');
+            $table->string('nombre', 100);
         });
     }
 
@@ -25,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('Logs');
+        Schema::dropIfExists('EstadoUsuario');
     }
 };

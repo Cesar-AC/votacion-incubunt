@@ -14,12 +14,13 @@ return new class extends Migration
         Schema::create('PadronElectoral', function (Blueprint $table) {
             $table->increments('idPadronElectoral');
             $table->unsignedInteger('idElecciones');
-            $table->unsignedInteger('idParticipante');
+            $table->unsignedInteger('idUsuario');
+            $table->dateTime('fechaVoto')->nullable();
             
             $table->foreign('idElecciones')->references('idElecciones')->on('Elecciones');
-            $table->foreign('idParticipante')->references('idParticipante')->on('Participante');
+            $table->foreign('idUsuario')->references('idUser')->on('User');
             
-            $table->unique(['idElecciones', 'idParticipante']);
+            $table->unique(['idElecciones', 'idUsuario']);
         });
     }
 

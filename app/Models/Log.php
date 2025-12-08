@@ -13,15 +13,16 @@ class Log extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'idUser',
-        'idPermiso',
-        'fecha_log',
+        'idCategoriaLog',
+        'idNivelLog',
+        'idUsuario',
+        'fecha',
         'descripcion'
     ];
 
-    public function user()
+    public function usuario()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'idUsuario', 'idUser');
     }
 
     public function permiso()

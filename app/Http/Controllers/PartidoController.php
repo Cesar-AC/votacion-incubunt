@@ -22,22 +22,28 @@ class PartidoController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'idElecciones' => 'required|integer',
             'partido' => 'required|string|max:255',
             'urlPartido' => 'required|string',
             'descripcion' => 'required|string',
+            'elecciones' => 'required|array',
+            'elecciones.*' => 'integer',
         ]);
-        $p = new Partido($data);
+        $p = new Partido([
+            'partido' => $data['partido'],
+            'urlPartido' => $data['urlPartido'],
+            'descripcion' => $data['descripcion'],
+        ]);
         $p->save();
+        $p->elecciones()->sync($data['elecciones']);
         return response()->json([
             'success' => true,
             'message' => 'Partido creado',
             'data' => [
                 'id' => $p->getKey(),
-                'idElecciones' => $p->idElecciones,
                 'partido' => $p->partido,
                 'urlPartido' => $p->urlPartido,
                 'descripcion' => $p->descripcion,
+                'elecciones' => $p->elecciones()->pluck('idElecciones'),
             ],
         ], Response::HTTP_CREATED);
     }
@@ -49,10 +55,10 @@ class PartidoController extends Controller
             'success' => true,
             'message' => 'Partido obtenido',
             'data' => [
-                'idElecciones' => $p->idElecciones,
                 'partido' => $p->partido,
                 'urlPartido' => $p->urlPartido,
                 'descripcion' => $p->descripcion,
+                'elecciones' => $p->elecciones()->pluck('idElecciones'),
             ],
         ]);
     }
@@ -66,21 +72,27 @@ class PartidoController extends Controller
     {
         $p = Partido::findOrFail($id);
         $data = $request->validate([
-            'idElecciones' => 'required|integer',
             'partido' => 'required|string|max:255',
             'urlPartido' => 'required|string',
             'descripcion' => 'required|string',
+            'elecciones' => 'required|array',
+            'elecciones.*' => 'integer',
         ]);
-        $p->update($data);
+        $p->update([
+            'partido' => $data['partido'],
+            'urlPartido' => $data['urlPartido'],
+            'descripcion' => $data['descripcion'],
+        ]);
+        $p->elecciones()->sync($data['elecciones']);
         return response()->json([
             'success' => true,
             'message' => 'Partido actualizado',
             'data' => [
                 'id' => $p->getKey(),
-                'idElecciones' => $p->idElecciones,
                 'partido' => $p->partido,
                 'urlPartido' => $p->urlPartido,
                 'descripcion' => $p->descripcion,
+                'elecciones' => $p->elecciones()->pluck('idElecciones'),
             ],
         ]);
     }
@@ -88,13 +100,13 @@ class PartidoController extends Controller
     public function destroy($id)
     {
         $p = Partido::findOrFail($id);
+        $p->elecciones()->detach();
         $p->delete();
         return response()->json([
             'success' => true,
             'message' => 'Partido eliminado',
             'data' => [
                 'id' => (int) $id,
-                'idElecciones' => $p->idElecciones,
                 'partido' => $p->partido,
                 'urlPartido' => $p->urlPartido,
                 'descripcion' => $p->descripcion,

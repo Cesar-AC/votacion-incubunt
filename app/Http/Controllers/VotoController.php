@@ -23,8 +23,6 @@ class VotoController extends Controller
     {
         $data = $request->validate([
             'idCandidato' => 'required|integer',
-            'idElecciones' => 'required|integer',
-            'fechaVoto' => 'required|date',
         ]);
         $v = new Voto($data);
         $v->save();
@@ -34,8 +32,6 @@ class VotoController extends Controller
             'data' => [
                 'id' => $v->getKey(),
                 'idCandidato' => $v->idCandidato,
-                'idElecciones' => $v->idElecciones,
-                'fechaVoto' => $v->fechaVoto,
             ],
         ], Response::HTTP_CREATED);
     }
@@ -47,9 +43,7 @@ class VotoController extends Controller
             'success' => true,
             'message' => 'Voto obtenido',
             'data' => [
-                'idCandidato' => $v->idCandidato,
-                'idElecciones' => $v->idElecciones,
-                'fechaVoto' => $v->fechaVoto,
+                'idCandidato' => $v->idCandidato
             ],
         ]);
     }
@@ -72,8 +66,6 @@ class VotoController extends Controller
             'data' => [
                 'id' => $v->getKey(),
                 'idCandidato' => $v->idCandidato,
-                'idElecciones' => $v->idElecciones,
-                'fechaVoto' => $v->fechaVoto,
             ],
         ]);
     }
@@ -88,8 +80,6 @@ class VotoController extends Controller
             'data' => [
                 'id' => (int) $id,
                 'idCandidato' => $v->idCandidato,
-                'idElecciones' => $v->idElecciones,
-                'fechaVoto' => $v->fechaVoto,
             ],
         ]);
     }

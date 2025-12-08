@@ -14,7 +14,6 @@ class Partido extends Model
 
     protected $fillable = [
         'idPartido',
-        'idElecciones',
         'partido',
         'urlPartido',
         'descripcion'
@@ -22,7 +21,7 @@ class Partido extends Model
 
     public function elecciones()
     {
-        return $this->belongsTo(Elecciones::class, 'idElecciones');
+        return $this->belongsToMany(Elecciones::class, 'PartidoEleccion', 'idPartido', 'idElecciones');
     }
 
     public function candidatos()

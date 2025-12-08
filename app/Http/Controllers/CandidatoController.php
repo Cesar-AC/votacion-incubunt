@@ -22,9 +22,9 @@ class CandidatoController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'idParticipante' => 'required|integer',
-            'idCargo' => 'required|integer',
             'idPartido' => 'required|integer',
+            'idCargo' => 'required|integer',
+            'idUsuario' => 'required|integer',
         ]);
         $c = new Candidato($data);
         $c->save();
@@ -33,9 +33,9 @@ class CandidatoController extends Controller
             'message' => 'Candidato creado',
             'data' => [
                 'id' => $c->getKey(),
-                'idParticipante' => $c->idParticipante,
-                'idCargo' => $c->idCargo,
                 'idPartido' => $c->idPartido,
+                'idCargo' => $c->idCargo,
+                'idUsuario' => $c->idUsuario,
             ],
         ], Response::HTTP_CREATED);
     }
@@ -47,9 +47,9 @@ class CandidatoController extends Controller
             'success' => true,
             'message' => 'Candidato obtenido',
             'data' => [
-                'idParticipante' => $c->idParticipante,
-                'idCargo' => $c->idCargo,
                 'idPartido' => $c->idPartido,
+                'idCargo' => $c->idCargo,
+                'idUsuario' => $c->idUsuario,
             ],
         ]);
     }
@@ -63,9 +63,9 @@ class CandidatoController extends Controller
     {
         $c = Candidato::findOrFail($id);
         $data = $request->validate([
-            'idParticipante' => 'required|integer',
-            'idCargo' => 'required|integer',
             'idPartido' => 'required|integer',
+            'idCargo' => 'required|integer',
+            'idUsuario' => 'required|integer',
         ]);
         $c->update($data);
         return response()->json([
@@ -73,9 +73,9 @@ class CandidatoController extends Controller
             'message' => 'Candidato actualizado',
             'data' => [
                 'id' => $c->getKey(),
-                'idParticipante' => $c->idParticipante,
-                'idCargo' => $c->idCargo,
                 'idPartido' => $c->idPartido,
+                'idCargo' => $c->idCargo,
+                'idUsuario' => $c->idUsuario,
             ],
         ]);
     }
@@ -89,9 +89,9 @@ class CandidatoController extends Controller
             'message' => 'Candidato eliminado',
             'data' => [
                 'id' => (int) $id,
-                'idParticipante' => $c->idParticipante,
-                'idCargo' => $c->idCargo,
                 'idPartido' => $c->idPartido,
+                'idCargo' => $c->idCargo,
+                'idUsuario' => $c->idUsuario,
             ],
         ]);
     }

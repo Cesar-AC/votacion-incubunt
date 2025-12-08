@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('Candidato', function (Blueprint $table) {
             $table->increments('idCandidato');
-            $table->unsignedInteger('idParticipante');
-            $table->unsignedInteger('idCargo');
             $table->unsignedInteger('idPartido');
+            $table->unsignedInteger('idCargo');
+            $table->unsignedInteger('idUsuario');
             
-            $table->foreign('idParticipante')->references('idParticipante')->on('Participante');
-            $table->foreign('idCargo')->references('idCargo')->on('Cargo');
             $table->foreign('idPartido')->references('idPartido')->on('Partido');
+            $table->foreign('idCargo')->references('idCargo')->on('Cargo');
+            $table->foreign('idUsuario')->references('idUser')->on('User');
         });
     }
 

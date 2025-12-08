@@ -26,8 +26,8 @@ class AutenticacionController extends Controller
         ]);
 
         $credenciales = [
-            'email' => $request->email,
-            'password' => $request->password,
+            'correo' => $request->email,
+            'contraseña' => $request->password,
         ];
 
         if (!Auth::attempt($credenciales)){

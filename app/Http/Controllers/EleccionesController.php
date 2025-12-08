@@ -29,6 +29,7 @@ class EleccionesController extends Controller
                 'fecha_cierre' => $e->fecha_cierre,
                 'descripcion' => $e->descripcion,
                 'estado' => $e->estado,
+                'partidos' => $e->partidos()->pluck('idPartido'),
             ],
         ]);
     }

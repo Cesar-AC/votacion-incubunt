@@ -16,31 +16,21 @@ class Elecciones extends Model
         'idElecciones',
         'titulo',
         'descripcion',
-        'fecha_inicio',
-        'fecha_cierre',
-        'estado'
+        'fechaInicio',
+        'fechaCierre',
+        'idEstado',
     ];
 
     public function estadoEleccion()
     {
-        return $this->belongsTo(EstadoElecciones::class, 'estado');
+        return $this->belongsTo(EstadoElecciones::class, 'idEstado');
     }
 
     public function partidos()
     {
-        return $this->hasMany(Partido::class, 'idElecciones');
+        return $this->belongsToMany(Partido::class, 'PartidoEleccion', 'idElecciones', 'idPartido');
     }
-
-    public function listaVotantes()
-    {
-        return $this->hasMany(ListaVotante::class, 'idElecciones');
-    }
-
-    public function votos()
-    {
-        return $this->hasMany(Voto::class, 'idElecciones');
-    }
-
+    
     public function padronElectoral()
     {
         return $this->hasMany(PadronElectoral::class, 'idElecciones');

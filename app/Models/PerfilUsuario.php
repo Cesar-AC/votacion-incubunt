@@ -18,11 +18,23 @@ class PerfilUsuario extends Model
         'nombre',
         'otrosNombres',
         'dni',
-        'telefono'
+        'telefono',
+        'idCarrera',
+        'idArea',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class, 'idUser');
+    }
+
+    public function carrera()
+    {
+        return $this->belongsTo(Carrera::class, 'idCarrera');
+    }
+
+    public function area()
+    {
+        return $this->belongsTo(Area::class, 'idArea');
     }
 }
