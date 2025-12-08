@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Area;
 use App\Models\Cargo;
 use App\Models\Carrera;
+use App\Models\CategoriaLog;
 use App\Models\EstadoElecciones;
 use App\Models\EstadoUsuario;
 use App\Models\NivelLog;
@@ -139,6 +140,16 @@ class DatosRealesSeeder extends Seeder
         foreach ($nivelLog as $nivel) {
             NivelLog::create([
                 'nombre' => $nivel,
+            ]);
+        }
+
+        $categoriaLog = [
+            'Autenticación',
+        ];
+
+        foreach ($categoriaLog as $categoria) {
+            CategoriaLog::create([
+                'nombre' => $categoria,
             ]);
         }
     }

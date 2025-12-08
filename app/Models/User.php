@@ -80,4 +80,13 @@ class User extends Authenticatable
     {
         return $this->hasMany(PadronElectoral::class, 'idUsuario', 'idUser');
     }
+
+    public function getAuthPassword()
+    {
+        return $this->contraseña;
+    }
+
+    public function username(){
+        return 'correo';
+    }
 }
