@@ -16,9 +16,4 @@ class Carrera extends Model
         'idCarrera',
         'carrera'
     ];
-
-    public function participantes()
-    {
-        return $this->hasMany(Participante::class, 'idCarrera');
-    }
 }

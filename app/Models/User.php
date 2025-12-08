@@ -71,11 +71,6 @@ class User extends Authenticatable
         return $this->hasOne(PerfilUsuario::class, 'idUser');
     }
 
-    public function participante()
-    {
-        return $this->hasMany(Participante::class, 'idUser');
-    }
-
     public function estadoUsuario()
     {
         return $this->belongsTo(EstadoUsuario::class, 'idEstadoUsuario');

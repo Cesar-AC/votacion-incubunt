@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -214,6 +215,7 @@ class PadronElectoralController extends Controller
             $user = User::create([
                 'correo' => $correo,
                 'contraseña' => bcrypt($dni),
+                'idEstadoUsuario' => 1, // Activo
             ]);
 
             $user->save();
@@ -224,23 +226,17 @@ class PadronElectoralController extends Controller
                 'nombre' => $nombres[0] ?? '',
                 'otrosNombres' => join(' ', array_slice($nombres, 1)) ?? '',
                 'dni' => $dni,
-                'telefono' => $telefono
+                'telefono' => $telefono,
+                'idCarrera' => 1, // Temporal: sin carrera asignada
+                'idArea' => 1, // Temporal: sin área asignada
             ]);
 
             $perfil->save();
 
-            $participante = $user->participante()->create([
-                'biografia' => '',
-                'experiencia' => '',
-                'idUser' => $user->getKey(),
-                'idEstadoParticipante' => 1,
-            ]);
-
-            $participante->save();
-
             $padron = new PadronElectoral([
                 'idElecciones' => $eleccion->getKey(),
-                'idParticipante' => $participante->getKey()
+                'idUsuario' => $user->getKey(),
+                'fechaVoto' => Carbon::now(),
             ]);
 
             $padron->save();
