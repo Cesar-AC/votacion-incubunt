@@ -1,0 +1,145 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Area;
+use App\Models\Cargo;
+use App\Models\Carrera;
+use App\Models\EstadoElecciones;
+use App\Models\EstadoUsuario;
+use App\Models\NivelLog;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+class DatosRealesSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $areas = [
+            'Sin área asignada',
+            'Presidencia',
+            'Marketing',
+            'Project Management Office',
+            'Tecnologías de la Información',
+            'Logística y Finanzas',
+            'Sistemas Integrados de Gestión y Emprendimiento',
+            'Gestión del Talento Humano',
+        ];
+
+        foreach ($areas as $index => $area) {
+            Area::create([
+                'area' => $area,
+            ]);
+        }
+
+        $cargos = [
+            'Director'
+        ];
+
+        foreach ($cargos as $cargo) {
+            foreach (Area::all() as $area) {
+                Cargo::create([
+                    'cargo' => $cargo,
+                    'idArea' => $area->getKey(),
+                ]);
+            }
+        }
+
+        $carreras = [
+            'Sin carrera asignada',
+            'Agronomía',
+            'Ingeniería Agrícola',
+            'Ingeniería Agroindustrial',
+            'Zootecnia',
+            'Ciencias Biológicas',
+            'Microbiológica y Parasitología',
+            'Biología Pesquera',
+            'Administración',
+            'Contabilidad y Finanzas',
+            'Economía',
+            'Estomatología',
+            'Estadística',
+            'Física',
+            'Informática',
+            'Matemáticas',
+            'Antropología',
+            'Arqueología',
+            'Historia',
+            'Trabajo Social',
+            'Turismo',
+            'Derecho',
+            'Ciencias Política y Gobernabilidad',
+            'Enfermería',
+            'Ciencias de la Comunicación',
+            'Educación Inicial',
+            'Educación Primaria',
+            'Educación Secundaria Mención Idiomas',
+            'Educación Secundaria Mención Matemáticas',
+            'Educación Secundaria Mención Lengua y Literatura',
+            'Educación Secundaria Mención Ciencias Naturales',
+            'Educación Secundaria Mención Filosofía, Psicología y Ciencias Sociales',
+            'Educación Secundaria Mención Historia y Geografía',
+            'Farmacia y Bioquímica',
+            'Arquitectura y Urbanismo',
+            'Ingeniería Civil',
+            'Ingeniería Industrial',
+            'Ingeniería de Materiales',
+            'Ingeniería Mecánica',
+            'Ingeniería Mecatrónica',
+            'Ingeniería Metalúrgica',
+            'Ingeniería de Minas',
+            'Ingeniería de Sistemas',
+            'Ingeniería Química',
+            'Ingeniería Ambiental',
+            'Medicina',
+        ];
+
+        foreach ($carreras as $carrera) {
+            Carrera::create([
+                'carrera' => $carrera,
+            ]);
+        }
+
+        $estadosElecciones = [
+            'Activa',
+            'Programada',
+            'Finalizada',
+            'Anulada'
+        ];
+
+        foreach ($estadosElecciones as $estado) {
+            EstadoElecciones::create([
+                'estado' => $estado,
+            ]);
+        }
+
+        $estadosUsuario = [
+            'Activo',
+            'Inactivo',
+            'Suspendido',
+            'Inhabilitado',
+        ];
+
+        foreach ($estadosUsuario as $estado) {
+            EstadoUsuario::create([
+                'nombre' => $estado,
+            ]);
+        }
+
+        $nivelLog = [
+            'Información',
+            'Advertencia',
+            'Error',
+            'Error crítico',
+        ];
+
+        foreach ($nivelLog as $nivel) {
+            NivelLog::create([
+                'nombre' => $nivel,
+            ]);
+        }
+    }
+}

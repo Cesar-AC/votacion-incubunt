@@ -144,9 +144,9 @@ class PermisoSeeder extends Seeder
 
     private function crearUsuarioAdministrador(){
         $usuario = new User([
-            'usuario' => 'administrador',
-            'email' => 'administrador@incubunt.com',
-            'password' => bcrypt('password'),
+            'correo' => 'administrador@incubunt.com',
+            'contraseña' => bcrypt('password'),
+            'idEstadoUsuario' => 1, // Activo
         ]);
 
         $usuario->save();
@@ -156,9 +156,9 @@ class PermisoSeeder extends Seeder
 
     private function crearUsuarioVotante(){
         $usuario = new User([
-            'usuario' => 'votante',
-            'email' => 'votante@incubunt.com',
-            'password' => bcrypt('password'),
+            'correo' => 'votante@incubunt.com',
+            'contraseña' => bcrypt('password'),
+            'idEstadoUsuario' => 1, // Activo
         ]);
 
         $usuario->save();
