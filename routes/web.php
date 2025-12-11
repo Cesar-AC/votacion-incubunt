@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AutenticacionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KPIController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\CarreraController;
@@ -236,4 +237,12 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/roles/{id}', [RolController::class, 'destroy'])->name('crud.rol.eliminar')->middleware('can:delete,App\Models\Rol');
     Route::get('/roles/{id}', [RolController::class, 'show'])->name('crud.rol.ver_datos')->middleware('can:view,App\Models\Rol');
     Route::post('/roles/{id}/agregar-permiso', [RolController::class, 'agregarPermiso'])->name('crud.rol.agregar_permiso')->middleware('can:update,App\Models\Rol');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('kpi/elecciones-activas', [KPIController::class, 'obtenerCantidadEleccionesActivas'])->name('kpi.elecciones_activas');
+    Route::get('kpi/electores-habilitados/{eleccion}', [KPIController::class, 'obtenerCantidadElectoresHabilitados'])->name('kpi.electores_habilitados');
+    Route::get('kpi/electores-habilitados/{eleccion}/area/{area}', [KPIController::class, 'obtenerCantidadElectoresHabilitadosPorArea'])->name('kpi.electores_habilitados_por_area');
+    Route::get('kpi/porcentaje-participacion/{eleccion}', [KPIController::class, 'obtenerPorcentajeParticipacionPorEleccion'])->name('kpi.porcentaje_participacion_por_eleccion');
+    Route::get('kpi/porcentaje-participacion/{eleccion}/area/{area}', [KPIController::class, 'obtenerPorcentajeParticipacionPorArea'])->name('kpi.porcentaje_participacion_por_area');
 });
