@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\EstadisticasElectoralesService;
+use App\Interfaces\IEstadisticasElectoralesService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
@@ -14,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(IEstadisticasElectoralesService::class, EstadisticasElectoralesService::class);
     }
 
     /**

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Elecciones extends Model
 {
+    use HasFactory;
+    
     protected $table = 'Elecciones';
 
     protected $primaryKey = 'idElecciones';
@@ -31,8 +34,23 @@ class Elecciones extends Model
         return $this->belongsToMany(Partido::class, 'PartidoEleccion', 'idElecciones', 'idPartido');
     }
     
-    public function padronElectoral()
-    {
-        return $this->hasMany(PadronElectoral::class, 'idElecciones');
+    public function usuarios(){
+        return $this->belongsToMany(User::class, 'PadronElectoral', 'idElecciones', 'idUsuario');
+    }
+
+    public function estaActivo(){
+        return $this->idEstado === EstadoElecciones::ACTIVO;
+    }
+
+    public function estaProgramado(){
+        return $this->idEstado === EstadoElecciones::PROGRAMADO;
+    }
+
+    public function estaFinalizado(){
+        return $this->idEstado === EstadoElecciones::FINALIZADO;
+    }
+
+    public function estaAnulado(){
+        return $this->idEstado === EstadoElecciones::ANULADO;
     }
 }
