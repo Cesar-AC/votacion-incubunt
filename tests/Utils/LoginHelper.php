@@ -9,26 +9,32 @@ use Illuminate\Support\Facades\Auth;
 
 class LoginHelper
 {
-    private static function usuarioConPermiso(string $permiso){
+    private static function asignarPermisoAUsuario(User $user, string $permiso){
+        $permisoModel = Permiso::firstOrCreate(['permiso' => $permiso]);
+        $user->permisos()->attach($permisoModel->idPermiso);
+    }
+
+    private static function usuarioConPermisos(array|string $permisos){
         $user = User::factory()->create([
-            'usuario' => fake()->userName(),
-            'email' => fake()->email(),
-            'password' => bcrypt(fake()->password()),
+            'correo' => fake()->email(),
+            'contraseña' => bcrypt(fake()->password()),
         ]);
 
-        $perm = new Permiso([
-            'permiso' => $permiso,
-        ]);
-        $perm->save();
-
-        $user->permisos()->attach($perm);
-
+        if (is_array($permisos)) {
+            foreach ($permisos as $permiso) {
+                self::asignarPermisoAUsuario($user, $permiso);
+            }
+        } else {
+            self::asignarPermisoAUsuario($user, $permisos);
+        }
+        
         return $user;
     }
 
-    public static function loguearseConPermiso(TestCase $test, string $permiso): User
+    public static function loguearseConPermiso(TestCase $test, array|string $permisos): User
     {
-        $user = self::usuarioConPermiso($permiso);
+        $test->seed();
+        $user = self::usuarioConPermisos($permisos);
         $test->actingAs($user);
         
         return $user;
