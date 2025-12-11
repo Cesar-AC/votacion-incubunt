@@ -14,11 +14,8 @@ return new class extends Migration
         Schema::create('Voto', function (Blueprint $table) {
             $table->increments('idVoto');
             $table->unsignedInteger('idCandidato');
-            $table->unsignedInteger('idElecciones');
-            $table->dateTime('fechaVoto');
             
             $table->foreign('idCandidato')->references('idCandidato')->on('Candidato');
-            $table->foreign('idElecciones')->references('idElecciones')->on('Elecciones');
         });
     }
 

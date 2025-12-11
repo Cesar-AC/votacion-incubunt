@@ -14,18 +14,11 @@ class Voto extends Model
 
     protected $fillable = [
         'idVoto',
-        'idCandidato',
-        'idElecciones',
-        'fechaVoto'
+        'idCandidato'
     ];
 
     public function candidato()
     {
         return $this->belongsTo(Candidato::class, 'idCandidato');
-    }
-
-    public function elecciones()
-    {
-        return $this->belongsTo(Elecciones::class, 'idElecciones');
     }
 }

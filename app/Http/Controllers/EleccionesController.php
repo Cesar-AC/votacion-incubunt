@@ -12,53 +12,29 @@ use Illuminate\Support\Facades\Auth;
 
 class EleccionesController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) {
-            return view('auth.login');
-        }
-
-        /** @var Usuario $user */
-        $user = Auth::user();
-        $hasPerm = $user->permisos()->where('permiso', $permiso)->exists();
-        if (!$hasPerm) {
-            abort(404);
-        }
-        return null;
-    }
-
     public function index()
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
         return view('crud.elecciones.ver');
     }
 
-    public function show($id)
+    public function show(Request $request, Elecciones $e)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
-        $e = Elecciones::findOrFail($id);
         return response()->json([
             'success' => true,
             'message' => 'Elección obtenida',
             'data' => [
                 'titulo' => $e->titulo,
-                'fecha_inicio' => $e->fecha_inicio,
-                'fecha_cierre' => $e->fecha_cierre,
                 'descripcion' => $e->descripcion,
-                'estado' => $e->estado,
+                'fechaInicio' => $e->fechaInicio,
+                'fechaCierre' => $e->fechaCierre,
+                'estado' => $e->estadoEleccion(),
+                'partidos' => $e->partidos()->pluck('idPartido'),
             ],
         ]);
     }
 
     public function create()
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
         return view('crud.elecciones.crear');
     }
 
@@ -81,54 +57,60 @@ class EleccionesController extends Controller
         return false;
     }
 
+    private static function validDates(Carbon $inicio, Carbon $fin): ?string
+    {
+        if ($inicio->isPast()) {
+            return back()->withErrors([
+                'fechaInicio' => 'La fecha de inicio de la elección no puede ser anterior al día de hoy.'
+            ])->withInput();
+        }
+
+        if ($fin->isPast()) {
+            return back()->withErrors([
+                'fechaCierre' => 'La fecha de cierre de la elección no puede ser anterior al día de hoy.'
+            ])->withInput();
+        }
+
+        if ($fin->lessThan($inicio)) {
+            return back()->withErrors([
+                'fechaCierre' => 'La fecha de cierre de la elección no puede ser anterior a la fecha de inicio.'
+            ])->withInput();
+        }
+
+        return null;
+    }
+
     public function store(Request $request)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
-        // Normalizar fechas a string para que pase la validación aunque el test envíe Carbon
-        $fi = $request->input('fecha_inicio');
-        $fc = $request->input('fecha_cierre');
-        if ($fi instanceof Carbon) { $fi = $fi->toDateTimeString(); }
-        if ($fc instanceof Carbon) { $fc = $fc->toDateTimeString(); }
-        if (!is_null($fi) || !is_null($fc)) {
-            $request->merge([
-                'fecha_inicio' => $fi,
-                'fecha_cierre' => $fc,
-            ]);
-        }
         $data = $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'required|string',
-            'fecha_inicio' => 'required|date',
-            'fecha_cierre' => 'required|date|after_or_equal:fecha_inicio',
+            'fechaInicio' => 'required|date',
+            'fechaCierre' => 'required|date',
         ]);
 
-        $inicio = Carbon::parse($data['fecha_inicio']);
-        $fin = Carbon::parse($data['fecha_cierre']);
+        $fechaInicio = Carbon::parse($data['fechaInicio']);
+        $fechaCierre = Carbon::parse($data['fechaCierre']);
 
+        $errorFechas = self::validDates($fechaInicio, $fechaCierre);
+        if ($errorFechas) return $errorFechas;
+
+        /*
         if ($this->overlapsExisting(null, $inicio, $fin)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ya existe una elección en el rango de fechas indicado',
             ], Response::HTTP_CONFLICT);
         }
+        */
 
-        // Asegurar estado por defecto existente
-        $estadoId = EstadoElecciones::query()->value('idEstado');
-        if (!$estadoId) {
-            $nuevoEstado = new EstadoElecciones(['estado' => 'Programada']);
-            $nuevoEstado->save();
-            $estadoId = $nuevoEstado->getKey();
-        }
-
-        $e = new Elecciones([
+        $e = Elecciones::factory()->create([
             'titulo' => $data['titulo'],
             'descripcion' => $data['descripcion'],
-            'fecha_inicio' => $inicio,
-            'fecha_cierre' => $fin,
-            'estado' => $estadoId,
+            'fechaInicio' => $fechaInicio,
+            'fechaCierre' => $fechaCierre
         ]);
+
         $e->save();
 
         return response()->json([
@@ -137,96 +119,88 @@ class EleccionesController extends Controller
             'data' => [
                 'id' => $e->getKey(),
                 'titulo' => $e->titulo,
-                'fecha_inicio' => $e->fecha_inicio,
-                'fecha_cierre' => $e->fecha_cierre,
                 'descripcion' => $e->descripcion,
-                'estado' => $e->estado,
+                'fechaInicio' => $e->fechaInicio,
+                'fechaCierre' => $e->fechaCierre,
+                'estado' => $e->estadoEleccion(),
             ],
         ], Response::HTTP_CREATED);
     }
 
     public function edit($id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
         return view('crud.elecciones.editar');
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Elecciones $id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
-        $e = Elecciones::findOrFail($id);
-        // Normalizar fechas a string para que pase la validación aunque el test envíe Carbon
-        $fi = $request->input('fecha_inicio');
-        $fc = $request->input('fecha_cierre');
-        if ($fi instanceof Carbon) { $fi = $fi->toDateTimeString(); }
-        if ($fc instanceof Carbon) { $fc = $fc->toDateTimeString(); }
-        if (!is_null($fi) || !is_null($fc)) {
-            $request->merge([
-                'fecha_inicio' => $fi,
-                'fecha_cierre' => $fc,
-            ]);
-        }
+        $e = $id;
         $data = $request->validate([
-            'titulo' => 'required|string|max:255',
-            'descripcion' => 'required|string',
-            'fecha_inicio' => 'required|date',
-            'fecha_cierre' => 'required|date|after_or_equal:fecha_inicio',
-            'estado' => 'nullable|integer',
+            'titulo' => 'string|max:255',
+            'descripcion' => 'string',
+            'fechaInicio' => 'date',
+            'fechaCierre' => 'date',
+            'idEstado' => 'integer',
         ]);
 
-        $inicio = Carbon::parse($data['fecha_inicio']);
-        $fin = Carbon::parse($data['fecha_cierre']);
-        if ($this->overlapsExisting($e->getKey(), $inicio, $fin)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Las fechas se sobreponen con otra elección',
-            ], Response::HTTP_CONFLICT);
+        if ($e->estaFinalizado()) {
+            return back()->withErrors([
+                'idEleccion' => 'No se pueden modificar elecciones que están finalizadas.'
+            ])->withInput();
         }
 
-        $e->titulo = $data['titulo'];
-        $e->descripcion = $data['descripcion'];
-        $e->fecha_inicio = $inicio;
-        $e->fecha_cierre = $fin;
-        if (array_key_exists('estado', $data)) {
-            $e->estado = $data['estado'];
+        if (empty($data)) {
+            return back()->withErrors([
+                'idEleccion' => 'No se han proporcionado datos para actualizar.'
+            ])->withInput();
         }
+
+        isset($data['fechaInicio']) 
+            ? $fechaInicio = Carbon::parse($data['fechaInicio']) 
+            : $fechaInicio = Carbon::parse($e->fechaInicio);
+
+        isset($data['fechaCierre'])
+            ? $fechaCierre = Carbon::parse($data['fechaCierre']) 
+            : $fechaCierre = Carbon::parse($e->fechaCierre);
+
+        $errorFechas = self::validDates($fechaInicio, $fechaCierre);
+        if ($errorFechas) return $errorFechas;
+
+        if (isset($data['titulo'])) $e->titulo = $data['titulo'];
+        if (isset($data['descripcion'])) $e->descripcion = $data['descripcion'];
+        if (isset($data['fechaInicio'])) $e->fechaInicio = $fechaInicio;
+        if (isset($data['fechaCierre'])) $e->fechaCierre = $fechaCierre;
+        if (isset($data['idEstado'])) $e->idEstado = $data['idEstado'];
+
         $e->save();
-
         return response()->json([
             'success' => true,
             'message' => 'Elección actualizada correctamente',
             'data' => [
                 'id' => $e->getKey(),
                 'titulo' => $e->titulo,
-                'fecha_inicio' => $e->fecha_inicio,
-                'fecha_cierre' => $e->fecha_cierre,
                 'descripcion' => $e->descripcion,
-                'estado' => $e->estado,
+                'fechaInicio' => $e->fechaInicio,
+                'fechaCierre' => $e->fechaCierre,
+                'estado' => $e->estadoEleccion(),
             ],
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, Elecciones $id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
-        $e = Elecciones::findOrFail($id);
+        $e = $id;
         $e->delete();
         return response()->json([
             'success' => true,
             'message' => 'Elección eliminada',
             'data' => [
-                'id' => (int) $id,
+                'id' => $e->getKey(),
                 'titulo' => $e->titulo,
-                'fecha_inicio' => $e->fecha_inicio,
-                'fecha_cierre' => $e->fecha_cierre,
                 'descripcion' => $e->descripcion,
-                'estado' => $e->estado,
+                'fechaInicio' => $e->fechaInicio,
+                'fechaCierre' => $e->fechaCierre,
+                'estado' => $e->estadoEleccion(),
             ],
         ]);
     }

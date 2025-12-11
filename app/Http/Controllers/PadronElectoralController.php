@@ -2,40 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Elecciones;
 use App\Models\PadronElectoral;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Iterator;
+use League\Csv\Reader;
+use Aspera\Spreadsheet\XLSX\Reader as XLSXReader;
 
 class PadronElectoralController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) { return view('auth.login'); }
-        $user = Auth::user();
-        if (!$user->permisos()->where('permiso', $permiso)->exists()) { abort(404); }
-        return null;
-    }
-
     public function index()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         return view('crud.padron_electoral.ver');
     }
 
     public function create()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         return view('crud.padron_electoral.crear');
     }
 
     public function store(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         $data = $request->validate([
             'idElecciones' => 'required|integer',
-            'idUser' => 'required|integer',
-            'idEstadoParticipante' => 'required|integer',
+            'idUser' => 'required|integer'
         ]);
         $p = new PadronElectoral($data);
         $p->save();
@@ -45,36 +39,31 @@ class PadronElectoralController extends Controller
             'data' => [
                 'id' => $p->getKey(),
                 'idElecciones' => $p->idElecciones,
-                'idUser' => $p->idUser,
-                'idEstadoParticipante' => $p->idEstadoParticipante,
+                'idParticipante' => $p->idParticipante
             ],
         ], Response::HTTP_CREATED);
     }
 
     public function show($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         $p = PadronElectoral::findOrFail($id);
         return response()->json([
             'success' => true,
             'message' => 'Padrón obtenido',
             'data' => [
                 'idElecciones' => $p->idElecciones,
-                'idUser' => $p->idUser,
-                'idEstadoParticipante' => $p->idEstadoParticipante,
+                'idParticipante' => $p->idParticipante,
             ],
         ]);
     }
 
     public function edit($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         return view('crud.padron_electoral.editar');
     }
 
     public function update(Request $request, $id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         $p = PadronElectoral::findOrFail($id);
         $data = $request->validate([
             'idEstadoParticipante' => 'required|integer',
@@ -86,34 +75,30 @@ class PadronElectoralController extends Controller
             'data' => [
                 'id' => $p->getKey(),
                 'idElecciones' => $p->idElecciones,
-                'idUser' => $p->idUser,
-                'idEstadoParticipante' => $p->idEstadoParticipante,
+                'idParticipante' => $p->idParticipante,
             ],
         ]);
     }
 
     public function importForm()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         return view('crud.padron_electoral.importar');
     }
 
     public function import(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         $data = $request->validate([
             'idElecciones' => 'required|integer',
-            'idEstadoParticipante' => 'required|integer',
-            'usuarios' => 'required|array',
-            'usuarios.*' => 'integer',
+            'participantes' => 'required|array',
+            'participantes.*' => 'integer',
         ]);
 
         $created = [];
         $skipped = [];
-        foreach ($data['usuarios'] as $idUser) {
+        foreach ($data['participantes'] as $idUser) {
             $exists = PadronElectoral::query()
                 ->where('idElecciones', $data['idElecciones'])
-                ->where('idUser', $idUser)
+                ->where('idParticipante', $idUser)
                 ->exists();
             if ($exists) {
                 $skipped[] = $idUser;
@@ -121,13 +106,12 @@ class PadronElectoralController extends Controller
             }
             $p = new PadronElectoral([
                 'idElecciones' => $data['idElecciones'],
-                'idUser' => $idUser,
-                'idEstadoParticipante' => $data['idEstadoParticipante'],
+                'idParticipante' => $idUser
             ]);
             $p->save();
             $created[] = [
                 'id' => $p->getKey(),
-                'idUser' => $idUser,
+                'idParticipante' => $idUser,
             ];
         }
 
@@ -136,7 +120,6 @@ class PadronElectoralController extends Controller
             'message' => 'Importación de padrón completada',
             'data' => [
                 'idElecciones' => $data['idElecciones'],
-                'idEstadoParticipante' => $data['idEstadoParticipante'],
                 'creados' => $created,
                 'omitidos' => $skipped,
             ],
@@ -145,7 +128,6 @@ class PadronElectoralController extends Controller
 
     public function destroy($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.padron_electoral.*')) { return $r; }
         $p = PadronElectoral::findOrFail($id);
         $p->delete();
         return response()->json([
@@ -154,9 +136,158 @@ class PadronElectoralController extends Controller
             'data' => [
                 'id' => (int) $id,
                 'idElecciones' => $p->idElecciones,
-                'idUser' => $p->idUser,
-                'idEstadoParticipante' => $p->idEstadoParticipante,
+                'idParticipante' => $p->idUser
             ],
         ]);
+    }
+
+    private static function importFromCSV(string $path): Iterator{
+        $csv = Reader::createFromPath($path, 'r');
+        $csv->setHeaderOffset(0);
+        $registros = $csv->getRecords();
+
+        $mapa = [
+            'correo' => 0,
+            // 'area' => 1,
+            'nombres' => 2,
+            'apellidos' => 3,
+            'dni' => 4,
+            'telefono' => 5,
+        ];
+
+        return new CSVIteratorAdapter($registros, $mapa);
+    }
+
+    private static function importFromXLSX(string $path, bool $hasHeader = true): Iterator{
+        $lector = new XLSXReader();
+        $lector->open($path);
+        $lector->changeSheet(0);
+
+        if ($hasHeader) $lector->next();
+ 
+        return $lector;
+    }
+
+    private static function readFile(string $path): Iterator {
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        return match ($extension) {
+            'csv' => self::importFromCSV($path),
+            'xlsx' => self::importFromXLSX($path),
+            default => throw new \InvalidArgumentException("Formato de archivo no soportado: $extension"),
+        };
+    }
+
+    public static function importFromFile(Elecciones $eleccion, string $path) {
+        $registros = self::readFile($path);
+
+        $correosExistentes = PadronElectoral::query()
+            ->where('idElecciones', '=', $eleccion->getKey())
+            ->join('User', 'PadronElectoral.idUsuario', '=', 'User.idUser')
+            ->get()
+            ->pluck('correo');
+
+        $dniExistentes = PadronElectoral::query()
+            ->where('idElecciones', '=', $eleccion->getKey())
+            ->join('User', 'PadronElectoral.idUsuario', '=', 'User.idUser')
+            ->join('PerfilUsuario', 'User.idUser', '=', 'PerfilUsuario.idUser')
+            ->get()
+            ->pluck('dni');
+
+        foreach ($registros as $indice => $registro) {
+            $correo = (string) $registro[0];
+            /* Area por implementar */
+            // $area = (int) $registro[1];
+            $nombres = explode(' ',(string) $registro[2]);
+            $apellidos = explode(' ', (string) $registro[3]);
+            $dni = (string) $registro[4];
+            $telefono = (string) $registro[5];
+
+            $correoDuplicado = $correosExistentes->contains($correo);
+            $dniDuplicado = $dniExistentes->contains($dni);
+
+            if ($correoDuplicado || $dniDuplicado) {
+                $datosOmitidos[] = [
+                    'indice' => $indice,
+                    'correo' => $correo,
+                    'nombres' => join(' ', $nombres),
+                    'apellidos' => join(' ', $apellidos),
+                    'dni' => $dni,
+                    'telefono' => $telefono,
+                    'razon' => $correoDuplicado ? 'Correo duplicado' : 'DNI duplicado',
+                ];
+
+                continue;
+            }
+
+            $correosExistentes->push($correo);
+            $dniExistentes->push($dni);
+
+            $user = User::createOrFirst([
+                'correo' => $correo,
+                'contraseña' => bcrypt($dni),
+                'idEstadoUsuario' => 1, // Activo
+            ]);
+
+            $user->save();
+
+            $perfil = $user->perfil()->createOrFirst([
+                'apellidoPaterno' => $apellidos[0] ?? '',
+                'apellidoMaterno' => $apellidos[1] ?? '',
+                'nombre' => $nombres[0] ?? '',
+                'otrosNombres' => join(' ', array_slice($nombres, 1)) ?? '',
+                'dni' => $dni,
+                'telefono' => $telefono,
+                'idCarrera' => 1, // Temporal: sin carrera asignada
+                'idArea' => 1, // Temporal: sin área asignada
+            ]);
+
+            $perfil->save();
+
+            $registroEnPadron = PadronElectoral::createOrFirst([
+                'idElecciones' => $eleccion->getKey(),
+                'idUsuario' => $user->getKey(),
+                'fechaVoto' => Carbon::now(),
+            ]);
+
+            $registroEnPadron->save();
+        }
+
+        $message = 'Importación completada';
+        if (count($datosOmitidos) > 0) $message .= ' con ' . count($datosOmitidos) . ' registros omitidos';
+
+        return [
+            'success' => true,
+            'message' => $message,
+            'data' => [
+                'registrosOmitidos' => $datosOmitidos,
+            ],
+        ];
+    }
+}
+
+class CSVIteratorAdapter implements Iterator {
+    private Iterator $iterator;
+    private array $map;
+
+    public function __construct(Iterator $reader, array $map) {
+        $this->iterator = $reader;
+        $this->map = $map;
+    }
+
+    public function rewind(): void { $this->iterator->rewind(); }
+
+    public function valid(): bool { return $this->iterator->valid(); }
+
+    public function next(): void { $this->iterator->next(); }
+
+    public function key(): int { return $this->iterator->key(); }
+
+    public function current(): array { 
+        $row = $this->iterator->current();
+        $mappedRow = [];
+        foreach ($this->map as $key => $value) {
+            $mappedRow[$value] = $row[$key] ?? null;
+        }
+        return $mappedRow;
     }
 }

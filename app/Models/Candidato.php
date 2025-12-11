@@ -14,16 +14,16 @@ class Candidato extends Model
 
     protected $fillable = [
         'idCandidato',
-        'idParticipante',
+        'idPartido',
         'idCargo',
-        'idPartido'
+        'idUsuario'
     ];
 
-    public function participante()
+    public function usuario()
     {
-        return $this->belongsTo(Participante::class, 'idParticipante');
+        return $this->belongsTo(User::class, 'idUsuario');
     }
-
+    
     public function cargo()
     {
         return $this->belongsTo(Cargo::class, 'idCargo');

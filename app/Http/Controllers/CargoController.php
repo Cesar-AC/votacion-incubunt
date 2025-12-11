@@ -9,29 +9,18 @@ use Illuminate\Support\Facades\Auth;
 
 class CargoController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) { return view('auth.login'); }
-        $user = Auth::user();
-        if (!$user->permisos()->where('permiso', $permiso)->exists()) { abort(404); }
-        return null;
-    }
-
     public function index()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
         return view('crud.cargo.ver');
     }
 
     public function create()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
         return view('crud.cargo.crear');
     }
 
     public function store(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
         $data = $request->validate([
             'idCargo' => 'required|integer',
             'cargo' => 'required|string|max:100',
@@ -52,7 +41,6 @@ class CargoController extends Controller
 
     public function show($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
         $c = Cargo::findOrFail($id);
         return response()->json([
             'success' => true,
@@ -66,13 +54,11 @@ class CargoController extends Controller
 
     public function edit($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
         return view('crud.cargo.editar');
     }
 
     public function update(Request $request, $id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
         $c = Cargo::findOrFail($id);
         $data = $request->validate([
             'cargo' => 'required|string|max:100',
@@ -92,7 +78,6 @@ class CargoController extends Controller
 
     public function destroy($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
         $c = Cargo::findOrFail($id);
         $c->delete();
         return response()->json([

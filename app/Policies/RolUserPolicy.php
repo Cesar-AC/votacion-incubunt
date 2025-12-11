@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\RolUser;
+use App\Models\User;
+use App\Policies\Utils\ValidadorPermisos;
+use Illuminate\Auth\Access\Response;
+
+class RolUserPolicy
+{
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function viewAny(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'rol_user:crud:ver:*',
+            'rol_user:crud:*',
+            'rol_user:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can view the model.
+     */
+    public function view(User $user, RolUser $rolUser): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            "rol_user:crud:ver:{$rolUser->id}",
+            'rol_user:crud:ver:*',
+            'rol_user:crud:*',
+            'rol_user:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can create models.
+     */
+    public function create(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'rol_user:crud:agregar',
+            'rol_user:crud:*',
+            'rol_user:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can update the model.
+     */
+    public function update(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'rol_user:crud:editar',
+            'rol_user:crud:*',
+            'rol_user:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can delete the model.
+     */
+    public function delete(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'rol_user:crud:eliminar',
+            'rol_user:crud:*',
+            'rol_user:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can restore the model.
+     */
+    public function restore(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'rol_user:crud:agregar',
+            'rol_user:crud:*',
+            'rol_user:*'
+        ]);
+    }
+
+    /**
+     * Determine whether the user can permanently delete the model.
+     */
+    public function forceDelete(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'rol_user:crud:eliminar',
+            'rol_user:crud:*',
+            'rol_user:*'
+        ]);
+    }
+}

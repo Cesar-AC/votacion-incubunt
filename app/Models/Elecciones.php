@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Elecciones extends Model
 {
+    use HasFactory;
+    
     protected $table = 'Elecciones';
 
     protected $primaryKey = 'idElecciones';
@@ -16,33 +19,38 @@ class Elecciones extends Model
         'idElecciones',
         'titulo',
         'descripcion',
-        'fecha_inicio',
-        'fecha_cierre',
-        'estado'
+        'fechaInicio',
+        'fechaCierre',
+        'idEstado',
     ];
 
     public function estadoEleccion()
     {
-        return $this->belongsTo(EstadoElecciones::class, 'estado');
+        return $this->belongsTo(EstadoElecciones::class, 'idEstado');
     }
 
     public function partidos()
     {
-        return $this->hasMany(Partido::class, 'idElecciones');
+        return $this->belongsToMany(Partido::class, 'PartidoEleccion', 'idElecciones', 'idPartido');
+    }
+    
+    public function usuarios(){
+        return $this->belongsToMany(User::class, 'PadronElectoral', 'idElecciones', 'idUsuario');
     }
 
-    public function listaVotantes()
-    {
-        return $this->hasMany(ListaVotante::class, 'idElecciones');
+    public function estaActivo(){
+        return $this->idEstado === EstadoElecciones::ACTIVO;
     }
 
-    public function votos()
-    {
-        return $this->hasMany(Voto::class, 'idElecciones');
+    public function estaProgramado(){
+        return $this->idEstado === EstadoElecciones::PROGRAMADO;
     }
 
-    public function padronElectoral()
-    {
-        return $this->hasMany(PadronElectoral::class, 'idElecciones');
+    public function estaFinalizado(){
+        return $this->idEstado === EstadoElecciones::FINALIZADO;
+    }
+
+    public function estaAnulado(){
+        return $this->idEstado === EstadoElecciones::ANULADO;
     }
 }
