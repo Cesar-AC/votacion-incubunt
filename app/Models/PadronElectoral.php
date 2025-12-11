@@ -8,18 +8,17 @@ class PadronElectoral extends Model
 {
     protected $table = 'PadronElectoral';
 
-    protected $primaryKey = 'idPadronElectoral';
+    protected $primaryKey = ['idElecciones', 'idUsuario'];
 
     public $timestamps = false;
 
     protected $fillable = [
-        'idPadronElectoral',
         'idElecciones',
         'idUsuario',
         'fechaVoto',
     ];
 
-    public function elecciones()
+    public function eleccion()
     {
         return $this->belongsTo(Elecciones::class, 'idElecciones');
     }
