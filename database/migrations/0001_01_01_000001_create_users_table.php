@@ -1,4 +1,6 @@
-<?php
+ALTER TABLE `User` ADD COLUMN `correo` VARCHAR(100) NOT NULL UNIQUE;
+ALTER TABLE `User` ADD COLUMN `contraseña` TEXT NOT NULL;
+ALTER TABLE `User` ADD COLUMN `idEstadoUsuario` INT UNSIGNED NOT NULL;<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
