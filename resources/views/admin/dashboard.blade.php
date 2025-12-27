@@ -25,7 +25,7 @@
           <p class="text-muted small mb-3">
             No hay votaciones disponibles en este momento
           </p>
-          <a href="#" class="btn btn-primary btn-sm">
+          <a href="{{ route('crud.elecciones.crear') }}" class="btn btn-primary btn-sm">
             Crear Proceso Electoral
           </a>
         </div>
@@ -39,9 +39,9 @@
           <i class="fas fa-th-large fa-2x text-info mb-3"></i>
           <h6 class="font-weight-bold">Patrones Electorales</h6>
           <p class="text-muted small mb-3">
-            No hay patrones electorales disponibles
+            No hay padrones electorales disponibles
           </p>
-          <a href="#" class="btn btn-info btn-sm">
+          <a href="{{ route('crud.padron_electoral.crear') }}" class="btn btn-info btn-sm">
             Crear Patrón Electoral
           </a>
         </div>
@@ -57,7 +57,7 @@
           <p class="text-muted small mb-3">
             No hay usuarios disponibles
           </p>
-          <a href="#" class="btn btn-warning btn-sm text-white">
+          <a href="{{ route('crud.user.crear') }}" class="btn btn-warning btn-sm text-white">
             Crear Usuario
           </a>
         </div>
@@ -73,7 +73,7 @@
           <p class="text-muted small mb-3">
             Hay 2 administradores disponibles
           </p>
-          <a href="#" class="btn btn-success btn-sm">
+          <a href="{{ route('crud.user.crear') }}" class="btn btn-success btn-sm">
             Crear Administrador
           </a>
         </div>

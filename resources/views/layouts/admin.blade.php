@@ -65,9 +65,9 @@
                 <div id="collapseGestion" class="collapse" aria-labelledby="headingGestion">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header" style="color: black !important;">Opciones:</h6>
+                        <a class="collapse-item" href="{{ route('crud.elecciones.ver') }}" style="color: black !important;">Gestionar Elecciones</a>
                         <a class="collapse-item" href="{{ route('crud.padron_electoral.ver') }}" style="color: black !important;">Gestionar Padrones</a>
                         <a class="collapse-item" href="{{ route('crud.user.ver') }}" style="color: black !important;">Gestionar Usuarios</a>
-                        <a class="collapse-item" href="{{ route('crud.permiso.ver') }}" style="color: black !important;">Gestionar Permisos</a>
                         <a class="collapse-item" href="{{ route('crud.partido.ver') }}" style="color: black !important;">Gestionar Partidos</a>
                         <a class="collapse-item" href="#" style="color: black !important;">Configuraciones</a>
                     </div>

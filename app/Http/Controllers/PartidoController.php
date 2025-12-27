@@ -11,7 +11,9 @@ class PartidoController extends Controller
 {
     public function index()
     {
-        return view('crud.partido.ver');
+        $partidos = Partido::orderBy('idPartido', 'desc')->get();
+
+        return view('crud.partido.ver', compact('partidos'));
     }
 
     public function create()
@@ -65,7 +67,9 @@ class PartidoController extends Controller
 
     public function edit($id)
     {
-        return view('crud.partido.editar');
+        $partido = Partido::findOrFail($id);
+
+        return view('crud.partido.editar', compact('partido'));
     }
 
     public function update(Request $request, $id)
