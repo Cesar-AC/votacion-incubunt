@@ -15,6 +15,7 @@ class PerfilUsuario extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'idUser',
         'apellidoPaterno',
         'apellidoMaterno',
         'nombre',

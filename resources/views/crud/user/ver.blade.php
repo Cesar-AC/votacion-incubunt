@@ -37,104 +37,48 @@
     </div>
   </div>
 
-  <!-- Usuario 1 -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body py-3">
-      <div class="d-flex justify-content-between">
+@foreach ($usuarios as $usuario)
+<div class="card shadow-sm mb-3">
+  <div class="card-body py-3">
+    <div class="d-flex justify-content-between">
 
-        <!-- Info -->
-        <div>
-          <h6 class="font-weight-bold mb-1">Juan Pérez</h6>
-          <small class="text-muted d-block mb-2">
-            juan.perez@correo.com
-          </small>
+      <div>
+        <h6 class="font-weight-bold mb-1">
+          @if ($usuario->perfil)
+            {{ $usuario->perfil->nombre }} {{ $usuario->perfil->apellidoPaterno }}
+          @else
+            {{ $usuario->correo }}
+          @endif
+        </h6>
 
-          <!-- Etiquetas -->
-          <span class="badge badge-info mr-1">
-            Grupo: Estudiantes
-          </span>
-          <span class="badge badge-primary">
-            Rol: Votante
-          </span>
-        </div>
+        <small class="text-muted d-block mb-2">
+          {{ $usuario->correo }}
+        </small>
 
-        <!-- Acciones -->
-        <div class="text-right">
-          <a href="#" class="btn btn-outline-primary btn-sm mb-1">
-            <i class="fas fa-edit"></i> Edit
-          </a><br>
-          <a href="#" class="btn btn-outline-danger btn-sm">
-            <i class="fas fa-trash"></i> Delete
-          </a>
-        </div>
-
+        <span class="badge badge-primary">
+          Rol:
+          {{ $usuario->roles->first()->rol ?? 'Sin rol' }}
+        </span>
       </div>
+
+      <div class="text-right">
+        <a href="#" class="btn btn-outline-primary btn-sm mb-1">
+          <i class="fas fa-edit"></i> Editar
+        </a><br>
+        <a href="#" class="btn btn-outline-danger btn-sm">
+          <i class="fas fa-trash"></i> Eliminar
+        </a>
+        <a href="#" class="btn btn-outline-secondary btn-sm mt-1">
+          <i class="fas fa-eye"></i> Ver
+        </a>
+      </div>
+
     </div>
   </div>
+</div>
+@endforeach
 
-  <!-- Usuario 2 -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body py-3">
-      <div class="d-flex justify-content-between">
 
-        <div>
-          <h6 class="font-weight-bold mb-1">María López</h6>
-          <small class="text-muted d-block mb-2">
-            maria.lopez@correo.com
-          </small>
-
-          <span class="badge badge-warning mr-1">
-            Grupo: Docentes
-          </span>
-          <span class="badge badge-success">
-            Rol: Moderador
-          </span>
-        </div>
-
-        <div class="text-right">
-          <a href="#" class="btn btn-outline-primary btn-sm mb-1">
-            <i class="fas fa-edit"></i> Edit
-          </a><br>
-          <a href="#" class="btn btn-outline-danger btn-sm">
-            <i class="fas fa-trash"></i> Delete
-          </a>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- Usuario 3 -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body py-3">
-      <div class="d-flex justify-content-between">
-
-        <div>
-          <h6 class="font-weight-bold mb-1">Carlos Rivas</h6>
-          <small class="text-muted d-block mb-2">
-            carlos.rivas@correo.com
-          </small>
-
-          <span class="badge badge-secondary mr-1">
-            Grupo: Administrativos
-          </span>
-          <span class="badge badge-danger">
-            Rol: Administrador
-          </span>
-        </div>
-
-        <div class="text-right">
-          <a href="#" class="btn btn-outline-primary btn-sm mb-1">
-            <i class="fas fa-edit"></i> Edit
-          </a><br>
-          <a href="#" class="btn btn-outline-danger btn-sm">
-            <i class="fas fa-trash"></i> Delete
-          </a>
-        </div>
-
-      </div>
-    </div>
-  </div>
 
 </div>
 @endsection
