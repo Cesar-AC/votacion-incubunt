@@ -129,7 +129,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Tipo Voto
-/* Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/tipo-voto', [TipoVotoController::class, 'index'])->name('crud.tipo_voto.ver')->middleware('can:viewAny,App\Models\TipoVoto');
     Route::get('/tipo-voto/crear', [TipoVotoController::class, 'create'])->name('crud.tipo_voto.crear')->middleware('can:create,App\Models\TipoVoto');
     Route::post('/tipo-voto/crear', [TipoVotoController::class, 'store'])->name('crud.tipo_voto.crear')->middleware('can:create,App\Models\TipoVoto');
@@ -137,7 +137,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tipo-voto/{id}/editar', [TipoVotoController::class, 'update'])->name('crud.tipo_voto.editar')->middleware('can:update,App\Models\TipoVoto');
     Route::delete('/tipo-voto/{id}', [TipoVotoController::class, 'destroy'])->name('crud.tipo_voto.eliminar')->middleware('can:delete,App\Models\TipoVoto');
     Route::get('/tipo-voto/{id}', [TipoVotoController::class, 'show'])->name('crud.tipo_voto.ver_datos')->middleware('can:view,App\Models\TipoVoto');
-}); */
+});
 
 // Cargo
 Route::middleware(['auth'])->group(function () {
@@ -162,7 +162,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Estado Participante
-/* Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/estado-participante', [EstadoParticipanteController::class, 'index'])->name('crud.estado_participante.ver')->middleware('can:viewAny,App\Models\EstadoParticipante');
     Route::get('/estado-participante/crear', [EstadoParticipanteController::class, 'create'])->name('crud.estado_participante.crear')->middleware('can:create,App\Models\EstadoParticipante');
     Route::post('/estado-participante/crear', [EstadoParticipanteController::class, 'store'])->name('crud.estado_participante.crear')->middleware('can:create,App\Models\EstadoParticipante');
@@ -170,7 +170,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/estado-participante/{id}/editar', [EstadoParticipanteController::class, 'update'])->name('crud.estado_participante.editar')->middleware('can:update,App\Models\EstadoParticipante');
     Route::delete('/estado-participante/{id}', [EstadoParticipanteController::class, 'destroy'])->name('crud.estado_participante.eliminar')->middleware('can:delete,App\Models\EstadoParticipante');
     Route::get('/estado-participante/{id}', [EstadoParticipanteController::class, 'show'])->name('crud.estado_participante.ver_datos')->middleware('can:view,App\Models\EstadoParticipante');
-}); */
+});
 
 // Lista Votante
 Route::middleware(['auth'])->group(function () {
@@ -183,7 +183,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/lista-votante/{id}', [ListaVotanteController::class, 'show'])->name('crud.lista_votante.ver_datos')->middleware('can:view,App\Models\ListaVotante');
 });
 
-/* // Participante
+// Participante
 Route::middleware(['auth'])->group(function () {
     Route::get('/participantes', [ParticipanteController::class, 'index'])->name('crud.participante.ver')->middleware('can:viewAny,App\Models\Participante');
     Route::get('/participantes/crear', [ParticipanteController::class, 'create'])->name('crud.participante.crear')->middleware('can:create,App\Models\Participante');
@@ -192,7 +192,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/participantes/{id}/editar', [ParticipanteController::class, 'update'])->name('crud.participante.editar')->middleware('can:update,App\Models\Participante');
     Route::delete('/participantes/{id}', [ParticipanteController::class, 'destroy'])->name('crud.participante.eliminar')->middleware('can:delete,App\Models\Participante');
     Route::get('/participantes/{id}', [ParticipanteController::class, 'show'])->name('crud.participante.ver_datos')->middleware('can:view,App\Models\Participante');
-}); */
+});
 
 // Permiso
 Route::middleware(['auth'])->group(function () {
@@ -246,5 +246,3 @@ Route::middleware(['auth'])->group(function () {
     Route::get('kpi/porcentaje-participacion/{eleccion}', [KPIController::class, 'obtenerPorcentajeParticipacionPorEleccion'])->name('kpi.porcentaje_participacion_por_eleccion');
     Route::get('kpi/porcentaje-participacion/{eleccion}/area/{area}', [KPIController::class, 'obtenerPorcentajeParticipacionPorArea'])->name('kpi.porcentaje_participacion_por_area');
 });
-
-require __DIR__.'/auth.php';
