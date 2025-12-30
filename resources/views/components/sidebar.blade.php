@@ -22,55 +22,90 @@
     </li>
 
     @if($isAdmin)
-        <!-- Divider -->
         <hr class="sidebar-divider">
 
-        <!-- Heading -->
         <div class="sidebar-heading">
             Menu Principal
         </div>
 
-        <!-- Nav Item - Gestionar Elecciones Collapse Menu -->
+        <!-- GESTIÓN DE ELECCIONES -->
         <li class="nav-item">
-            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseGestion"
-                aria-expanded="false" aria-controls="collapseGestion">
-                <i class="fas fa-fw fa-tasks"></i>
-                <span>Gestionar Elecciones</span>
+            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseElecciones"
+                aria-expanded="false" aria-controls="collapseElecciones">
+                <i class="fas fa-fw fa-vote-yea"></i>
+                <span>Gestión de Elecciones</span>
             </a>
-            <div id="collapseGestion" class="collapse" aria-labelledby="headingGestion">
+            <div id="collapseElecciones" class="collapse">
                 <div class="bg-white py-2 collapse-inner rounded">
-                    <h6 class="collapse-header" style="color: black !important;">Opciones:</h6>
-                    <a class="collapse-item" href="{{ route('crud.elecciones.ver') }}" style="color: black !important;">Gestionar Elecciones</a>
-                    <a class="collapse-item" href="{{ route('crud.padron_electoral.ver') }}" style="color: black !important;">Gestionar Padrones</a>
-                    <a class="collapse-item" href="{{ route('crud.user.ver') }}" style="color: black !important;">Gestionar Usuarios</a>
-                    <a class="collapse-item" href="{{ route('crud.partido.ver') }}" style="color: black !important;">Gestionar Partidos</a>
-                    <a class="collapse-item" href="#" style="color: black !important;">Configuraciones</a>
+                    <h6 class="collapse-header text-dark">Opciones:</h6>
+                    <a class="collapse-item text-dark" href="{{ route('crud.elecciones.ver') }}">Elecciones</a>
+                    <a class="collapse-item text-dark" href="{{ route('crud.padron_electoral.ver') }}">Padrones</a>
+                    <a class="collapse-item text-dark" href="{{ route('crud.voto.ver') }}">Votos</a>
                 </div>
             </div>
         </li>
 
-        <!-- Nav Item - Reportes -->
+        <!-- GESTIÓN DE USUARIOS -->
         <li class="nav-item">
-            <a class="nav-link" href="#">
-                <i class="fas fa-fw fa-chart-bar"></i>
-                <span>Reportes</span></a>
+            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUsuarios"
+                aria-expanded="false" aria-controls="collapseUsuarios">
+                <i class="fas fa-fw fa-users"></i>
+                <span>Gestión de Usuarios</span>
+            </a>
+            <div id="collapseUsuarios" class="collapse">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <h6 class="collapse-header text-dark">Opciones:</h6>
+                    <a class="collapse-item text-dark" href="{{ route('crud.user.ver') }}">Usuarios</a>
+                    <a class="collapse-item text-dark" href="{{ route('crud.permiso.ver') }}">Permisos</a>
+                </div>
+            </div>
         </li>
-    @else
-        <!-- Divider -->
-        <hr class="sidebar-divider">
 
-        <!-- Heading -->
-        <div class="sidebar-heading">
-            Menu Principal
-        </div>
-
-        <!-- Nav Item - Votaciones -->
+        <!-- GESTIÓN DE PARTIDOS -->
         <li class="nav-item">
-            <a class="nav-link" href="{{ route('crud.elecciones.ver') }}">
-                <i class="fas fa-fw fa-vote-yea"></i>
-                <span>Votaciones</span></a>
+            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePartidos"
+                aria-expanded="false" aria-controls="collapsePartidos">
+                <i class="fas fa-fw fa-flag"></i>
+                <span>Gestión de Partidos</span>
+            </a>
+            <div id="collapsePartidos" class="collapse">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <h6 class="collapse-header text-dark">Opciones:</h6>
+                    <a class="collapse-item text-dark" href="{{ route('crud.candidato.ver') }}">Candidatos</a>
+                    <a class="collapse-item text-dark" href="{{ route('crud.propuesta_candidato.ver') }}">Propuestas Candidato</a>
+                    <a class="collapse-item text-dark" href="{{ route('crud.partido.ver') }}">Partidos</a>
+                    <a class="collapse-item text-dark" href="{{ route('crud.propuesta_partido.ver') }}">Propuestas Partido</a>
+                </div>
+            </div>
+        </li>
+
+        <!-- CONFIGURACIÓN -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseConfig"
+                aria-expanded="false" aria-controls="collapseConfig">
+                <i class="fas fa-fw fa-cogs"></i>
+                <span>Configuración</span>
+            </a>
+            <div id="collapseConfig" class="collapse">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <h6 class="collapse-header text-dark">Opciones:</h6>
+                    <a class="collapse-item text-dark" href="{{ route('crud.area.ver') }}">Áreas</a>
+                    <a class="collapse-item text-dark" href="{{ route('crud.candidato.ver') }}">Candidatos</a>
+                    <a class="collapse-item text-dark" href="{{ route('crud.cargo.ver') }}">Cargos</a>
+                    <a class="collapse-item text-dark" href="{{ route('crud.carrera.ver') }}">Carreras</a>
+                </div>
+            </div>
+        </li>
+
+        <!-- REPORTES -->
+        <li class="nav-item">
+            <a class="nav-link" href="">
+                <i class="fas fa-fw fa-chart-bar"></i>
+                <span>Reportes</span>
+            </a>
         </li>
     @endif
+
 
     <!-- Nav Item - Historiales -->
     <li class="nav-item">
