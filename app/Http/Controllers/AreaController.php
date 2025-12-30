@@ -10,7 +10,8 @@ class AreaController extends Controller
 {
     public function index()
     {
-        return view('crud.area.ver');
+       $areas = Area::orderBy('idArea', 'desc')->get();
+    return view('crud.area.ver', compact('areas'));
     }
 
     public function create()
