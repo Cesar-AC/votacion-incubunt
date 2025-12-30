@@ -18,7 +18,14 @@ class PadronElectoralController extends Controller
 {
     public function index()
     {
-        return view('crud.padron_electoral.ver');
+        $elecciones = Elecciones::withCount([
+        'usuarios as participantes_count'
+    ])
+    ->having('participantes_count', '>', 0)
+    ->orderBy('fechaInicio', 'desc')
+    ->get();
+
+    return view('crud.padron_electoral.ver', compact('elecciones'));
     }
 
     public function create()

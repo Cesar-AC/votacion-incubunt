@@ -1,4 +1,5 @@
 @extends('layouts.admin')
+
 @section('content')
 <div class="container-fluid px-3">
 
@@ -10,75 +11,46 @@
     </a>
   </div>
 
-  <!-- Card Padron -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body py-3">
-      <div class="d-flex justify-content-between">
+  @forelse ($elecciones as $eleccion)
+    <div class="card shadow-sm mb-3">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between">
 
-        <div>
-          <h6 class="font-weight-bold mb-1">Elecciones 2025</h6>
-          <small class="text-muted">50 participantes</small>
+          <div>
+            <h6 class="font-weight-bold mb-1">
+              {{ $eleccion->titulo }}
+            </h6>
+            <small class="text-muted">
+              {{ $eleccion->participantes_count }} participantes
+            </small>
+          </div>
+
+          <div class="text-right">
+            <a href="{{ route('crud.padron_electoral.editar', $eleccion->idElecciones) }}"
+               class="btn btn-outline-primary btn-sm mb-1">
+              <i class="fas fa-edit"></i> Editar
+            </a><br>
+
+            <form method="POST"
+                  action="{{ route('crud.padron_electoral.eliminar', $eleccion->idElecciones) }}"
+                  class="d-inline">
+              @csrf
+              @method('DELETE')
+              <button class="btn btn-outline-danger btn-sm"
+                      onclick="return confirm('¿Eliminar padrón?')">
+                <i class="fas fa-trash"></i> Eliminar
+              </button>
+            </form>
+          </div>
+
         </div>
-
-        <div class="text-right">
-          <a href="#" class="btn btn-outline-primary btn-sm mb-1">
-            <i class="fas fa-edit"></i> Edit
-          </a><br>
-          <a href="#" class="btn btn-outline-danger btn-sm">
-            <i class="fas fa-trash"></i> Delete
-          </a>
-        </div>
-
       </div>
     </div>
-  </div>
-
-  <!-- Card Padron -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body py-3">
-      <div class="d-flex justify-content-between">
-
-        <div>
-          <h6 class="font-weight-bold mb-1">Elecciones 2024</h6>
-          <small class="text-muted">50 participantes</small>
-        </div>
-
-        <div class="text-right">
-          <a href="#" class="btn btn-outline-primary btn-sm mb-1">
-            <i class="fas fa-edit"></i> Edit
-          </a><br>
-          <a href="#" class="btn btn-outline-danger btn-sm">
-            <i class="fas fa-trash"></i> Delete
-          </a>
-        </div>
-
-      </div>
+  @empty
+    <div class="alert alert-info">
+      No existen padrones creados aún.
     </div>
-  </div>
-
-  <!-- Card Padron -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body py-3">
-      <div class="d-flex justify-content-between">
-
-        <div>
-          <h6 class="font-weight-bold mb-1">Elecciones 2023</h6>
-          <small class="text-muted">50 participantes</small>
-        </div>
-
-        <div class="text-right">
-          <a href="#" class="btn btn-outline-primary btn-sm mb-1">
-            <i class="fas fa-edit"></i> Edit
-          </a><br>
-          <a href="#" class="btn btn-outline-danger btn-sm">
-            <i class="fas fa-trash"></i> Delete
-          </a>
-        </div>
-
-      </div>
-    </div>
-  </div>
+  @endforelse
 
 </div>
 @endsection
-<!-- Content Row -->
