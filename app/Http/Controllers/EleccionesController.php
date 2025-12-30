@@ -14,7 +14,11 @@ class EleccionesController extends Controller
 {
     public function index()
     {
-        return view('crud.elecciones.ver');
+        $elecciones = Elecciones::with(['estadoEleccion'])
+        ->withCount('usuarios') // cuenta padrón electoral
+        ->orderBy('fechaInicio', 'desc')
+        ->get();
+        return view('crud.elecciones.ver', compact('elecciones'));
     }
 
     public function show(Request $request, Elecciones $e)
