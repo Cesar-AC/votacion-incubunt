@@ -104,13 +104,13 @@ class EleccionesController extends Controller
         }
         */
 
-        $e = Elecciones::factory()->create([
-            'titulo' => $data['titulo'],
-            'descripcion' => $data['descripcion'],
-            'fechaInicio' => $fechaInicio,
-            'fechaCierre' => $fechaCierre
-        ]);
-
+        $e = Elecciones::create([
+    'titulo' => $data['titulo'],
+    'descripcion' => $data['descripcion'],
+    'fechaInicio' => $fechaInicio,
+    'fechaCierre' => $fechaCierre,
+    'idEstado' => EstadoElecciones::PROGRAMADO,
+]);
         $e->save();
 
         return response()->json([
@@ -122,7 +122,7 @@ class EleccionesController extends Controller
                 'descripcion' => $e->descripcion,
                 'fechaInicio' => $e->fechaInicio,
                 'fechaCierre' => $e->fechaCierre,
-                'estado' => $e->estadoEleccion(),
+                'estado' => $e->estadoEleccion->nombre ?? null,
             ],
         ], Response::HTTP_CREATED);
     }

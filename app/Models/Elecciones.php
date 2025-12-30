@@ -16,7 +16,6 @@ class Elecciones extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'idElecciones',
         'titulo',
         'descripcion',
         'fechaInicio',
