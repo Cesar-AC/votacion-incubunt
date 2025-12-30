@@ -3,96 +3,70 @@
 @section('content')
 <div class="container-fluid px-3">
 
+<form method="POST" action="{{ route('crud.padron_electoral.crear') }}">
+@csrf
+
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="font-weight-bold mb-0">Nuevo Padrón</h5>
-    <button class="btn btn-primary btn-sm shadow">
-      Guardar
+    <h5 class="font-weight-bold mb-0">Nuevo Padrón Electoral</h5>
+    <button type="submit" class="btn btn-primary btn-sm shadow">
+      Guardar padrón
     </button>
   </div>
 
-  <!-- Nombre del padrón -->
+  <!-- Elección -->
   <div class="card shadow-sm mb-3">
     <div class="card-body py-3">
       <div class="form-group mb-0">
-        <label class="small font-weight-bold">Elección</label>
-        <input type="text"
-               class="form-control"
-               placeholder="Ej. Elecciones 2025">
+        <label class="small font-weight-bold">Elección (Programada)</label>
+        <select name="idElecciones" class="form-control" required>
+          <option value="">-- Seleccione una elección --</option>
+          @foreach($elecciones as $e)
+            <option value="{{ $e->idElecciones }}">
+              {{ $e->titulo }} ({{ \Carbon\Carbon::parse($e->fechaInicio)->format('d/m/Y') }})
+            </option>
+          @endforeach
+        </select>
       </div>
     </div>
   </div>
 
-  <!-- Buscador -->
-  <div class="mb-3">
-    <div class="input-group shadow-sm rounded-pill overflow-hidden">
-      <input type="text"
-             class="form-control border-0"
-             placeholder="Buscar">
-      <div class="input-group-append">
-        <button class="btn btn-light border-0">
-          <i class="fas fa-times-circle text-muted"></i>
-        </button>
-      </div>
-      <div class="input-group-append">
-        <button class="btn btn-primary">
-          <i class="fas fa-filter"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Lista de personas -->
+  <!-- Lista de usuarios -->
   <div class="card shadow-sm">
     <div class="card-body p-2">
 
-      <!-- Persona -->
-      <div class="d-flex align-items-center p-2 border-bottom">
-        <input type="checkbox" class="mr-2">
+      @foreach($usuarios as $u)
+        <div class="d-flex align-items-center p-2 border-bottom">
+          <input type="checkbox"
+                 name="usuarios[]"
+                 value="{{ $u->idUser }}"
+                 class="mr-3">
 
-        <div class="rounded-circle bg-secondary mr-3"
-             style="width:40px; height:40px;"></div>
+          <div class="rounded-circle bg-secondary mr-3"
+               style="width:40px; height:40px;"></div>
 
-        <div class="flex-grow-1">
-          <div class="font-weight-bold">Juan Manrique Torres</div>
-          <small class="text-muted">
-            GTH · <span class="badge badge-success">Elector</span>
-          </small>
+          <div class="flex-grow-1">
+            <div class="font-weight-bold">
+              {{ $u->perfil->nombre ?? '' }}
+              {{ $u->perfil->apellidoPaterno ?? '' }}
+              {{ $u->perfil->apellidoMaterno ?? '' }}
+            </div>
+            <small class="text-muted">
+              {{ $u->correo }}
+            </small>
+          </div>
         </div>
-      </div>
+      @endforeach
 
-      <!-- Persona seleccionada -->
-      <div class="d-flex align-items-center p-2 border-bottom bg-light">
-        <input type="checkbox" class="mr-2" checked>
-
-        <div class="rounded-circle bg-secondary mr-3"
-             style="width:40px; height:40px;"></div>
-
-        <div class="flex-grow-1">
-          <div class="font-weight-bold">Juan Manrique Torres</div>
-          <small class="text-muted">
-            GTH · <span class="badge badge-success">Elector</span>
-          </small>
+      @if($usuarios->isEmpty())
+        <div class="text-center text-muted py-3">
+          No hay usuarios disponibles
         </div>
-      </div>
-
-      <!-- Más items -->
-      <div class="d-flex align-items-center p-2 border-bottom bg-light">
-        <input type="checkbox" class="mr-2" checked>
-
-        <div class="rounded-circle bg-secondary mr-3"
-             style="width:40px; height:40px;"></div>
-
-        <div class="flex-grow-1">
-          <div class="font-weight-bold">Juan Manrique Torres</div>
-          <small class="text-muted">
-            GTH · <span class="badge badge-success">Elector</span>
-          </small>
-        </div>
-      </div>
+      @endif
 
     </div>
   </div>
 
+</form>
 </div>
 @endsection

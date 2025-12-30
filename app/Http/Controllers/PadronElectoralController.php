@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\User;
+use App\Models\EstadoElecciones;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -22,27 +23,35 @@ class PadronElectoralController extends Controller
 
     public function create()
     {
-        return view('crud.padron_electoral.crear');
+        $elecciones = Elecciones::where('idEstado', EstadoElecciones::PROGRAMADO)
+        ->orderBy('fechaInicio', 'desc')
+        ->get();
+
+    $usuarios = User::with('perfil')->orderBy('idUser')->get();
+
+    return view('crud.padron_electoral.crear', compact('elecciones', 'usuarios'));
+
     }
 
     public function store(Request $request)
-    {
-        $data = $request->validate([
-            'idElecciones' => 'required|integer',
-            'idUser' => 'required|integer'
+{
+    $data = $request->validate([
+        'idElecciones' => 'required|exists:Elecciones,idElecciones',
+        'usuarios' => 'required|array',
+        'usuarios.*' => 'exists:User,idUser',
+    ]);
+
+    foreach ($data['usuarios'] as $idUsuario) {
+        PadronElectoral::firstOrCreate([
+            'idElecciones' => $data['idElecciones'],
+            'idUsuario' => $idUsuario,
         ]);
-        $p = new PadronElectoral($data);
-        $p->save();
-        return response()->json([
-            'success' => true,
-            'message' => 'Padrón creado',
-            'data' => [
-                'id' => $p->getKey(),
-                'idElecciones' => $p->idElecciones,
-                'idParticipante' => $p->idParticipante
-            ],
-        ], Response::HTTP_CREATED);
     }
+
+    return redirect()
+        ->route('crud.padron_electoral.ver')
+        ->with('success', 'Padrón creado correctamente');
+}
 
     public function show($id)
     {

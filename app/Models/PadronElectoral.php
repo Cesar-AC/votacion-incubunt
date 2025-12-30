@@ -8,10 +8,10 @@ class PadronElectoral extends Model
 {
     protected $table = 'PadronElectoral';
 
-    protected $primaryKey = ['idElecciones', 'idUsuario'];
-
+    public $incrementing = false;
     public $timestamps = false;
 
+ 
     protected $fillable = [
         'idElecciones',
         'idUsuario',
