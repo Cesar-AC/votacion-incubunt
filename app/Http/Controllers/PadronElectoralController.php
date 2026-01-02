@@ -75,7 +75,8 @@ class PadronElectoralController extends Controller
 
     public function edit($id)
     {
-        return view('crud.padron_electoral.editar');
+        $padron = PadronElectoral::findOrFail($id);
+        return view('crud.padron_electoral.editar', compact('padron'));
     }
 
     public function update(Request $request, $id)

@@ -16,7 +16,10 @@ class CandidatoController extends Controller
 
     public function create()
     {
-        return view('crud.candidato.crear');
+        $partidos = \App\Models\Partido::all();
+        $cargos = \App\Models\Cargo::all();
+        $usuarios = \App\Models\User::all();
+        return view('crud.candidato.crear', compact('partidos', 'cargos', 'usuarios'));
     }
 
     public function store(Request $request)
@@ -56,7 +59,11 @@ class CandidatoController extends Controller
 
     public function edit($id)
     {
-        return view('crud.candidato.editar');
+        $candidato = Candidato::findOrFail($id);
+        $partidos = \App\Models\Partido::all();
+        $cargos = \App\Models\Cargo::all();
+        $usuarios = \App\Models\User::all();
+        return view('crud.candidato.editar', compact('candidato', 'partidos', 'cargos', 'usuarios'));
     }
 
     public function update(Request $request, $id)

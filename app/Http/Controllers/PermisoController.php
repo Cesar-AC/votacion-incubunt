@@ -25,7 +25,10 @@ class PermisoController extends Controller
         return response()->json(['success'=>true,'message'=>'Permiso obtenido','data'=>['permiso'=>$m->permiso]]);
     }
 
-    public function edit($id){ return view('crud.permiso.editar'); }
+    public function edit($id){ 
+        $permiso = Permiso::findOrFail($id);
+        return view('crud.permiso.editar', compact('permiso')); 
+    }
 
     public function update(Request $request, $id)
     {

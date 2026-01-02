@@ -53,7 +53,8 @@ class AreaController extends Controller
 
     public function edit($id)
     {
-        return view('crud.area.editar');
+        $area = Area::findOrFail($id);
+        return view('crud.area.editar', compact('area'));
     }
 
     public function update(Request $request, $id)

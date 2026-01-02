@@ -39,7 +39,8 @@ class EleccionesController extends Controller
 
     public function create()
     {
-        return view('crud.elecciones.crear');
+        $estados = EstadoElecciones::all();
+        return view('crud.elecciones.crear', compact('estados'));
     }
 
     private function overlapsExisting(?int $excludeId, Carbon $inicio, Carbon $fin): bool
@@ -62,27 +63,20 @@ class EleccionesController extends Controller
     }
 
     private static function validDates(Carbon $inicio, Carbon $fin): ?string
-    {
-        if ($inicio->isPast()) {
-            return back()->withErrors([
-                'fechaInicio' => 'La fecha de inicio de la elección no puede ser anterior al día de hoy.'
-            ])->withInput();
-        }
-
-        if ($fin->isPast()) {
-            return back()->withErrors([
-                'fechaCierre' => 'La fecha de cierre de la elección no puede ser anterior al día de hoy.'
-            ])->withInput();
-        }
-
-        if ($fin->lessThan($inicio)) {
-            return back()->withErrors([
-                'fechaCierre' => 'La fecha de cierre de la elección no puede ser anterior a la fecha de inicio.'
-            ])->withInput();
-        }
-
-        return null;
+{
+    if ($inicio->isPast()) {
+        return 'La fecha de inicio no puede ser anterior a hoy.';
     }
+
+    if ($fin->isPast()) {
+        return 'La fecha de cierre no puede ser anterior a hoy.';
+    }
+
+    if ($fin->lessThan($inicio)) {
+        return 'La fecha de cierre no puede ser anterior a la fecha de inicio.';
+    }
+    return null;
+}
 
     public function store(Request $request)
     {
@@ -133,19 +127,21 @@ class EleccionesController extends Controller
 
     public function edit($id)
     {
-        return view('crud.elecciones.editar');
+        $eleccion = Elecciones::findOrFail($id);
+        $estados = EstadoElecciones::all();
+        return view('crud.elecciones.editar', compact('eleccion', 'estados'));
     }
 
     public function update(Request $request, Elecciones $id)
     {
         $e = $id;
         $data = $request->validate([
-            'titulo' => 'string|max:255',
-            'descripcion' => 'string',
-            'fechaInicio' => 'date',
-            'fechaCierre' => 'date',
-            'idEstado' => 'integer',
-        ]);
+    'titulo' => 'required|string|max:255',
+    'descripcion' => 'required|string',
+    'fechaInicio' => 'required|date',
+    'fechaCierre' => 'required|date',
+    'idEstado' => 'required|integer',
+]);
 
         if ($e->estaFinalizado()) {
             return back()->withErrors([
@@ -168,7 +164,11 @@ class EleccionesController extends Controller
             : $fechaCierre = Carbon::parse($e->fechaCierre);
 
         $errorFechas = self::validDates($fechaInicio, $fechaCierre);
-        if ($errorFechas) return $errorFechas;
+if ($errorFechas) {
+    return back()->withErrors([
+        'fechaCierre' => $errorFechas
+    ])->withInput();
+}
 
         if (isset($data['titulo'])) $e->titulo = $data['titulo'];
         if (isset($data['descripcion'])) $e->descripcion = $data['descripcion'];
@@ -177,18 +177,9 @@ class EleccionesController extends Controller
         if (isset($data['idEstado'])) $e->idEstado = $data['idEstado'];
 
         $e->save();
-        return response()->json([
-            'success' => true,
-            'message' => 'Elección actualizada correctamente',
-            'data' => [
-                'id' => $e->getKey(),
-                'titulo' => $e->titulo,
-                'descripcion' => $e->descripcion,
-                'fechaInicio' => $e->fechaInicio,
-                'fechaCierre' => $e->fechaCierre,
-                'estado' => $e->estadoEleccion(),
-            ],
-        ]);
+        return redirect()
+    ->route('crud.elecciones.ver')
+    ->with('success', 'Elección actualizada correctamente');
     }
 
     public function destroy(Request $request, Elecciones $id)

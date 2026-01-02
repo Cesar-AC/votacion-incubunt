@@ -16,7 +16,8 @@ class CargoController extends Controller
 
     public function create()
     {
-        return view('crud.cargo.crear');
+        $areas = \App\Models\Area::all();
+        return view('crud.cargo.crear', compact('areas'));
     }
 
     public function store(Request $request)
@@ -54,7 +55,9 @@ class CargoController extends Controller
 
     public function edit($id)
     {
-        return view('crud.cargo.editar');
+        $cargo = Cargo::findOrFail($id);
+        $areas = \App\Models\Area::all();
+        return view('crud.cargo.editar', compact('cargo', 'areas'));
     }
 
     public function update(Request $request, $id)

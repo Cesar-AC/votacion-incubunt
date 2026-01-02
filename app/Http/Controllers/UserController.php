@@ -93,23 +93,22 @@ class UserController extends Controller
             'success' => true,
             'message' => 'Usuario obtenido',
             'data' => [
-                'usuario' => $u->usuario,
-                'email' => $u->email,
+                'correo' => $u->correo,
             ],
         ]);
     }
 
     public function edit($id)
     {
-        return view('crud.user.editar');
+        $user = User::findOrFail($id);
+        return view('crud.user.editar', compact('user'));
     }
 
     public function update(Request $request, $id)
     {
         $u = User::findOrFail($id);
         $data = $request->validate([
-            'usuario' => 'required|string|max:255',
-            'email' => 'required|email|unique:User,email,' . $u->getKey() . ',idUser',
+            'correo' => 'required|email|unique:User,correo,' . $u->getKey() . ',idUser',
         ]);
         $u->update($data);
         return response()->json([
@@ -117,8 +116,7 @@ class UserController extends Controller
             'message' => 'Usuario actualizado',
             'data' => [
                 'id' => $u->getKey(),
-                'usuario' => $u->usuario,
-                'email' => $u->email,
+                'correo' => $u->correo,
             ],
         ]);
     }
@@ -132,8 +130,7 @@ class UserController extends Controller
             'message' => 'Usuario eliminado',
             'data' => [
                 'id' => (int) $id,
-                'usuario' => $u->usuario,
-                'email' => $u->email,
+                'correo' => $u->correo,
             ],
         ]);
     }

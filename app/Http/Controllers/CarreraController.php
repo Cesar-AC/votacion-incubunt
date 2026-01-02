@@ -53,7 +53,8 @@ class CarreraController extends Controller
 
     public function edit($id)
     {
-        return view('crud.carrera.editar');
+        $carrera = Carrera::findOrFail($id);
+        return view('crud.carrera.editar', compact('carrera'));
     }
 
     public function update(Request $request, $id)

@@ -26,7 +26,10 @@ class RolController extends Controller
         return response()->json(['success'=>true,'message'=>'Rol obtenido','data'=>['rol'=>$m->rol]]);
     }
 
-    public function edit($id){ return view('crud.rol.editar'); }
+    public function edit($id){ 
+        $rol = Rol::findOrFail($id);
+        return view('crud.rol.editar', compact('rol')); 
+    }
 
     public function update(Request $request, $id)
     {

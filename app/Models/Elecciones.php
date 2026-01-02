@@ -22,6 +22,10 @@ class Elecciones extends Model
         'fechaCierre',
         'idEstado',
     ];
+    protected $casts = [
+        'fechaInicio' => 'datetime',
+        'fechaCierre' => 'datetime',
+    ];
 
     public function estadoEleccion()
     {
