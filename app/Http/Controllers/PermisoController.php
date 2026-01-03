@@ -9,7 +9,10 @@ use Illuminate\Support\Facades\Auth;
 
 class PermisoController extends Controller
 {
-    public function index(){ return view('crud.permiso.ver'); }
+    public function index(){ 
+        $permisos = Permiso::all();
+        return view('crud.permiso.ver', compact('permisos')); 
+    }
     public function create(){ return view('crud.permiso.crear'); }
 
     public function store(Request $request)

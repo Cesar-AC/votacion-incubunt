@@ -73,28 +73,35 @@ class PadronElectoralController extends Controller
         ]);
     }
 
-    public function edit($id)
+    public function edit($idElecciones)
     {
-        $padron = PadronElectoral::findOrFail($id);
-        return view('crud.padron_electoral.editar', compact('padron'));
+        $eleccion = Elecciones::findOrFail($idElecciones);
+        $usuarios = User::with('perfil')->orderBy('idUser')->get();
+        $padronUsuarios = PadronElectoral::where('idElecciones', $idElecciones)->pluck('idUsuario')->toArray();
+        return view('crud.padron_electoral.editar', compact('eleccion', 'usuarios', 'padronUsuarios'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $idElecciones)
     {
-        $p = PadronElectoral::findOrFail($id);
         $data = $request->validate([
-            'idEstadoParticipante' => 'required|integer',
+            'usuarios' => 'required|array',
+            'usuarios.*' => 'exists:User,idUser',
         ]);
-        $p->update($data);
-        return response()->json([
-            'success' => true,
-            'message' => 'Padrón actualizado',
-            'data' => [
-                'id' => $p->getKey(),
-                'idElecciones' => $p->idElecciones,
-                'idParticipante' => $p->idParticipante,
-            ],
-        ]);
+
+        // Remove existing
+        PadronElectoral::where('idElecciones', $idElecciones)->delete();
+
+        // Add selected users
+        foreach ($data['usuarios'] as $idUsuario) {
+            PadronElectoral::create([
+                'idElecciones' => $idElecciones,
+                'idUsuario' => $idUsuario,
+            ]);
+        }
+
+        return redirect()
+            ->route('crud.padron_electoral.ver')
+            ->with('success', 'Padrón actualizado correctamente');
     }
 
     public function importForm()

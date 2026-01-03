@@ -10,7 +10,8 @@ class CarreraController extends Controller
 {
     public function index()
     {
-        return view('crud.carrera.ver');
+        $carreras = Carrera::all();
+        return view('crud.carrera.ver', compact('carreras'));
     }
 
     public function create()
