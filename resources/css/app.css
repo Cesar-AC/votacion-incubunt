@@ -9,3 +9,32 @@
         font-family: "Poppins", sans-serif;
     }
 }
+/* Solo aplica padding extra en móviles para que la barra no tape el contenido */
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 70px !important;
+    }
+    /* TABLET: Un poco más grande */
+    .nav-logo {
+        height: 42px;
+    }
+}
+.logo-svg {
+    filter: drop-shadow(
+        0px 1px 2px rgba(0, 0, 0, 0.1)
+    ); /* Le da un toque de relieve */
+    height: 40px; /* Tamaño ideal para móvil */
+}
+
+@media (min-width: 768px) {
+    .logo-svg {
+        height: 55px; /* Tamaño ideal para tablet/desktop */
+    }
+}
+
+@media (min-width: 1024px) {
+    /* DESKTOP: Tamaño completo */
+    .nav-logo {
+        height: 50px;
+    }
+}
