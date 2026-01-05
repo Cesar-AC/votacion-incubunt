@@ -11,7 +11,8 @@ class VotoController extends Controller
 {
     public function index()
     {
-        return view('crud.voto.ver');
+        $votos = Voto::with('candidato.usuario.perfil')->get();
+        return view('crud.voto.ver', compact('votos'));
     }
 
     public function create()

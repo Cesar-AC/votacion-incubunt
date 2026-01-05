@@ -11,7 +11,8 @@ class CandidatoController extends Controller
 {
     public function index()
     {
-        return view('crud.candidato.ver');
+        $candidatos = Candidato::with(['partido', 'cargo', 'usuario.perfil'])->get();
+        return view('crud.candidato.ver', compact('candidatos'));
     }
 
     public function create()

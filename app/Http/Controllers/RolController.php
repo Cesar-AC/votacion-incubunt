@@ -10,7 +10,10 @@ use Illuminate\Support\Facades\Auth;
 
 class RolController extends Controller
 {
-    public function index(){ return view('crud.rol.ver'); }
+    public function index(){ 
+        $roles = Rol::all();
+        return view('crud.rol.ver', compact('roles')); 
+    }
     public function create(){ return view('crud.rol.crear'); }
 
     public function store(Request $request)

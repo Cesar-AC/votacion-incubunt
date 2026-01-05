@@ -11,7 +11,8 @@ class CargoController extends Controller
 {
     public function index()
     {
-        return view('crud.cargo.ver');
+        $cargos = Cargo::with('area')->get();
+        return view('crud.cargo.ver', compact('cargos'));
     }
 
     public function create()
