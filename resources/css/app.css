@@ -27,4 +27,149 @@
         width: 1.5rem;
         text-align: center;
     }
+    
+    /* Mejoras de accesibilidad - Estados de foco */
+    .sidebar-brand:focus,
+    .nav-link:focus {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+    
+    .sidebar-brand:focus-visible,
+    .nav-link:focus-visible {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+    }
+    
+    #sidebarToggle:focus {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+    }
+    
+    #sidebarToggle:focus-visible {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+    }
+    
+    /* Mejora para lectores de pantalla - ocultar visualmente pero mantener accesible */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
+
+    /* Animaciones para vistas de votación */
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slide-up {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes scale-in {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @keyframes fall {
+        to {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.6s ease-out;
+    }
+
+    .animate-fade-in-up {
+        animation: fade-in-up 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .animate-slide-up {
+        animation: slide-up 0.8s ease-out;
+    }
+
+    .animate-scale-in {
+        animation: scale-in 0.5s ease-out;
+    }
+
+    .animate-bounce {
+        animation: bounce 1s ease-in-out infinite;
+    }
+
+    /* Mejoras responsive para vistas de votación */
+    @media (max-width: 640px) {
+        .votante-container {
+            padding-bottom: 100px;
+        }
+    }
+
+    /* Transiciones suaves para elementos interactivos */
+    .transition-smooth {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Mejoras de accesibilidad para botones */
+    button:focus-visible,
+    a:focus-visible {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* Efectos hover mejorados */
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
 }

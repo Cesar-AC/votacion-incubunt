@@ -3,10 +3,23 @@
 
 @endphp
 
-<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="background-color: #161349; transition: all 0.3s;">
+<nav class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" 
+     role="navigation" 
+     aria-label="Navegación principal"
+     style="background-color: #161349; transition: all 0.3s;">
 
-    <a class="sidebar-brand d-flex align-items-center justify-content-center py-3" href="{{ route('dashboard') }}" aria-label="Ir al Inicio de VotaIncubi">
-      <svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 150 45" preserveAspectRatio="xMidYMid meet">
+    <a class="sidebar-brand d-flex align-items-center justify-content-center py-3" 
+       href="{{ route('dashboard') }}" 
+       aria-label="Ir al Inicio de VotaIncubi"
+       tabindex="0">
+      <svg xmlns="http://www.w3.org/2000/svg" 
+           width="200" 
+           height="60" 
+           viewBox="0 0 150 45" 
+           preserveAspectRatio="xMidYMid meet"
+           role="img"
+           aria-label="Logo de VotaIncubi">
+        <title>VotaIncubi - Logo</title>
   <path fill="#3a2c99" d="M 25.1 17.6 L 123.5 17.6 L 123.5 44.1 L 25.1 44.1 Z" />
   
   <path fill="#c8c7ee" d="M 64.3 17.6 L 25.1 17.6 L 33.2 8.9 L 56.1 8.9 Z" />
@@ -34,40 +47,96 @@
 </svg>
     </a>
 
-  <hr class="sidebar-divider my-0 border-white/10">
+  <hr class="sidebar-divider my-0 border-white/10" role="separator" aria-orientation="horizontal">
 
-    <li class="nav-item">
-        @php $active = request()->routeIs('dashboard'); @endphp
-        <a class="nav-link group flex items-center transition-colors duration-200 {{ $active ? 'active' : '' }}" 
-           href="{{ route('dashboard') }}">
-            
-            <i class="fas fa-fw fa-tachometer-alt mr-2 text-sm transition-colors duration-200
-                {{ $active ? 'text-[#ffb700]' : 'text-white/60 group-hover:text-white' }}"></i>
-            
-            <span class="transition-colors duration-200
-                {{ $active ? 'text-[#ffb700] font-semibold' : 'text-white/60 group-hover:text-white' }}">
-                Dashboard
-            </span>
-        </a>
-    </li>
+    <ul class="navbar-nav" role="list">
+        <li class="nav-item" role="none">
+            @php $active = request()->routeIs('dashboard'); @endphp
+            <a class="nav-link group flex items-center transition-colors duration-200 {{ $active ? 'active' : '' }}" 
+               href="{{ route('dashboard') }}"
+               role="menuitem"
+               aria-current="{{ $active ? 'page' : 'false' }}"
+               tabindex="0">
+                
+                <i class="fas fa-fw fa-tachometer-alt mr-2 text-sm transition-colors duration-200
+                    {{ $active ? 'text-[#ffb700]' : 'text-white/60 group-hover:text-white' }}"
+                    aria-hidden="true"></i>
+                
+                <span class="transition-colors duration-200
+                    {{ $active ? 'text-[#ffb700] font-semibold' : 'text-white/60 group-hover:text-white' }}">
+                    Dashboard
+                </span>
+            </a>
+        </li>
+    </ul>
+
+    <!-- Sección de Votación -->
+    <hr class="sidebar-divider border-white/10" role="separator" aria-orientation="horizontal">
+    <div class="sidebar-heading text-white/40 text-[10px] uppercase tracking-wider px-3 py-2" role="heading" aria-level="2">
+        Votación
+    </div>
+
+    <ul class="navbar-nav" role="list">
+        <li class="nav-item" role="none">
+            @php $active = request()->routeIs('votante.home'); @endphp
+            <a class="nav-link group flex items-center transition-colors duration-200 {{ $active ? 'active' : '' }}" 
+               href="{{ route('votante.home') }}"
+               role="menuitem"
+               aria-current="{{ $active ? 'page' : 'false' }}"
+               tabindex="0">
+                
+                <i class="fas fa-fw fa-home mr-2 text-sm transition-colors duration-200
+                    {{ $active ? 'text-[#ffb700]' : 'text-white/60 group-hover:text-white' }}"
+                    aria-hidden="true"></i>
+                
+                <span class="transition-colors duration-200
+                    {{ $active ? 'text-[#ffb700] font-semibold' : 'text-white/60 group-hover:text-white' }}">
+                    Portal de Votación
+                </span>
+            </a>
+        </li>
+
+        <li class="nav-item" role="none">
+            @php $active = request()->routeIs('votante.elecciones') || request()->routeIs('votante.elecciones.*'); @endphp
+            <a class="nav-link group flex items-center transition-colors duration-200 {{ $active ? 'active' : '' }}" 
+               href="{{ route('votante.elecciones') }}"
+               role="menuitem"
+               aria-current="{{ $active ? 'page' : 'false' }}"
+               tabindex="0">
+                
+                <i class="fas fa-fw fa-vote-yea mr-2 text-sm transition-colors duration-200
+                    {{ $active ? 'text-[#ffb700]' : 'text-white/60 group-hover:text-white' }}"
+                    aria-hidden="true"></i>
+                
+                <span class="transition-colors duration-200
+                    {{ $active ? 'text-[#ffb700] font-semibold' : 'text-white/60 group-hover:text-white' }}">
+                    Elecciones
+                </span>
+            </a>
+        </li>
+    </ul>
 
     @if($isAdmin)
-        <hr class="sidebar-divider border-white/10">
-        <div class="sidebar-heading text-white/40 text-[10px] uppercase tracking-wider px-3 py-2">
+        <hr class="sidebar-divider border-white/10" role="separator" aria-orientation="horizontal">
+        <div class="sidebar-heading text-white/40 text-[10px] uppercase tracking-wider px-3 py-2" role="heading" aria-level="2">
             Menu Principal
         </div>
         @endif
 
     <!-- Divider -->
-    <hr class="sidebar-divider d-none d-md-block">
+    <hr class="sidebar-divider d-none d-md-block" role="separator" aria-orientation="horizontal">
 
     <!-- Sidebar Toggler (Sidebar) -->
     <div class="text-center d-none d-md-inline">
-        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+        <button class="rounded-circle border-0" 
+                id="sidebarToggle"
+                type="button"
+                aria-label="Alternar visibilidad del menú lateral"
+                aria-expanded="true"
+                aria-controls="accordionSidebar"
+                tabindex="0">
+            <span class="sr-only">Alternar menú</span>
+        </button>
     </div>
 
-
-
-</ul>
-
-</ul>
+</nav>
