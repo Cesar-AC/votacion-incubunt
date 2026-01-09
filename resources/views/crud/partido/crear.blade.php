@@ -14,7 +14,6 @@
       </button>
     </div>
 
-    <!-- Form -->
     <div class="card shadow-sm">
       <div class="card-body">
 
@@ -24,11 +23,25 @@
           <input type="text"
                  name="partido"
                  class="form-control @error('partido') is-invalid @enderror"
-                 value="{{ old('partido') }}"
-                 placeholder="Ej. Partido Renovación">
-          @error('partido')
-            <div class="invalid-feedback">{{ $message }}</div>
-          @enderror
+                 value="{{ old('partido') }}">
+          @error('partido')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+
+        <!-- Tipo -->
+        <div class="form-group">
+          <label class="small font-weight-bold">Tipo de Partido</label>
+          <select name="tipo"
+                  class="form-control @error('tipo') is-invalid @enderror"
+                  required>
+            <option value="">Seleccione tipo</option>
+            <option value="LISTA" {{ old('tipo')=='LISTA'?'selected':'' }}>
+              Lista (Junta Directiva)
+            </option>
+            <option value="INDIVIDUAL" {{ old('tipo')=='INDIVIDUAL'?'selected':'' }}>
+              Individual (uso interno)
+            </option>
+          </select>
+          @error('tipo')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 
         <!-- URL -->
@@ -37,11 +50,8 @@
           <input type="url"
                  name="urlPartido"
                  class="form-control @error('urlPartido') is-invalid @enderror"
-                 value="{{ old('urlPartido') }}"
-                 placeholder="https://www.partido.pe">
-          @error('urlPartido')
-            <div class="invalid-feedback">{{ $message }}</div>
-          @enderror
+                 value="{{ old('urlPartido') }}">
+          @error('urlPartido')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 
         <!-- Descripción -->
@@ -49,11 +59,8 @@
           <label class="small font-weight-bold">Descripción</label>
           <textarea name="descripcion"
                     class="form-control @error('descripcion') is-invalid @enderror"
-                    rows="3"
-                    placeholder="Descripción breve del partido">{{ old('descripcion') }}</textarea>
-          @error('descripcion')
-            <div class="invalid-feedback">{{ $message }}</div>
-          @enderror
+                    rows="3">{{ old('descripcion') }}</textarea>
+          @error('descripcion')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 
       </div>

@@ -12,13 +12,10 @@ use App\Http\Controllers\PartidoController;
 use App\Http\Controllers\PadronElectoralController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VotoController;
-use App\Http\Controllers\TipoVotoController;
 use App\Http\Controllers\CargoController;
 use App\Http\Controllers\EstadoEleccionesController;
-use App\Http\Controllers\EstadoParticipanteController;
 use App\Http\Controllers\ListaVotanteController;
-use App\Http\Controllers\ParticipanteController;
-use App\Http\Controllers\PermisoController;
+
 use App\Http\Controllers\PropuestaCandidatoController;
 use App\Http\Controllers\PropuestaPartidoController;
 use App\Http\Controllers\RolController;
@@ -104,6 +101,7 @@ Route::middleware(['auth'])->group(function () {
     // Importación de padrón
     Route::get('/padron/import', [PadronElectoralController::class, 'importForm'])->name('crud.padron_electoral.importar')->middleware('can:create,App\Models\PadronElectoral');
     Route::post('/padron/import', [PadronElectoralController::class, 'import'])->name('crud.padron_electoral.importar')->middleware('can:create,App\Models\PadronElectoral');
+    Route::post('/padron/import-file', [PadronElectoralController::class, 'importFile'])->name('crud.padron_electoral.importar_archivo')->middleware('can:create,App\Models\PadronElectoral');
 });
 
 // User
@@ -128,17 +126,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/votos/{id}', [VotoController::class, 'show'])->name('crud.voto.ver_datos')->middleware('can:view,App\Models\Voto');
 });
 
-// Tipo Voto
-Route::middleware(['auth'])->group(function () {
-    Route::get('/tipo-voto', [TipoVotoController::class, 'index'])->name('crud.tipo_voto.ver')->middleware('can:viewAny,App\Models\TipoVoto');
-    Route::get('/tipo-voto/crear', [TipoVotoController::class, 'create'])->name('crud.tipo_voto.crear')->middleware('can:create,App\Models\TipoVoto');
-    Route::post('/tipo-voto/crear', [TipoVotoController::class, 'store'])->name('crud.tipo_voto.crear')->middleware('can:create,App\Models\TipoVoto');
-    Route::get('/tipo-voto/{id}/editar', [TipoVotoController::class, 'edit'])->name('crud.tipo_voto.editar')->middleware('can:update,App\Models\TipoVoto');
-    Route::post('/tipo-voto/{id}/editar', [TipoVotoController::class, 'update'])->name('crud.tipo_voto.editar')->middleware('can:update,App\Models\TipoVoto');
-    Route::delete('/tipo-voto/{id}', [TipoVotoController::class, 'destroy'])->name('crud.tipo_voto.eliminar')->middleware('can:delete,App\Models\TipoVoto');
-    Route::get('/tipo-voto/{id}', [TipoVotoController::class, 'show'])->name('crud.tipo_voto.ver_datos')->middleware('can:view,App\Models\TipoVoto');
-});
-
 // Cargo
 Route::middleware(['auth'])->group(function () {
     Route::get('/cargos', [CargoController::class, 'index'])->name('crud.cargo.ver')->middleware('can:viewAny,App\Models\Cargo');
@@ -161,17 +148,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/estado-elecciones/{id}', [EstadoEleccionesController::class, 'show'])->name('crud.estado_elecciones.ver_datos')->middleware('can:view,App\Models\EstadoElecciones');
 });
 
-// Estado Participante
-Route::middleware(['auth'])->group(function () {
-    Route::get('/estado-participante', [EstadoParticipanteController::class, 'index'])->name('crud.estado_participante.ver')->middleware('can:viewAny,App\Models\EstadoParticipante');
-    Route::get('/estado-participante/crear', [EstadoParticipanteController::class, 'create'])->name('crud.estado_participante.crear')->middleware('can:create,App\Models\EstadoParticipante');
-    Route::post('/estado-participante/crear', [EstadoParticipanteController::class, 'store'])->name('crud.estado_participante.crear')->middleware('can:create,App\Models\EstadoParticipante');
-    Route::get('/estado-participante/{id}/editar', [EstadoParticipanteController::class, 'edit'])->name('crud.estado_participante.editar')->middleware('can:update,App\Models\EstadoParticipante');
-    Route::post('/estado-participante/{id}/editar', [EstadoParticipanteController::class, 'update'])->name('crud.estado_participante.editar')->middleware('can:update,App\Models\EstadoParticipante');
-    Route::delete('/estado-participante/{id}', [EstadoParticipanteController::class, 'destroy'])->name('crud.estado_participante.eliminar')->middleware('can:delete,App\Models\EstadoParticipante');
-    Route::get('/estado-participante/{id}', [EstadoParticipanteController::class, 'show'])->name('crud.estado_participante.ver_datos')->middleware('can:view,App\Models\EstadoParticipante');
-});
-
 // Lista Votante
 Route::middleware(['auth'])->group(function () {
     Route::get('/lista-votante', [ListaVotanteController::class, 'index'])->name('crud.lista_votante.ver')->middleware('can:viewAny,App\Models\ListaVotante');
@@ -181,17 +157,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/lista-votante/{id}/editar', [ListaVotanteController::class, 'update'])->name('crud.lista_votante.editar')->middleware('can:update,App\Models\ListaVotante');
     Route::delete('/lista-votante/{id}', [ListaVotanteController::class, 'destroy'])->name('crud.lista_votante.eliminar')->middleware('can:delete,App\Models\ListaVotante');
     Route::get('/lista-votante/{id}', [ListaVotanteController::class, 'show'])->name('crud.lista_votante.ver_datos')->middleware('can:view,App\Models\ListaVotante');
-});
-
-// Participante
-Route::middleware(['auth'])->group(function () {
-    Route::get('/participantes', [ParticipanteController::class, 'index'])->name('crud.participante.ver')->middleware('can:viewAny,App\Models\Participante');
-    Route::get('/participantes/crear', [ParticipanteController::class, 'create'])->name('crud.participante.crear')->middleware('can:create,App\Models\Participante');
-    Route::post('/participantes/crear', [ParticipanteController::class, 'store'])->name('crud.participante.crear')->middleware('can:create,App\Models\Participante');
-    Route::get('/participantes/{id}/editar', [ParticipanteController::class, 'edit'])->name('crud.participante.editar')->middleware('can:update,App\Models\Participante');
-    Route::post('/participantes/{id}/editar', [ParticipanteController::class, 'update'])->name('crud.participante.editar')->middleware('can:update,App\Models\Participante');
-    Route::delete('/participantes/{id}', [ParticipanteController::class, 'destroy'])->name('crud.participante.eliminar')->middleware('can:delete,App\Models\Participante');
-    Route::get('/participantes/{id}', [ParticipanteController::class, 'show'])->name('crud.participante.ver_datos')->middleware('can:view,App\Models\Participante');
 });
 
 // Permiso
@@ -214,6 +179,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/propuesta-candidato/{id}/editar', [PropuestaCandidatoController::class, 'update'])->name('crud.propuesta_candidato.editar')->middleware('can:update,App\Models\PropuestaCandidato');
     Route::delete('/propuesta-candidato/{id}', [PropuestaCandidatoController::class, 'destroy'])->name('crud.propuesta_candidato.eliminar')->middleware('can:delete,App\Models\PropuestaCandidato');
     Route::get('/propuesta-candidato/{id}', [PropuestaCandidatoController::class, 'show'])->name('crud.propuesta_candidato.ver_datos')->middleware('can:view,App\Models\PropuestaCandidato');
+    Route::get('/api/elecciones/{id}/candidatos', [PropuestaCandidatoController::class, 'getCandidatosByEleccion'])->middleware('can:viewAny,App\Models\PropuestaCandidato');
 });
 
 // Propuesta Partido
@@ -225,6 +191,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/propuesta-partido/{id}/editar', [PropuestaPartidoController::class, 'update'])->name('crud.propuesta_partido.editar')->middleware('can:update,App\Models\PropuestaPartido');
     Route::delete('/propuesta-partido/{id}', [PropuestaPartidoController::class, 'destroy'])->name('crud.propuesta_partido.eliminar')->middleware('can:delete,App\Models\PropuestaPartido');
     Route::get('/propuesta-partido/{id}', [PropuestaPartidoController::class, 'show'])->name('crud.propuesta_partido.ver_datos')->middleware('can:view,App\Models\PropuestaPartido');
+    Route::get('/api/elecciones/{id}/partidos', [PropuestaPartidoController::class, 'getPartidosByEleccion'])->middleware('can:viewAny,App\Models\PropuestaPartido');
 });
 
 // Rol

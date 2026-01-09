@@ -60,6 +60,25 @@
           @enderror
         </div>
 
+        <!-- Tipo -->
+        <div class="form-group">
+          <label class="small font-weight-bold">Tipo de Partido</label>
+          <select name="tipo"
+                  class="form-control @error('tipo') is-invalid @enderror"
+                  required>
+            <option value="">Seleccione tipo</option>
+            <option value="LISTA" {{ old('tipo', $partido->tipo)=='LISTA'?'selected':'' }}>
+              Lista (Junta Directiva)
+            </option>
+            <option value="INDIVIDUAL" {{ old('tipo', $partido->tipo)=='INDIVIDUAL'?'selected':'' }}>
+              Individual (uso interno)
+            </option>
+          </select>
+          @error('tipo')
+            <div class="invalid-feedback">{{ $message }}</div>
+          @enderror
+        </div>
+
       </div>
     </div>
   </form>

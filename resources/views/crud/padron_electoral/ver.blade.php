@@ -6,9 +6,14 @@
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h5 class="font-weight-bold mb-0">Gestionar Padrones</h5>
-    <a href="{{ route('crud.padron_electoral.crear') }}" class="btn btn-primary btn-sm shadow">
-      Nuevo Padrón
-    </a>
+    <div>
+      <a href="{{ route('crud.padron_electoral.importar') }}" class="btn btn-secondary btn-sm shadow mr-2">
+        <i class="fas fa-upload"></i> Importar
+      </a>
+      <a href="{{ route('crud.padron_electoral.crear') }}" class="btn btn-primary btn-sm shadow">
+        Nuevo Padrón
+      </a>
+    </div>
   </div>
 
   @forelse ($elecciones as $eleccion)
