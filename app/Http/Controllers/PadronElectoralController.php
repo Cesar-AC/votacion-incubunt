@@ -106,7 +106,11 @@ class PadronElectoralController extends Controller
 
     public function importForm()
     {
-        return view('crud.padron_electoral.importar');
+        $elecciones = Elecciones::where('idEstado', EstadoElecciones::PROGRAMADO)
+            ->orderBy('fechaInicio', 'desc')
+            ->get();
+
+        return view('crud.padron_electoral.importar', compact('elecciones'));
     }
 
     public function import(Request $request)

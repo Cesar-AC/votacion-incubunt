@@ -16,6 +16,28 @@
     </div>
   </div>
 
+  <!-- Mostrar resultados de importación -->
+  @if(session('import_result'))
+    @php $result = session('import_result') @endphp
+    <div class="alert alert-info">
+      <h6>Resultado de la importación:</h6>
+      <p>{{ $result['message'] }}</p>
+      @if(!empty($result['data']['registrosOmitidos']))
+        <details>
+          <summary>Ver registros omitidos ({{ count($result['data']['registrosOmitidos']) }})</summary>
+          <ul>
+            @foreach($result['data']['registrosOmitidos'] as $omitido)
+              <li>
+                Fila {{ $omitido['indice'] }}: {{ $omitido['correo'] }} - {{ $omitido['razon'] }}
+              </li>
+            @endforeach
+          </ul>
+        </details>
+      @endif
+    </div>
+    @php session()->forget('import_result') @endphp
+  @endif
+
   @forelse ($elecciones as $eleccion)
     <div class="card shadow-sm mb-3">
       <div class="card-body py-3">
