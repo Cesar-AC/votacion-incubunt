@@ -22,24 +22,21 @@ class CargoController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $data = $request->validate([
-            'idCargo' => 'required|integer',
-            'cargo' => 'required|string|max:100',
-            'idArea' => 'required|integer',
-        ]);
-        $c = new Cargo($data);
-        $c->save();
-        return response()->json([
-            'success' => true,
-            'message' => 'Cargo creado',
-            'data' => [
-                'id' => $c->getKey(),
-                'cargo' => $c->cargo,
-                'idArea' => $c->idArea,
-            ],
-        ], Response::HTTP_CREATED);
-    }
+{
+    $data = $request->validate([
+        // 'idCargo' no es necesario si es auto-increment
+        'cargo' => 'required|string|max:100',
+        'idArea' => 'required|integer',
+    ]);
+
+    $c = new Cargo($data);
+    $c->save();
+
+    // Redirige a la lista de cargos con un mensaje de éxito
+    return redirect()->route('crud.cargo.ver')
+                     ->with('success', 'Cargo creado correctamente');
+}
+
 
     public function show($id)
     {

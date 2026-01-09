@@ -37,7 +37,8 @@ class DatosRealesSeeder extends Seeder
         }
 
         $cargos = [
-            'Director'
+            'Director',
+            'Presidencia'
         ];
 
         foreach ($cargos as $cargo) {

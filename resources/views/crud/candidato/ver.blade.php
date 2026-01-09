@@ -26,9 +26,19 @@
                         @forelse($candidatos ?? [] as $candidato)
                             <tr>
                                 <td>{{ $candidato->getKey() }}</td>
-                                <td>{{ $candidato->usuario->perfil ? $candidato->usuario->perfil->nombre . ' ' . $candidato->usuario->perfil->apellidoPaterno . ' ' . $candidato->usuario->perfil->apellidoMaterno : 'N/A' }}</td>
+                                <td>
+    {{ 
+        $candidato->usuario->perfil
+            ? trim(
+                $candidato->usuario->perfil->nombre . ' ' .
+                $candidato->usuario->perfil->apellidoPaterno . ' ' .
+                $candidato->usuario->perfil->apellidoMaterno
+              )
+            : $candidato->usuario->correo
+    }}
+</td>
                                 <td>{{ $candidato->partido->partido ?? 'N/A' }}</td>
-                                <td>{{ $candidato->cargo->cargo ?? 'N/A' }}</td>
+                                <td>{{ $candidato->cargo->cargo ?? 'N/A' }} de {{ $candidato->cargo->area->area ?? 'N/A' }} </td>
                                 <td class="text-center">
                                     <a href="{{ route('crud.candidato.editar', $candidato->getKey()) }}"
                                        class="btn btn-sm btn-warning">
