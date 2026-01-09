@@ -13,10 +13,15 @@ use App\Models\Cargo;
 class CandidatoController extends Controller
 {
     public function index()
-    {
-        $candidatos = Candidato::with(['partido', 'cargo', 'usuario.perfil'])->get();
-        return view('crud.candidato.ver', compact('candidatos'));
-    }
+{
+    $elecciones = \App\Models\Elecciones::with([
+        'partidos.candidatos.usuario.perfil',
+        'partidos.candidatos.cargo.area'
+    ])->get();
+
+    return view('crud.candidato.ver', compact('elecciones'));
+}
+
 public function create()
 {
     $partidos   = \App\Models\Partido::all();
@@ -34,11 +39,12 @@ public function create()
 
 public function store(Request $request)
 {
-    // 🔍 DEBUG: todo el request crudo
+    // 🔍 DEBUG: request completo
     Log::info('STORE CANDIDATO - REQUEST COMPLETO', [
         'all' => $request->all()
     ]);
 
+    // ✅ VALIDACIÓN GENERAL
     $request->validate([
         'idEleccion' => 'required|integer|exists:Elecciones,idElecciones',
         'candidatos' => 'required|array|min:1',
@@ -49,7 +55,6 @@ public function store(Request $request)
         'candidatos.*.idPartido' => 'nullable|integer|exists:Partido,idPartido',
     ]);
 
-    // 🔍 DEBUG: después de validar
     Log::info('STORE CANDIDATO - VALIDADO', [
         'idEleccion' => $request->idEleccion,
         'candidatos' => $request->candidatos
@@ -59,49 +64,95 @@ public function store(Request $request)
 
         foreach ($request->candidatos as $index => $c) {
 
-            // 🔍 DEBUG por candidato
             Log::info("PROCESANDO CANDIDATO #{$index}", $c);
 
+            // 🔒 VALIDACIÓN: Grupal requiere partido
+            if ($c['tipo'] === 'Grupal' && empty($c['idPartido'])) {
+                throw new \Exception('El candidato grupal requiere partido');
+            }
+
+            // 🔒 VALIDACIÓN: Evitar duplicados
+            $existeCandidato = Candidato::where([
+                'idUsuario' => $c['idUsuario'],
+                'idCargo' => $c['idCargo'],
+                'idPartido' => $c['idPartido']
+            ])->exists();
+
+            if ($existeCandidato) {
+                throw new \Exception('Este candidato ya está registrado');
+            }
+
+            /**
+             * ==========================
+             *  CANDIDATO INDIVIDUAL
+             * ==========================
+             */
             if ($c['tipo'] === 'Individual') {
 
+                // Crear partido individual
                 $partido = Partido::create([
-                    'partido' => 'Candidato '.$c['idUsuario'],
+                    'partido' => 'Candidato ' . $c['idUsuario'],
                     'descripcion' => 'Candidato individual',
                     'tipo' => 'INDIVIDUAL',
-                    'urlPartido' => "hi",
+                    'urlPartido' => 'hi',
                 ]);
 
                 Log::info('PARTIDO INDIVIDUAL CREADO', $partido->toArray());
 
+                // Asociar partido a elección
                 PartidoEleccion::create([
                     'idPartido' => $partido->idPartido,
                     'idElecciones' => $request->idEleccion
                 ]);
 
-                Log::info('PARTIDO ASOCIADO A ELECCION', [
+                Log::info('PARTIDO INDIVIDUAL ASOCIADO A ELECCION', [
                     'idPartido' => $partido->idPartido,
                     'idElecciones' => $request->idEleccion
                 ]);
 
+                // Crear candidato
                 Candidato::create([
                     'idUsuario' => $c['idUsuario'],
                     'idCargo' => $c['idCargo'],
                     'idPartido' => $partido->idPartido
-                
                 ]);
 
                 Log::info('CANDIDATO INDIVIDUAL CREADO', $c);
 
+            /**
+             * ==========================
+             *  CANDIDATO GRUPAL
+             * ==========================
+             */
             } else {
 
                 $cargo = Cargo::with('area')->findOrFail($c['idCargo']);
 
                 Log::info('CARGO GRUPAL', $cargo->toArray());
 
+                // Validar que sea Junta Directiva
                 if ($cargo->idArea != 1) {
                     throw new \Exception('Cargo inválido para Junta Directiva');
                 }
 
+                // Asegurar relación Partido - Elección
+                $existeRelacion = PartidoEleccion::where('idPartido', $c['idPartido'])
+                    ->where('idElecciones', $request->idEleccion)
+                    ->exists();
+
+                if (!$existeRelacion) {
+                    PartidoEleccion::create([
+                        'idPartido' => $c['idPartido'],
+                        'idElecciones' => $request->idEleccion
+                    ]);
+
+                    Log::info('PARTIDO GRUPAL ASOCIADO A ELECCION', [
+                        'idPartido' => $c['idPartido'],
+                        'idElecciones' => $request->idEleccion
+                    ]);
+                }
+
+                // Crear candidato
                 Candidato::create([
                     'idUsuario' => $c['idUsuario'],
                     'idCargo' => $c['idCargo'],
@@ -117,6 +168,7 @@ public function store(Request $request)
         ->route('crud.candidato.ver')
         ->with('success', 'Candidatos creados correctamente.');
 }
+
 
     public function show($id)
     {
