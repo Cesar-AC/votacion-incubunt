@@ -10,9 +10,11 @@ use Illuminate\Http\Request;
 class VotanteController extends Controller
 {
     // Página principal del votante
-    public function home()
+    public function home() 
     {
-        return view('dashboard');
+        $eleccionesActivas = \App\Models\Elecciones::where('idEstado', \App\Models\EstadoElecciones::ACTIVO)->get();
+        
+        return view('votante.home', compact('eleccionesActivas'));
     }
 
     // ==========================================
