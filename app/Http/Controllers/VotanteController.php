@@ -14,29 +14,14 @@ use Illuminate\Support\Facades\DB;
 
 class VotanteController extends Controller
 {
-    /**
-     * Home del votante
-     */
-    public function home()
+
+    // Página principal del votante
+    public function home() 
     {
-        // TEMPORAL: Datos de ejemplo sin BD
-        $eleccionesActivas = collect([
-            (object)[
-                'id' => 1,
-                'nombreEleccion' => 'Elecciones Centro de Estudiantes 2024',
-                'descripcion' => 'Elección de representantes estudiantiles para el periodo académico 2024-2025',
-                'fechaInicio' => '2024-12-15 08:00:00',
-                'fechaFin' => '2024-12-20 18:00:00',
-                'idEstadoEleccion' => 2
-            ],
-        ]);
+        $eleccionesActivas = \App\Models\Elecciones::where('idEstado', \App\Models\EstadoElecciones::ACTIVO)->get();
+        
+        return view('votante.home', compact('eleccionesActivas'));
 
-        // Cuando conectes con BD, descomentar:
-        // $eleccionesActivas = Elecciones::where('idEstadoEleccion', 2)
-        //     ->orderBy('fechaInicio', 'desc')
-        //     ->get();
-
-        return view('votante.elecciones.index', compact('eleccionesActivas'));
     }
 
     /**

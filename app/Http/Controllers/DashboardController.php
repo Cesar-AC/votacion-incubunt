@@ -24,7 +24,7 @@ class DashboardController extends Controller
     {
         return match (true) {
             $this->esAdministrador($request) => view('admin.dashboard'),
-            $this->esVotante($request) => view('dashboard'),
+            $this->esVotante($request) => redirect()->route('votante.home'),
             default => abort(403, 'No tienes permiso para acceder al dashboard. Contacta a un administrador.'),
         };
     }
