@@ -23,7 +23,7 @@ class Candidato extends Model
     {
         return $this->belongsTo(User::class, 'idUsuario');
     }
-    
+
     public function cargo()
     {
         return $this->belongsTo(Cargo::class, 'idCargo');
@@ -42,5 +42,10 @@ class Candidato extends Model
     public function votos()
     {
         return $this->hasMany(Voto::class, 'idCandidato');
+    }
+
+    public function elecciones()
+    {
+        return $this->belongsToMany(Elecciones::class, 'CandidatoEleccion', 'idCandidato', 'idElecciones');
     }
 }
