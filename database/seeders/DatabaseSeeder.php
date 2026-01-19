@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             DatosRealesSeeder::class,
             PermisoSeeder::class,
+            ConfiguracionSeeder::class,
         ]);
     }
 }

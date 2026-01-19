@@ -106,7 +106,6 @@ class DatosRealesSeeder extends Seeder
         }
 
         $estadosElecciones = [
-            'Activa',
             'Programada',
             'Finalizada',
             'Anulada'
