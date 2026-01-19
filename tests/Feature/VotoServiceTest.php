@@ -28,12 +28,7 @@ class VotoServiceTest extends TestCase
 
     private function crearEstadoEleccion(): EstadoElecciones
     {
-        $estadoElecciones = new EstadoElecciones([
-            'estado' => fake()->words(2, true),
-        ]);
-        $estadoElecciones->save();
-
-        return $estadoElecciones;
+        return EstadoElecciones::programado();
     }
 
     private function crearEleccion(?EstadoElecciones $estado = null): Elecciones

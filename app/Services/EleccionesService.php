@@ -20,7 +20,7 @@ class EleccionesService implements IEleccionesService
 
     protected function validarEleccionParaServicio(Elecciones $eleccion)
     {
-        if (!$eleccion->estado->esProgramado()) {
+        if (!$eleccion->estaProgramado()) {
             throw new \Exception('No se puede configurar esta elección en el servicio: La elección no está programada.');
         }
     }
