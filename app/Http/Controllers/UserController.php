@@ -15,9 +15,9 @@ class UserController extends Controller
 {
     public function index()
     {
-         $usuarios = User::with(['perfil', 'roles'])->get();
+        $usuarios = User::with(['perfil', 'roles'])->get();
 
-       return view('crud.user.ver', compact('usuarios'));
+        return view('crud.user.ver', compact('usuarios'));
     }
 
     public function create()

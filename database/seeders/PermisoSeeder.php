@@ -15,15 +15,16 @@ class PermisoSeeder extends Seeder
 
     const INDICATIVO_CRUD = 'crud';
     const INDICATIVO_COMODIN = '*';
-    
-    private function crearPermisosCRUD($entidades){
+
+    private function crearPermisosCRUD($entidades)
+    {
         $indicativo_crud = self::INDICATIVO_CRUD;
         $acciones = ['ver:' . self::INDICATIVO_COMODIN, 'agregar', 'editar', 'eliminar', self::INDICATIVO_COMODIN];
 
-        foreach($entidades as $entidad){
+        foreach ($entidades as $entidad) {
             $permiso = join(':', [$entidad, $indicativo_crud]);
-            
-            foreach($acciones as $accion){
+
+            foreach ($acciones as $accion) {
                 $permisoCRUD = join(':', [$permiso, $accion]);
                 Permiso::create([
                     'permiso' => $permisoCRUD,
@@ -32,8 +33,9 @@ class PermisoSeeder extends Seeder
         }
     }
 
-    private function crearPermisosComodin($entidades){
-        foreach ($entidades as $entidad){
+    private function crearPermisosComodin($entidades)
+    {
+        foreach ($entidades as $entidad) {
             $permiso = join(':', [$entidad, self::INDICATIVO_COMODIN]);
             Permiso::create([
                 'permiso' => $permiso,
@@ -41,10 +43,11 @@ class PermisoSeeder extends Seeder
         }
     }
 
-    private function crearPermisosDashboard(){
+    private function crearPermisosDashboard()
+    {
         $dashboards = ['administrador', 'votante'];
 
-        foreach ($dashboards as $dashboard){
+        foreach ($dashboards as $dashboard) {
             $permiso = join(':', ['dashboard', $dashboard]);
             Permiso::create([
                 'permiso' => $permiso,
@@ -52,21 +55,24 @@ class PermisoSeeder extends Seeder
         }
     }
 
-    private function obtenerPermisosVotante(){
+    private function obtenerPermisosVotante()
+    {
         // Por implementar.
         return [];
     }
 
-    private function crearPermisosVotante(){
+    private function crearPermisosVotante()
+    {
         $permisos = $this->obtenerPermisosVotante();
-        foreach ($permisos as $permiso){
+        foreach ($permisos as $permiso) {
             Permiso::create([
                 'permiso' => $permiso,
             ]);
         }
     }
 
-    private function obtenerEntidades(){
+    private function obtenerEntidades()
+    {
         $entidades = [
             'area',
             'candidato',
@@ -91,58 +97,73 @@ class PermisoSeeder extends Seeder
         return $entidades;
     }
 
-    private function crearPermisos(){
+    private function crearPermisoVotar()
+    {
+        Permiso::create([
+            'permiso' => 'voto:votar',
+        ]);
+    }
+
+    private function crearPermisos()
+    {
         $entidades = $this->obtenerEntidades();
 
         $this->crearPermisosCRUD($entidades);
         $this->crearPermisosComodin($entidades);
         $this->crearPermisosVotante();
         $this->crearPermisosDashboard();
+        $this->crearPermisoVotar();
     }
 
-    private function crearRoles(){
+    private function crearRoles()
+    {
         $roles = ['administrador', 'votante'];
 
-        foreach ($roles as $rol){
+        foreach ($roles as $rol) {
             Rol::create([
                 'rol' => $rol,
             ]);
         }
     }
 
-    private function asignarPermisosAdministrador(){
+    private function asignarPermisosAdministrador()
+    {
         $rolAdministrador = Rol::where('rol', 'administrador')->first();
 
         $entidades = $this->obtenerEntidades();
 
         $rolAdministrador->permisos()->attach(Permiso::where('permiso', '=', 'dashboard:administrador')->first());
-        foreach ($entidades as $entidad){
+        foreach ($entidades as $entidad) {
             $permiso = join(':', [$entidad, self::INDICATIVO_COMODIN]);
             $rolAdministrador->permisos()->attach(Permiso::where('permiso', $permiso)->first());
         }
     }
 
-    private function asignarPermisosVotante(){
+    private function asignarPermisosVotante()
+    {
         $rolVotante = Rol::where('rol', 'votante')->first();
 
         $rolVotante->permisos()->attach(Permiso::where('permiso', '=', 'dashboard:votante')->first());
         $permisos = $this->obtenerPermisosVotante();
-        foreach ($permisos as $permiso){
+        foreach ($permisos as $permiso) {
             $rolVotante->permisos()->attach(Permiso::where('permiso', '=', $permiso)->first());
-        }   
+        }
     }
-    
-    private function asignarPermisosARoles(){
+
+    private function asignarPermisosARoles()
+    {
         $this->asignarPermisosAdministrador();
         $this->asignarPermisosVotante();
     }
 
-    private function asignarRolAUsuario($rol, $usuario){
+    private function asignarRolAUsuario($rol, $usuario)
+    {
         $rolAdministrador = Rol::where('rol', $rol)->first();
         $usuario->roles()->attach($rolAdministrador);
     }
 
-    private function crearUsuarioAdministrador(){
+    private function crearUsuarioAdministrador()
+    {
         $usuario = new User([
             'correo' => 'administrador@incubunt.com',
             'contraseña' => bcrypt('password'),
@@ -154,7 +175,8 @@ class PermisoSeeder extends Seeder
         $this->asignarRolAUsuario('administrador', $usuario);
     }
 
-    private function crearUsuarioVotante(){
+    private function crearUsuarioVotante()
+    {
         $usuario = new User([
             'correo' => 'votante@incubunt.com',
             'contraseña' => bcrypt('password'),
@@ -165,7 +187,7 @@ class PermisoSeeder extends Seeder
 
         $this->asignarRolAUsuario('votante', $usuario);
     }
-    
+
     public function run(): void
     {
         $this->crearPermisos();

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedInteger('idPartido');
             $table->unsignedInteger('idCargo');
             $table->unsignedInteger('idUsuario');
-            
+
             $table->foreign('idPartido')->references('idPartido')->on('Partido');
             $table->foreign('idCargo')->references('idCargo')->on('Cargo');
             $table->foreign('idUsuario')->references('idUser')->on('User');

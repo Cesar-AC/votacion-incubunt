@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Interfaces\Services\IVotoService;
 use App\Models\Voto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -9,6 +10,10 @@ use Illuminate\Support\Facades\Auth;
 
 class VotoController extends Controller
 {
+    public function __construct(
+        protected readonly IVotoService $votoService,
+    ) {}
+
     public function index()
     {
         $votos = Voto::with('candidato.usuario.perfil')->get();
@@ -23,65 +28,32 @@ class VotoController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'idCandidato' => 'required|integer',
+            'idCandidato' => 'required|integer'
         ]);
-        $v = new Voto($data);
-        $v->save();
+
+        try {
+            $this->votoService->votar(Auth::user(), $data['idCandidato']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Voto creado',
-            'data' => [
-                'id' => $v->getKey(),
-                'idCandidato' => $v->idCandidato,
-            ],
-        ], Response::HTTP_CREATED);
+        ], Response::HTTP_OK);
     }
 
-    public function show($id)
-    {
-        $v = Voto::findOrFail($id);
-        return response()->json([
-            'success' => true,
-            'message' => 'Voto obtenido',
-            'data' => [
-                'idCandidato' => $v->idCandidato
-            ],
-        ]);
-    }
+    /**
+     * @param Request $request
+     * @return void
+     * Un alias para la funcionalidad de store
+     */
 
-    public function edit($id)
+    public function votar(Request $request)
     {
-        return view('crud.voto.editar');
-    }
-
-    public function update(Request $request, $id)
-    {
-        $v = Voto::findOrFail($id);
-        $data = $request->validate([
-            'fechaVoto' => 'required|date',
-        ]);
-        $v->update($data);
-        return response()->json([
-            'success' => true,
-            'message' => 'Voto actualizado',
-            'data' => [
-                'id' => $v->getKey(),
-                'idCandidato' => $v->idCandidato,
-            ],
-        ]);
-    }
-
-    public function destroy($id)
-    {
-        $v = Voto::findOrFail($id);
-        $v->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Voto eliminado',
-            'data' => [
-                'id' => (int) $id,
-                'idCandidato' => $v->idCandidato,
-            ],
-        ]);
+        return $this->store($request);
     }
 }
