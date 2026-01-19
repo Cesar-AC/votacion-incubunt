@@ -19,6 +19,7 @@ use App\Http\Controllers\ListaVotanteController;
 use App\Http\Controllers\PropuestaCandidatoController;
 use App\Http\Controllers\PropuestaPartidoController;
 use App\Http\Controllers\RolController;
+use App\Http\Controllers\VotanteController;
 
 Route::get('/login', [AutenticacionController::class, 'verInicioSesion'])->name('vistaLogin');
 
@@ -32,7 +33,49 @@ Route::middleware(['auth', 'throttle:login'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// ========================================
+// RUTAS DEL VOTANTE (Portal de Votación)
+// ========================================
+Route::prefix('votante')->name('votante.')->middleware(['auth'])->group(function () {
+    
+    // Página principal del votante
+    Route::get('/', [VotanteController::class, 'home'])->name('home');
+
+    // Elecciones (para permitir 'votante.elecciones')
+    Route::prefix('elecciones')->group(function () { 
+        // Lista de elecciones (Ahora sí se llamará 'votante.elecciones')
+        Route::get('/', [VotanteController::class, 'listarElecciones'])->name('elecciones');
+        
+        // Detalle (Debemos agregar manualmente el prefijo para mantener consistencia: 'votante.elecciones.detalle')
+        Route::get('/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
+    });
+
+    // Proceso de votación
+    Route::prefix('votar')->name('votar.')->group(function () {
+        
+        // Vista inicial para votar (vista general de la elección)
+        Route::get('/{eleccionId}', [VotanteController::class, 'iniciarVotacion'])->name('index');
+
+        // Lista completa de candidatos para seleccionar
+        Route::get('/{eleccionId}/lista', [VotanteController::class, 'listarCandidatos'])->name('lista');
+
+        // Detalle del candidato seleccionado (biografía, propuestas)
+        Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
+        
+        // Procesar el voto (POST)
+        Route::post('/{eleccionId}/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
+
+    });
+
+    // Resultados de elecciones
+    Route::get('/resultados/{eleccionId}', [VotanteController::class, 'verResultados'])->name('resultados');
+});
+
 
 // Area
 Route::middleware(['auth'])->group(function () {
@@ -212,4 +255,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('kpi/electores-habilitados/{eleccion}/area/{area}', [KPIController::class, 'obtenerCantidadElectoresHabilitadosPorArea'])->name('kpi.electores_habilitados_por_area');
     Route::get('kpi/porcentaje-participacion/{eleccion}', [KPIController::class, 'obtenerPorcentajeParticipacionPorEleccion'])->name('kpi.porcentaje_participacion_por_eleccion');
     Route::get('kpi/porcentaje-participacion/{eleccion}/area/{area}', [KPIController::class, 'obtenerPorcentajeParticipacionPorArea'])->name('kpi.porcentaje_participacion_por_area');
+});
+
+Route::get('/candidatos', function () {
+    return view('candidatos');
 });
