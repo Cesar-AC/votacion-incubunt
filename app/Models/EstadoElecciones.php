@@ -41,6 +41,12 @@ class EstadoElecciones extends Model
         return $this->idEstado === self::ANULADO;
     }
 
+    // Una elección activa es la que no está finalizada ni anulada
+    public function esActivo()
+    {
+        return ! $this->esFinalizado() && ! $this->esAnulado();
+    }
+
     public static function programado()
     {
         return self::where('idEstado', '=', self::PROGRAMADO)->first();

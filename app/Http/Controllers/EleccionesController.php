@@ -9,16 +9,32 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use App\Interfaces\Services\IEleccionesService;
 
 class EleccionesController extends Controller
 {
+    private IEleccionesService $eleccionesService;
+
+    public function __construct(IEleccionesService $eleccionesService)
+    {
+        $this->eleccionesService = $eleccionesService;
+    }
+
     public function index()
     {
         $elecciones = Elecciones::with(['estadoEleccion'])
         ->withCount('usuarios') // cuenta padrón electoral
         ->orderBy('fechaInicio', 'desc')
         ->get();
-        return view('crud.elecciones.ver', compact('elecciones'));
+
+        $eleccionActiva = null;
+        try {
+            $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+        } catch (\Exception $e) {
+            // sin elección activa configurada, omitimos
+        }
+
+        return view('crud.elecciones.ver', compact('elecciones', 'eleccionActiva'));
     }
 
     public function show(Request $request, Elecciones $e)
@@ -62,13 +78,13 @@ class EleccionesController extends Controller
         return false;
     }
 
-    private static function validDates(Carbon $inicio, Carbon $fin): ?string
+    private static function validDates(Carbon $inicio, Carbon $fin, bool $permitirPasadas = false): ?string
 {
-    if ($inicio->isPast()) {
+    if (! $permitirPasadas && $inicio->isPast()) {
         return 'La fecha de inicio no puede ser anterior a hoy.';
     }
 
-    if ($fin->isPast()) {
+    if (! $permitirPasadas && $fin->isPast()) {
         return 'La fecha de cierre no puede ser anterior a hoy.';
     }
 
@@ -90,7 +106,7 @@ class EleccionesController extends Controller
         $fechaInicio = Carbon::parse($data['fechaInicio']);
         $fechaCierre = Carbon::parse($data['fechaCierre']);
 
-        $errorFechas = self::validDates($fechaInicio, $fechaCierre);
+        $errorFechas = self::validDates($fechaInicio, $fechaCierre, true);
         if ($errorFechas) return $errorFechas;
 
         /*

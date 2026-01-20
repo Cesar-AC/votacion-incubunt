@@ -34,7 +34,13 @@ class EleccionesService implements IEleccionesService
 
     public function __construct(?Elecciones $eleccionActiva)
     {
-        $this->guardarEleccionActiva($eleccionActiva);
+        // Si no hay elección configurada aún, permitimos null y se lanzará
+        // excepción solo cuando se solicite la activa.
+        if ($eleccionActiva !== null) {
+            $this->guardarEleccionActiva($eleccionActiva);
+        } else {
+            $this->eleccionActiva = null;
+        }
     }
 
     public function obtenerEleccionActiva(): Elecciones

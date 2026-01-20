@@ -11,6 +11,10 @@
     </a>
   </div>
 
+  @php
+    $activaId = $eleccionActiva?->getKey();
+  @endphp
+
   @forelse($elecciones as $e)
     <div class="card shadow-sm mb-3">
       <div class="card-body py-3">
@@ -48,6 +52,9 @@
             <span class="badge badge-{{ $badge }} mt-1">
               {{ $e->estadoEleccion->nombre ?? 'Sin estado' }}
             </span>
+            @if($activaId === $e->idElecciones)
+              <span class="badge badge-info mt-1">Activa</span>
+            @endif
           </div>
 
           <!-- Acciones -->

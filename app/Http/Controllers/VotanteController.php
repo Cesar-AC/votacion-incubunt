@@ -109,8 +109,8 @@ class VotanteController extends Controller
         }
 
         // Verificar que el usuario esté en el padrón electoral
-        $padron = PadronElectoral::where('idUser', Auth::id())
-            ->where('idEleccion', $eleccionId)
+        $padron = PadronElectoral::where('idUsuario', Auth::id())
+            ->where('idElecciones', $eleccionId)
             ->first();
 
         if (!$padron) {
@@ -142,8 +142,8 @@ class VotanteController extends Controller
                 ->with('error', 'Esta elección no está activa.');
         }
 
-        $padron = PadronElectoral::where('idUser', Auth::id())
-            ->where('idEleccion', $eleccionId)
+        $padron = PadronElectoral::where('idUsuario', Auth::id())
+            ->where('idElecciones', $eleccionId)
             ->first();
 
         if (!$padron) {
@@ -158,7 +158,7 @@ class VotanteController extends Controller
         }
 
         // Obtener cargos y candidatos
-        $cargos = Cargo::where('idEleccion', $eleccionId)
+        $cargos = Cargo::where('idElecciones', $eleccionId)
             ->orderBy('orden')
             ->get();
 
@@ -212,8 +212,8 @@ class VotanteController extends Controller
         }
 
         // Obtener padrón
-        $padron = PadronElectoral::where('idUser', Auth::id())
-            ->where('idEleccion', $eleccionId)
+        $padron = PadronElectoral::where('idUsuario', Auth::id())
+            ->where('idElecciones', $eleccionId)
             ->firstOrFail();
 
         // Verificar si ya votó
@@ -254,8 +254,8 @@ class VotanteController extends Controller
         $eleccion = Elecciones::findOrFail($eleccionId);
         
         // Obtener el padrón y votos del usuario
-        $padron = PadronElectoral::where('idUser', Auth::id())
-            ->where('idEleccion', $eleccionId)
+        $padron = PadronElectoral::where('idUsuario', Auth::id())
+            ->where('idElecciones', $eleccionId)
             ->firstOrFail();
 
         $votos = Voto::with(['candidato.usuario.perfil', 'candidato.partido', 'candidato.cargo'])
@@ -279,7 +279,7 @@ class VotanteController extends Controller
         }
 
         // Obtener resultados por cargo
-        $cargos = Cargo::where('idEleccion', $eleccionId)->get();
+        $cargos = Cargo::where('idElecciones', $eleccionId)->get();
         
         $resultadosPorCargo = [];
         foreach ($cargos as $cargo) {
