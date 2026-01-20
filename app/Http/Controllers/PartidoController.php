@@ -84,18 +84,9 @@ class PartidoController extends Controller
             'tipo' => $data['tipo'],
         ]);
         $p->elecciones()->sync($data['elecciones']);
-        return response()->json([
-            'success' => true,
-            'message' => 'Partido actualizado',
-            'data' => [
-                'id' => $p->getKey(),
-                'partido' => $p->partido,
-                'urlPartido' => $p->urlPartido,
-                'descripcion' => $p->descripcion,
-                'tipo' => $p->tipo,
-                'elecciones' => $p->elecciones()->pluck('idElecciones'),
-            ],
-        ]);
+        return redirect()
+            ->route('crud.partido.ver')
+            ->with('success', 'Partido actualizado correctamente');
     }
 
     public function destroy($id)

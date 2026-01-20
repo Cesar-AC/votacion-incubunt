@@ -29,14 +29,9 @@ class CarreraController extends Controller
         $carrera = new Carrera($data);
         $carrera->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Carrera creada correctamente',
-            'data' => [
-                'id' => $carrera->getKey(),
-                'carrera' => $carrera->carrera,
-            ],
-        ], Response::HTTP_CREATED);
+        return redirect()
+            ->route('crud.carrera.ver')
+            ->with('success', 'Carrera creada correctamente');
     }
 
     public function show($id)
@@ -68,14 +63,9 @@ class CarreraController extends Controller
 
         $carrera->update($data);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Carrera actualizada correctamente',
-            'data' => [
-                'id' => $carrera->getKey(),
-                'carrera' => $carrera->carrera,
-            ],
-        ]);
+        return redirect()
+            ->route('crud.carrera.ver')
+            ->with('success', 'Carrera actualizada correctamente');
     }
 
     public function destroy($id)
