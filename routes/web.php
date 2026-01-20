@@ -40,45 +40,21 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// ========================================
-// RUTAS DEL VOTANTE (Portal de Votación)
-// ========================================
-Route::prefix('votante')->name('votante.')->middleware(['auth'])->group(function () {
-    
-    // Página principal del votante
-    Route::get('/', [VotanteController::class, 'home'])->name('home');
+// Rutas del Votante 
 
-    // Elecciones (para permitir 'votante.elecciones')
-    Route::prefix('elecciones')->group(function () { 
-        // Lista de elecciones (Ahora sí se llamará 'votante.elecciones')
-        Route::get('/', [VotanteController::class, 'listarElecciones'])->name('elecciones');
+Route::middleware(['auth'])->group(function () {
+    Route::prefix('votante')->name('votante.')->group(function () {
+        Route::get('/home', [VotanteController::class, 'home'])->name('home');
+        Route::get('/elecciones', [VotanteController::class, 'listarElecciones'])->name('elecciones');
+        Route::get('/elecciones/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
         
-        // Detalle (Debemos agregar manualmente el prefijo para mantener consistencia: 'votante.elecciones.detalle')
-        Route::get('/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
+        Route::prefix('votar')->name('votar.')->group(function () {
+            Route::get('/{eleccionId}/candidatos', [VotanteController::class, 'listarCandidatos'])->name('lista');
+            Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
+            Route::post('/{eleccionId}/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
+        });
     });
-
-    // Proceso de votación
-    Route::prefix('votar')->name('votar.')->group(function () {
-        
-        // Vista inicial para votar (vista general de la elección)
-        Route::get('/{eleccionId}', [VotanteController::class, 'iniciarVotacion'])->name('index');
-
-        // Lista completa de candidatos para seleccionar
-        Route::get('/{eleccionId}/lista', [VotanteController::class, 'listarCandidatos'])->name('lista');
-
-        // Detalle del candidato seleccionado (biografía, propuestas)
-        Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
-        
-        // Procesar el voto (POST)
-        Route::post('/{eleccionId}/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
-
-    });
-
-    // Resultados de elecciones
-    Route::get('/resultados/{eleccionId}', [VotanteController::class, 'verResultados'])->name('resultados');
 });
-
-
 // Area
 Route::middleware(['auth'])->group(function () {
     Route::get('/areas', [AreaController::class, 'index'])->name('crud.area.ver')->middleware('can:viewAny,App\Models\Area');
@@ -259,5 +235,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('kpi/porcentaje-participacion/{eleccion}/area/{area}', [KPIController::class, 'obtenerPorcentajeParticipacionPorArea'])->name('kpi.porcentaje_participacion_por_area');
 });
 
-// Nota: la ruta simple '/candidatos' fue eliminada porque
-// duplicaba la ruta CRUD nombrada y causaba conflictos.
+
+// ========================================
+// RUTA NECESARIA PARA EVITAR ERROR DE votante.home
+// ========================================
+Route::middleware(['auth'])->group(function () {
+    Route::get('/votante', [VotanteController::class, 'home'])->name('votante.home');
+});
+
+// ========================================
+// RUTAS PLACEHOLDER PARA EVITAR ERRORES EN EL MENÚ
+// ========================================
+Route::middleware(['auth'])->group(function () {
+    Route::get('/votante', [VotanteController::class, 'home'])->name('votante.home');
+    Route::get('/votante/elecciones', function () {
+        return redirect()->route('votante.home')->with('info', 'La sección de elecciones está temporalmente inactiva.');
+    })->name('votante.elecciones');
+});
+
