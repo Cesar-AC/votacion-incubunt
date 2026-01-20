@@ -114,6 +114,12 @@
                             <i class="fas fa-clipboard-list mr-3" style="color: #161349; font-size: 1.1rem;"></i>
                             <span>Padrones</span>
                         </a>
+                        <a href="{{ route('crud.lista_votante.ver') }}" 
+                           class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
+                           data-dismiss="modal">
+                            <i class="fas fa-list-ol mr-3" style="color: #161349; font-size: 1.1rem;"></i>
+                            <span>Listas Votantes</span>
+                        </a>
                         <a href="{{ route('crud.voto.ver') }}" 
                            class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
                            data-dismiss="modal">
@@ -139,6 +145,22 @@
                             <span>Permisos</span>
                         </a>
 
+                        <!-- Carreras -->
+                        <a href="{{ route('crud.carrera.ver') }}" 
+                           class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
+                           data-dismiss="modal">
+                            <i class="fas fa-graduation-cap mr-3" style="color: #6c757d; font-size: 1.1rem;"></i>
+                            <span>Carreras</span>
+                        </a>
+
+                        <!-- Cargos -->
+                        <a href="{{ route('crud.cargo.ver') }}" 
+                           class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
+                           data-dismiss="modal">
+                            <i class="fas fa-briefcase mr-3" style="color: #6c757d; font-size: 1.1rem;"></i>
+                            <span>Cargos</span>
+                        </a>
+
                         <!-- Partidos -->
                         <div class="list-group-item bg-light font-weight-bold text-uppercase small px-3 py-2" 
                              style="color: #161349; background-color: #f8f9fa !important;">
@@ -155,6 +177,18 @@
                            data-dismiss="modal">
                             <i class="fas fa-user-tie mr-3" style="color: #FFB700; font-size: 1.1rem;"></i>
                             <span>Candidatos</span>
+                        </a>
+                        <a href="{{ route('crud.propuesta_candidato.ver') }}" 
+                           class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
+                           data-dismiss="modal">
+                            <i class="fas fa-file-alt mr-3" style="color: #6c757d; font-size: 1.1rem;"></i>
+                            <span>Propuestas Candidatos</span>
+                        </a>
+                        <a href="{{ route('crud.propuesta_partido.ver') }}" 
+                           class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
+                           data-dismiss="modal">
+                            <i class="fas fa-file-contract mr-3" style="color: #6c757d; font-size: 1.1rem;"></i>
+                            <span>Propuestas Partidos</span>
                         </a>
                         
                         <!-- Configuración -->

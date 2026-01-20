@@ -57,6 +57,24 @@ class Elecciones extends Model
         return $this->estado->esProgramado();
     }
 
+    public function estaActivo()
+    {
+        $now = now();
+
+        $inicio = $this->fechaInicio;
+        $cierre = $this->fechaCierre;
+
+        $isBetween = false;
+        if ($inicio && $cierre) {
+            $isBetween = $now->between($inicio, $cierre);
+        }
+
+        $esAnulado = optional($this->estado)->esAnulado() ?? false;
+        $esFinalizado = optional($this->estado)->esFinalizado() ?? false;
+
+        return $isBetween && !$esAnulado && !$esFinalizado;
+    }
+
     public function estaFinalizado()
     {
         return $this->estado->esFinalizado();

@@ -15,6 +15,7 @@ use App\Http\Controllers\VotoController;
 use App\Http\Controllers\CargoController;
 use App\Http\Controllers\EstadoEleccionesController;
 use App\Http\Controllers\ListaVotanteController;
+use App\Http\Controllers\PermisoController;
 
 use App\Http\Controllers\PropuestaCandidatoController;
 use App\Http\Controllers\PropuestaPartidoController;
@@ -257,6 +258,5 @@ Route::middleware(['auth'])->group(function () {
     Route::get('kpi/porcentaje-participacion/{eleccion}/area/{area}', [KPIController::class, 'obtenerPorcentajeParticipacionPorArea'])->name('kpi.porcentaje_participacion_por_area');
 });
 
-Route::get('/candidatos', function () {
-    return view('candidatos');
-});
+// Nota: la ruta simple '/candidatos' fue eliminada porque
+// duplicaba la ruta CRUD nombrada y causaba conflictos.

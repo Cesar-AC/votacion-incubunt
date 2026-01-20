@@ -18,8 +18,10 @@ class VotanteController extends Controller
     // Página principal del votante
     public function home() 
     {
-        $eleccionesActivas = \App\Models\Elecciones::where('idEstado', \App\Models\EstadoElecciones::ACTIVO)->get();
-        
+        $eleccionesActivas = \App\Models\Elecciones::with('estadoEleccion')->get()->filter(function($e) {
+            return method_exists($e, 'estaActivo') ? $e->estaActivo() : false;
+        })->values();
+
         return view('votante.home', compact('eleccionesActivas'));
 
     }
@@ -101,7 +103,7 @@ class VotanteController extends Controller
         $eleccion = Elecciones::findOrFail($eleccionId);
 
         // Verificar que la elección esté activa
-        if ($eleccion->idEstadoEleccion != 2) {
+        if (! method_exists($eleccion, 'estaActivo') || ! $eleccion->estaActivo()) {
             return redirect()->route('votante.elecciones')
                 ->with('error', 'Esta elección no está activa.');
         }
@@ -135,7 +137,7 @@ class VotanteController extends Controller
         $eleccion = Elecciones::findOrFail($eleccionId);
 
         // Verificar estado y padrón
-        if ($eleccion->idEstadoEleccion != 2) {
+        if (! method_exists($eleccion, 'estaActivo') || ! $eleccion->estaActivo()) {
             return redirect()->route('votante.elecciones')
                 ->with('error', 'Esta elección no está activa.');
         }
@@ -205,7 +207,7 @@ class VotanteController extends Controller
         $eleccion = Elecciones::findOrFail($eleccionId);
 
         // Verificar estado
-        if ($eleccion->idEstadoEleccion != 2) {
+        if (! method_exists($eleccion, 'estaActivo') || ! $eleccion->estaActivo()) {
             return back()->with('error', 'Esta elección no está activa.');
         }
 
