@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\Elecciones;
+use App\Models\PadronElectoral;
+use App\Models\Voto;
 
 class VotanteController extends Controller
 {
@@ -73,7 +77,95 @@ class VotanteController extends Controller
     }
 
     /**
-     * Lista de candidatos para votar - CON DATOS DE PRUEBA
+     * Ver detalle de una elección - CON DATOS DE PRUEBA
+     */
+    public function verDetalleEleccion($id)
+    {
+        $eleccion = (object)[
+            'id' => $id,
+            'nombreEleccion' => 'Elecciones Estudiantiles 2026',
+            'descripcion' => 'Elecciones para renovar el Consejo Estudiantil',
+            'fechaInicio' => now()->subDays(2),
+            'fechaFin' => now()->addDays(5),
+            'estadoEleccionesId' => 1,
+            'estadoEleccion' => (object)['nombre' => 'Activo']
+        ];
+
+        $candidatos = collect([
+            (object)[
+                'id' => 1,
+                'usuario' => (object)[
+                    'perfil' => (object)[
+                        'nombres' => 'Juan Carlos',
+                        'apellidoPaterno' => 'Pérez',
+                        'carrera' => (object)['nombreCarrera' => 'Ingeniería de Sistemas']
+                    ]
+                ],
+                'partido' => (object)['nombrePartido' => 'MEP'],
+                'cargo' => (object)['nombreCargo' => 'Presidente']
+            ]
+        ]);
+
+        $yaVoto = false;
+
+        // Cuando conectes con BD, descomentar:
+        /*
+        $eleccion = Elecciones::with(['estadoEleccion', 'candidatos.usuario.perfil'])
+            ->findOrFail($id);
+        
+        $yaVoto = Voto::where('idPadronElectoral', function($query) use ($id) {
+            $query->select('id')
+                  ->from('padron_electoral')
+                  ->where('idUser', Auth::id())
+                  ->where('idEleccion', $id)
+                  ->limit(1);
+        })->exists();
+        
+        $candidatos = $eleccion->candidatos;
+        */
+
+        return view('votante.elecciones.detalle', compact('eleccion', 'candidatos', 'yaVoto'));
+    }
+
+    /**
+     * Iniciar proceso de votación
+     */
+    public function iniciarVotacion($eleccionId)
+    {
+        // Cuando conectes con BD, descomentar:
+        /*
+        $eleccion = Elecciones::findOrFail($eleccionId);
+
+        // Verificar que la elección esté activa
+        if (!method_exists($eleccion, 'estaActivo') || !$eleccion->estaActivo()) {
+            return redirect()->route('votante.elecciones')
+                ->with('error', 'Esta elección no está activa.');
+        }
+
+        // Verificar que el usuario esté en el padrón electoral
+        $padron = PadronElectoral::where('idUser', Auth::id())
+            ->where('idEleccion', $eleccionId)
+            ->first();
+
+        if (!$padron) {
+            return redirect()->route('votante.elecciones')
+                ->with('error', 'No estás registrado en el padrón electoral para esta elección.');
+        }
+
+        // Verificar si ya votó
+        $yaVoto = Voto::where('idPadronElectoral', $padron->id)->exists();
+
+        if ($yaVoto) {
+            return redirect()->route('votante.elecciones.detalle', $eleccionId)
+                ->with('info', 'Ya has emitido tu voto en esta elección.');
+        }
+        */
+
+        return redirect()->route('votante.votar.lista', $eleccionId);
+    }
+
+    /**
+     * Listar candidatos para votar - CON DATOS DE PRUEBA
      */
     public function listarCandidatos($eleccionId)
     {
@@ -309,6 +401,45 @@ class VotanteController extends Controller
             ])
         ];
 
+        // Cuando conectes con BD, descomentar:
+        /*
+        $eleccion = Elecciones::findOrFail($eleccionId);
+
+        // Verificar estado
+        if (!method_exists($eleccion, 'estaActivo') || !$eleccion->estaActivo()) {
+            return redirect()->route('votante.elecciones')
+                ->with('error', 'Esta elección no está activa.');
+        }
+
+        // Verificar padrón
+        $padron = PadronElectoral::where('idUser', Auth::id())
+            ->where('idEleccion', $eleccionId)
+            ->first();
+
+        if (!$padron) {
+            return redirect()->route('votante.elecciones')
+                ->with('error', 'No estás registrado en el padrón electoral.');
+        }
+
+        // Obtener cargos y candidatos
+        $cargos = Cargo::whereHas('candidatos', function($query) use ($eleccionId) {
+            $query->where('idEleccion', $eleccionId);
+        })->get();
+
+        $candidatosPorCargo = [];
+        foreach ($cargos as $cargo) {
+            $candidatosPorCargo[$cargo->id] = Candidato::with([
+                'usuario.perfil.carrera',
+                'partido',
+                'cargo',
+                'propuestas'
+            ])
+            ->where('idCargo', $cargo->id)
+            ->where('idEleccion', $eleccionId)
+            ->get();
+        }
+        */
+
         return view('votante.votar.lista', compact('eleccion', 'cargos', 'candidatosPorCargo'));
     }
 
@@ -368,15 +499,30 @@ class VotanteController extends Controller
                 ]
             ])
         ];
+
+        // Cuando conectes con BD, descomentar:
+        /*
+        $eleccion = Elecciones::findOrFail($eleccionId);
+        
+        $candidato = Candidato::with([
+            'usuario.perfil.carrera',
+            'partido.propuestas',
+            'cargo',
+            'propuestas'
+        ])
+        ->where('idEleccion', $eleccionId)
+        ->findOrFail($candidatoId);
+        */
         
         return view('votante.votar.detalle_candidato', compact('eleccion', 'candidato'));
     }
 
     /**
-     * Procesa y emite el voto - SIMULADO
+     * Procesa y emite el voto
      */
     public function emitirVoto(Request $request, $eleccionId)
     {
+        // SIMULACIÓN - Cuando conectes con BD, reemplazar todo esto:
         $eleccion = (object)[
             'id' => $eleccionId,
             'nombreEleccion' => 'Elecciones Estudiantiles 2026',
@@ -384,6 +530,94 @@ class VotanteController extends Controller
         ];
 
         // Simular votos registrados
+        $votos = collect([
+            (object)[
+                'fechaVoto' => now(),
+                'candidato' => (object)[
+                    'usuario' => (object)[
+                        'perfil' => (object)[
+                            'nombres' => 'Juan Carlos',
+                            'apellidoPaterno' => 'Pérez',
+                            'fotoPerfil' => null,
+                            'carrera' => (object)['nombreCarrera' => 'Ingeniería de Sistemas']
+                        ]
+                    ],
+                    'partido' => (object)[
+                        'nombrePartido' => 'Movimiento Estudiantil Progresista',
+                        'logo' => null
+                    ],
+                    'cargo' => (object)['nombreCargo' => 'Presidente']
+                ]
+            ]
+        ]);
+
+        // Redirigir a página de éxito
+        return redirect()->route('votante.votar.exito', $eleccionId)
+            ->with('success', '¡Tu voto ha sido registrado exitosamente!');
+
+        // CÓDIGO REAL - Descomentar cuando conectes con BD:
+        /*
+        $eleccion = Elecciones::findOrFail($eleccionId);
+
+        // Verificar estado
+        if (!method_exists($eleccion, 'estaActivo') || !$eleccion->estaActivo()) {
+            return back()->with('error', 'Esta elección no está activa.');
+        }
+
+        // Obtener padrón
+        $padron = PadronElectoral::where('idUser', Auth::id())
+            ->where('idEleccion', $eleccionId)
+            ->firstOrFail();
+
+        // Verificar si ya votó
+        if (Voto::where('idPadronElectoral', $padron->id)->exists()) {
+            return redirect()->route('votante.elecciones.detalle', $eleccionId)
+                ->with('error', 'Ya has votado en esta elección.');
+        }
+
+        // Validar datos
+        $request->validate([
+            'candidatos' => 'required|array',
+            'candidatos.*' => 'required|exists:candidatos,id'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Registrar votos
+            foreach ($request->candidatos as $cargoId => $candidatoId) {
+                Voto::create([
+                    'idCandidato' => $candidatoId,
+                    'idPadronElectoral' => $padron->id,
+                    'fechaVoto' => now(),
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('votante.votar.exito', $eleccionId)
+                ->with('success', '¡Tu voto ha sido registrado exitosamente!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return back()->with('error', 'Hubo un error al registrar tu voto. Por favor, intenta nuevamente.');
+        }
+        */
+    }
+
+    /**
+     * Pantalla de éxito después de votar
+     */
+    public function votoExitoso($eleccionId)
+    {
+        // SIMULACIÓN - Datos de prueba
+        $eleccion = (object)[
+            'id' => $eleccionId,
+            'nombreEleccion' => 'Elecciones Estudiantiles 2026',
+            'descripcion' => 'Elecciones para renovar el Consejo Estudiantil'
+        ];
+
         $votos = collect([
             (object)[
                 'fechaVoto' => now(),
@@ -423,41 +657,20 @@ class VotanteController extends Controller
             ]
         ]);
 
+        // CÓDIGO REAL - Descomentar cuando conectes con BD:
+        /*
+        $eleccion = Elecciones::findOrFail($eleccionId);
+        
+        // Obtener el padrón y votos del usuario
+        $padron = PadronElectoral::where('idUser', Auth::id())
+            ->where('idEleccion', $eleccionId)
+            ->firstOrFail();
+
+        $votos = Voto::with(['candidato.usuario.perfil', 'candidato.partido', 'candidato.cargo'])
+            ->where('idPadronElectoral', $padron->id)
+            ->get();
+        */
+
         return view('votante.votar.exito', compact('eleccion', 'votos'));
-    }
-
-    /**
-     * Detalle de elección - CON DATOS DE PRUEBA
-     */
-    public function verDetalleEleccion($id)
-    {
-        $eleccion = (object)[
-            'id' => $id,
-            'nombreEleccion' => 'Elecciones Estudiantiles 2026',
-            'descripcion' => 'Elecciones para renovar el Consejo Estudiantil',
-            'fechaInicio' => now()->subDays(2),
-            'fechaFin' => now()->addDays(5),
-            'estadoEleccionesId' => 1,
-            'estadoEleccion' => (object)['nombre' => 'Activo']
-        ];
-
-        $candidatos = collect([
-            (object)[
-                'id' => 1,
-                'usuario' => (object)[
-                    'perfil' => (object)[
-                        'nombres' => 'Juan Carlos',
-                        'apellidoPaterno' => 'Pérez',
-                        'carrera' => (object)['nombreCarrera' => 'Ingeniería de Sistemas']
-                    ]
-                ],
-                'partido' => (object)['nombrePartido' => 'MEP'],
-                'cargo' => (object)['nombreCargo' => 'Presidente']
-            ]
-        ]);
-
-        $yaVoto = false;
-
-        return view('votante.elecciones.detalle', compact('eleccion', 'candidatos', 'yaVoto'));
     }
 }

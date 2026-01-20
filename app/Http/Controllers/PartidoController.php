@@ -21,34 +21,27 @@ class PartidoController extends Controller
         return view('crud.partido.crear');
     }
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'partido' => 'required|string|max:255',
-            'urlPartido' => 'required|string',
-            'descripcion' => 'required|string',
-            'elecciones' => 'required|array',
-            'elecciones.*' => 'integer',
-        ]);
-        $p = new Partido([
-            'partido' => $data['partido'],
-            'urlPartido' => $data['urlPartido'],
-            'descripcion' => $data['descripcion'],
-        ]);
-        $p->save();
-        $p->elecciones()->sync($data['elecciones']);
-        return response()->json([
-            'success' => true,
-            'message' => 'Partido creado',
-            'data' => [
-                'id' => $p->getKey(),
-                'partido' => $p->partido,
-                'urlPartido' => $p->urlPartido,
-                'descripcion' => $p->descripcion,
-                'elecciones' => $p->elecciones()->pluck('idElecciones'),
-            ],
-        ], Response::HTTP_CREATED);
-    }
+   public function store(Request $request)
+{
+    $data = $request->validate([
+        'partido'     => 'required|string|max:255',
+        'urlPartido'  => 'required|string',
+        'descripcion' => 'required|string',
+        'tipo'        => 'required|in:LISTA,INDIVIDUAL'
+    ]);
+
+    $p = Partido::create([
+        'partido'     => $data['partido'],
+        'urlPartido'  => $data['urlPartido'],
+        'descripcion' => $data['descripcion'],
+        'tipo'        => $data['tipo'],
+    ]);
+    return redirect()
+    ->route('crud.partido.ver')
+    ->with('success', 'Partido creado correctamente');
+
+}
+
 
     public function show($id)
     {
@@ -60,6 +53,7 @@ class PartidoController extends Controller
                 'partido' => $p->partido,
                 'urlPartido' => $p->urlPartido,
                 'descripcion' => $p->descripcion,
+                'tipo' => $p->tipo,
                 'elecciones' => $p->elecciones()->pluck('idElecciones'),
             ],
         ]);
@@ -79,6 +73,7 @@ class PartidoController extends Controller
             'partido' => 'required|string|max:255',
             'urlPartido' => 'required|string',
             'descripcion' => 'required|string',
+            'tipo' => 'required|in:LISTA,INDIVIDUAL',
             'elecciones' => 'required|array',
             'elecciones.*' => 'integer',
         ]);
@@ -86,6 +81,7 @@ class PartidoController extends Controller
             'partido' => $data['partido'],
             'urlPartido' => $data['urlPartido'],
             'descripcion' => $data['descripcion'],
+            'tipo' => $data['tipo'],
         ]);
         $p->elecciones()->sync($data['elecciones']);
         return response()->json([
@@ -96,6 +92,7 @@ class PartidoController extends Controller
                 'partido' => $p->partido,
                 'urlPartido' => $p->urlPartido,
                 'descripcion' => $p->descripcion,
+                'tipo' => $p->tipo,
                 'elecciones' => $p->elecciones()->pluck('idElecciones'),
             ],
         ]);
@@ -114,6 +111,7 @@ class PartidoController extends Controller
                 'partido' => $p->partido,
                 'urlPartido' => $p->urlPartido,
                 'descripcion' => $p->descripcion,
+                'tipo' => $p->tipo,
             ],
         ]);
     }

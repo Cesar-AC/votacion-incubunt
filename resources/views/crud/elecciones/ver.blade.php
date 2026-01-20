@@ -6,19 +6,6 @@
   <!-- Header -->
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
     <h5 class="font-weight-bold mb-2 mb-md-0">Gestionar Elecciones</h5>
-        <a href="{{ route('crud.elecciones.crear') }}" class="btn btn-primary btn-sm shadow">
-        Nueva elección
-        </a>
-  </div>
-
-  @extends('layouts.admin')
-
-@section('content')
-<div class="container-fluid px-2 px-md-4">
-
-  <!-- Header -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-    <h5 class="font-weight-bold mb-2 mb-md-0">Gestionar Elecciones</h5>
     <a href="{{ route('crud.elecciones.crear') }}" class="btn btn-primary btn-sm shadow">
       Nueva elección
     </a>
@@ -94,6 +81,3 @@
 </div>
 @endsection
 
-
-</div>
-@endsection

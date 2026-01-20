@@ -37,7 +37,8 @@ class DatosRealesSeeder extends Seeder
         }
 
         $cargos = [
-            'Director'
+            'Director',
+            'Presidencia'
         ];
 
         foreach ($cargos as $cargo) {
@@ -105,7 +106,6 @@ class DatosRealesSeeder extends Seeder
         }
 
         $estadosElecciones = [
-            'Activa',
             'Programada',
             'Finalizada',
             'Anulada'

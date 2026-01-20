@@ -6,10 +6,37 @@
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h5 class="font-weight-bold mb-0">Gestionar Padrones</h5>
-    <a href="{{ route('crud.padron_electoral.crear') }}" class="btn btn-primary btn-sm shadow">
-      Nuevo Padrón
-    </a>
+    <div>
+      <a href="{{ route('crud.padron_electoral.importar') }}" class="btn btn-secondary btn-sm shadow mr-2">
+        <i class="fas fa-upload"></i> Importar
+      </a>
+      <a href="{{ route('crud.padron_electoral.crear') }}" class="btn btn-primary btn-sm shadow">
+        Nuevo Padrón
+      </a>
+    </div>
   </div>
+
+  <!-- Mostrar resultados de importación -->
+  @if(session('import_result'))
+    @php $result = session('import_result') @endphp
+    <div class="alert alert-info">
+      <h6>Resultado de la importación:</h6>
+      <p>{{ $result['message'] }}</p>
+      @if(!empty($result['data']['registrosOmitidos']))
+        <details>
+          <summary>Ver registros omitidos ({{ count($result['data']['registrosOmitidos']) }})</summary>
+          <ul>
+            @foreach($result['data']['registrosOmitidos'] as $omitido)
+              <li>
+                Fila {{ $omitido['indice'] }}: {{ $omitido['correo'] }} - {{ $omitido['razon'] }}
+              </li>
+            @endforeach
+          </ul>
+        </details>
+      @endif
+    </div>
+    @php session()->forget('import_result') @endphp
+  @endif
 
   @forelse ($elecciones as $eleccion)
     <div class="card shadow-sm mb-3">

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Elecciones extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'Elecciones';
 
     protected $primaryKey = 'idElecciones';
@@ -36,24 +36,70 @@ class Elecciones extends Model
     {
         return $this->belongsToMany(Partido::class, 'PartidoEleccion', 'idElecciones', 'idPartido');
     }
-    
-    public function usuarios(){
+
+    public function usuarios()
+    {
         return $this->belongsToMany(User::class, 'PadronElectoral', 'idElecciones', 'idUsuario');
     }
 
-    public function estaActivo(){
-        return $this->idEstado === EstadoElecciones::ACTIVO;
+    public function candidatos()
+    {
+        return $this->belongsToMany(Candidato::class, 'CandidatoEleccion', 'idElecciones', 'idCandidato');
     }
 
-    public function estaProgramado(){
-        return $this->idEstado === EstadoElecciones::PROGRAMADO;
+    public function estado()
+    {
+        return $this->belongsTo(EstadoElecciones::class, 'idEstado');
     }
 
-    public function estaFinalizado(){
-        return $this->idEstado === EstadoElecciones::FINALIZADO;
+    public function estaProgramado()
+    {
+        return $this->estado->esProgramado();
     }
 
-    public function estaAnulado(){
-        return $this->idEstado === EstadoElecciones::ANULADO;
+    public function estaActivo()
+    {
+        $now = now();
+
+        $inicio = $this->fechaInicio;
+        $cierre = $this->fechaCierre;
+
+        $isBetween = false;
+        if ($inicio && $cierre) {
+            $isBetween = $now->between($inicio, $cierre);
+        }
+
+        $esAnulado = optional($this->estado)->esAnulado() ?? false;
+        $esFinalizado = optional($this->estado)->esFinalizado() ?? false;
+
+        return $isBetween && !$esAnulado && !$esFinalizado;
+    }
+
+    public function estaFinalizado()
+    {
+        return $this->estado->esFinalizado();
+    }
+
+    public function estaAnulado()
+    {
+        return $this->estado->esAnulado();
+    }
+
+    public function marcarComoProgramada()
+    {
+        $this->estado()->associate(EstadoElecciones::programado());
+        $this->save();
+    }
+
+    public function marcarComoFinalizado()
+    {
+        $this->estado()->associate(EstadoElecciones::finalizado());
+        $this->save();
+    }
+
+    public function marcarComoAnulado()
+    {
+        $this->estado()->associate(EstadoElecciones::anulado());
+        $this->save();
     }
 }

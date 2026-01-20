@@ -16,7 +16,8 @@ class Partido extends Model
         'idPartido',
         'partido',
         'urlPartido',
-        'descripcion'
+        'descripcion',
+        'tipo'
     ];
 
     public function elecciones()

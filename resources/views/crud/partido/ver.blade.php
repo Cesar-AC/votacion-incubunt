@@ -28,7 +28,14 @@
             <small class="text-muted d-block mb-2">
               {{ $partido->urlPartido ?? 'Sin URL' }}
             </small>
+            <p class="mb-2">
+              {{ $partido->descripcion }}
+            </p>
+            <span class="badge badge-info">
+              Tipo: {{ $partido->tipo }}
+            </span>
           </div>
+
 
           <!-- Acciones -->
           <div class="text-right">
