@@ -214,7 +214,9 @@
                              style="color: #161349; background-color: #f8f9fa !important;">
                             <i class="fas fa-user mr-2"></i>Mi Cuenta
                         </div>
-                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center py-3 px-4 border-0 menu-item">
+                        <a href="{{ route('profile.show') }}" 
+                           class="list-group-item list-group-item-action d-flex align-items-center py-3 px-4 border-0 menu-item"
+                           data-dismiss="modal">
                             <i class="fas fa-user mr-3" style="color: #161349; font-size: 1.1rem;"></i>
                             <span>Mi Perfil</span>
                         </a>
