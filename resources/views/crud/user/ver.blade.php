@@ -62,7 +62,7 @@
       </div>
 
       <div class="text-right">
-        <a href="#" class="btn btn-outline-primary btn-sm mb-1">
+        <a href="{{ route('crud.user.editar', $usuario->getKey()) }}" class="btn btn-outline-primary btn-sm mb-1">
           <i class="fas fa-edit"></i> Editar
         </a><br>
         <a href="#" class="btn btn-outline-danger btn-sm">

@@ -50,7 +50,7 @@
             @endphp
 
             <span class="badge badge-{{ $badge }} mt-1">
-              {{ $e->estadoEleccion->nombre ?? 'Sin estado' }}
+              {{ $e->estadoEleccion->estado ?? 'Sin estado' }}
             </span>
             @if($activaId === $e->idElecciones)
               <span class="badge badge-info mt-1">Activa</span>
