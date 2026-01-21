@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\PerfilUsuario;
 use App\Models\RolUser;
+use App\Models\Permiso;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -118,6 +119,38 @@ class UserController extends Controller
         return redirect()
             ->route('crud.user.ver')
             ->with('success', 'Usuario actualizado correctamente');
+    }
+
+    public function permisos($id)
+    {
+        $user = User::with(['perfil', 'roles', 'permisos'])->findOrFail($id);
+        $permisos = Permiso::orderBy('permiso')->get();
+
+        return view('crud.user.permisos', compact('user', 'permisos'));
+    }
+
+    public function asignarPermiso(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $data = $request->validate([
+            'permiso_id' => 'required|integer|exists:Permiso,idPermiso',
+        ]);
+
+        $user->permisos()->syncWithoutDetaching([$data['permiso_id']]);
+
+        return redirect()
+            ->route('crud.user.permisos', $user->getKey())
+            ->with('success', 'Permiso asignado correctamente');
+    }
+
+    public function quitarPermiso($id, $permisoId)
+    {
+        $user = User::findOrFail($id);
+        $user->permisos()->detach($permisoId);
+
+        return redirect()
+            ->route('crud.user.permisos', $user->getKey())
+            ->with('success', 'Permiso eliminado correctamente');
     }
 
     public function destroy($id)

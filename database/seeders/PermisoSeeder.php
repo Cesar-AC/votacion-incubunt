@@ -57,8 +57,16 @@ class PermisoSeeder extends Seeder
 
     private function obtenerPermisosVotante()
     {
-        // Por implementar.
-        return [];
+        // Permisos que tienen TODOS los votantes por defecto
+        // Solo pueden votar y ver información de elecciones y candidatos
+        return [
+            'voto:votar',                           // Permiso principal: emitir voto
+            'elecciones:crud:ver:*',                // Ver elecciones
+            'candidato:crud:ver:*',                 // Ver candidatos
+            'propuesta_candidato:crud:ver:*',       // Ver propuestas de candidatos
+            'propuesta_partido:crud:ver:*',         // Ver propuestas de partidos
+            'partido:crud:ver:*',                   // Ver partidos
+        ];
     }
 
     private function crearPermisosVotante()
@@ -129,14 +137,9 @@ class PermisoSeeder extends Seeder
     private function asignarPermisosAdministrador()
     {
         $rolAdministrador = Rol::where('rol', 'administrador')->first();
-
-        $entidades = $this->obtenerEntidades();
-
-        $rolAdministrador->permisos()->attach(Permiso::where('permiso', '=', 'dashboard:administrador')->first());
-        foreach ($entidades as $entidad) {
-            $permiso = join(':', [$entidad, self::INDICATIVO_COMODIN]);
-            $rolAdministrador->permisos()->attach(Permiso::where('permiso', $permiso)->first());
-        }
+        // Otorgar absolutamente todos los permisos existentes al rol administrador
+        $todosLosPermisos = Permiso::all();
+        $rolAdministrador->permisos()->sync($todosLosPermisos->pluck('idPermiso'));
     }
 
     private function asignarPermisosVotante()

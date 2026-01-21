@@ -132,6 +132,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/users/crear', [UserController::class, 'store'])->name('crud.user.crear')->middleware('can:create,App\Models\User');
     Route::get('/users/{id}/editar', [UserController::class, 'edit'])->name('crud.user.editar')->middleware('can:update,App\Models\User');
     Route::put('/users/{id}/editar', [UserController::class, 'update'])->name('crud.user.editar')->middleware('can:update,App\Models\User');
+    Route::get('/users/{id}/permisos', [UserController::class, 'permisos'])->name('crud.user.permisos')->middleware('can:update,App\Models\User');
+    Route::post('/users/{id}/permisos', [UserController::class, 'asignarPermiso'])->name('crud.user.permisos.asignar')->middleware('can:update,App\Models\User');
+    Route::delete('/users/{id}/permisos/{permisoId}', [UserController::class, 'quitarPermiso'])->name('crud.user.permisos.quitar')->middleware('can:update,App\Models\User');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('crud.user.eliminar')->middleware('can:delete,App\Models\User');
     Route::get('/users/{id}', [UserController::class, 'show'])->name('crud.user.ver_datos')->middleware('can:view,App\Models\User');
 });
