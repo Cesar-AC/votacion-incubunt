@@ -2,10 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Enum\TablasVoto;
+use App\Models\Interfaces\IElegibleAVoto;
+use App\Models\Traits\ElegibleAVoto;
 use Illuminate\Database\Eloquent\Model;
 
-class Partido extends Model
+class Partido extends Model implements IElegibleAVoto
 {
+    use ElegibleAVoto;
+
+    protected $tablaVoto = TablasVoto::PARTIDO->value;
+
     protected $table = 'Partido';
 
     protected $primaryKey = 'idPartido';
@@ -19,6 +26,11 @@ class Partido extends Model
         'descripcion',
         'tipo'
     ];
+
+    public function votos()
+    {
+        return $this->hasMany(VotoPartido::class, 'idPartido');
+    }
 
     public function elecciones()
     {

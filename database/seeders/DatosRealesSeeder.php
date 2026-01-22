@@ -9,6 +9,7 @@ use App\Models\CategoriaLog;
 use App\Models\EstadoElecciones;
 use App\Models\EstadoUsuario;
 use App\Models\NivelLog;
+use App\Models\TipoVoto;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -151,6 +152,16 @@ class DatosRealesSeeder extends Seeder
             CategoriaLog::create([
                 'nombre' => $categoria,
             ]);
+        }
+
+        $tiposVoto = [
+            ['idTipoVoto' => TipoVoto::ID_NO_APLICABLE, 'descripcion' => 'Tipo de voto no aplicable', 'peso' => 1],
+            ['idTipoVoto' => TipoVoto::ID_MISMA_AREA, 'descripcion' => 'Voto de la misma área', 'peso' => 2],
+            ['idTipoVoto' => TipoVoto::ID_OTRA_AREA, 'descripcion' => 'Voto de área externa', 'peso' => 1],
+        ];
+
+        foreach ($tiposVoto as $tipoVoto) {
+            TipoVoto::create($tipoVoto);
         }
     }
 }
