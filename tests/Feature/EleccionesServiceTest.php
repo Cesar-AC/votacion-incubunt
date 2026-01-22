@@ -9,8 +9,10 @@ use App\Models\Cargo;
 use App\Models\Elecciones;
 use App\Models\EstadoElecciones;
 use App\Models\Partido;
+use App\Models\TipoVoto;
 use App\Models\User;
-use App\Models\Voto;
+use App\Models\VotoCandidato;
+use App\Models\VotoPartido;
 use App\Services\EleccionesService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -211,16 +213,18 @@ class EleccionesServiceTest extends TestCase
 
         // Crear votos para el candidato
         for ($i = 0; $i < 5; $i++) {
-            Voto::create([
+            VotoCandidato::create([
                 'idCandidato' => $candidato->getKey(),
                 'idElecciones' => $eleccion->getKey(),
+                'idTipoVoto' => TipoVoto::ID_MISMA_AREA,
             ]);
         }
 
         $service = new EleccionesService($eleccion);
         $resultado = $service->obtenerVotos($candidato, null);
 
-        $this->assertEquals(5, $resultado->getVotos());
+        // 5 votos de MISMA_AREA (peso 2) = 10 puntos
+        $this->assertEquals(10, $resultado->getVotos());
     }
 
     public function test_obtener_votos_de_todos_los_candidatos(): void
@@ -233,16 +237,18 @@ class EleccionesServiceTest extends TestCase
 
         // Crear votos
         for ($i = 0; $i < 3; $i++) {
-            Voto::create([
+            VotoCandidato::create([
                 'idCandidato' => $candidato1->getKey(),
                 'idElecciones' => $eleccion->getKey(),
+                'idTipoVoto' => TipoVoto::ID_MISMA_AREA,
             ]);
         }
 
         for ($i = 0; $i < 7; $i++) {
-            Voto::create([
+            VotoCandidato::create([
                 'idCandidato' => $candidato2->getKey(),
                 'idElecciones' => $eleccion->getKey(),
+                'idTipoVoto' => TipoVoto::ID_MISMA_AREA,
             ]);
         }
 
@@ -257,9 +263,11 @@ class EleccionesServiceTest extends TestCase
             $this->assertInstanceOf(IVotosCandidatoDTO::class, $dto);
 
             if ($dto->getCandidato()->getKey() === $candidato1->getKey()) {
-                $this->assertEquals(3, $dto->getVotos());
+                // 3 votos * peso 2 = 6
+                $this->assertEquals(6, $dto->getVotos());
             } elseif ($dto->getCandidato()->getKey() === $candidato2->getKey()) {
-                $this->assertEquals(7, $dto->getVotos());
+                // 7 votos * peso 2 = 14
+                $this->assertEquals(14, $dto->getVotos());
             }
         });
     }
@@ -274,29 +282,33 @@ class EleccionesServiceTest extends TestCase
 
         // Votos en elección 1
         for ($i = 0; $i < 3; $i++) {
-            Voto::create([
+            VotoCandidato::create([
                 'idCandidato' => $candidato->getKey(),
                 'idElecciones' => $eleccion1->getKey(),
+                'idTipoVoto' => TipoVoto::ID_MISMA_AREA,
             ]);
         }
 
         // Votos en elección 2
         for ($i = 0; $i < 5; $i++) {
-            Voto::create([
+            VotoCandidato::create([
                 'idCandidato' => $candidato->getKey(),
                 'idElecciones' => $eleccion2->getKey(),
+                'idTipoVoto' => TipoVoto::ID_MISMA_AREA,
             ]);
         }
 
         $service = new EleccionesService($eleccion1);
 
         // Votos en elección activa (elección 1)
+        // 3 votos * peso 2 = 6
         $votosEleccion1 = $service->obtenerVotos($candidato, null);
-        $this->assertEquals(3, $votosEleccion1->getVotos());
+        $this->assertEquals(6, $votosEleccion1->getVotos());
 
         // Votos en elección específica (elección 2)
+        // 5 votos * peso 2 = 10
         $votosEleccion2 = $service->obtenerVotos($candidato, $eleccion2);
-        $this->assertEquals(5, $votosEleccion2->getVotos());
+        $this->assertEquals(10, $votosEleccion2->getVotos());
     }
 
     public function test_cambiar_eleccion_activa(): void
@@ -386,5 +398,177 @@ class EleccionesServiceTest extends TestCase
 
         $this->assertInstanceOf(Collection::class, $resultado);
         $this->assertCount(0, $resultado);
+    }
+
+    public function test_obtener_votos_de_partido_especifico(): void
+    {
+        $eleccion = $this->crearEleccion();
+        $partido = $this->crearPartido();
+
+        // Asociar partido a la elección
+        $eleccion->partidos()->attach($partido->getKey());
+
+        // Crear votos para el partido
+        for ($i = 0; $i < 5; $i++) {
+            VotoPartido::create([
+                'idPartido' => $partido->getKey(),
+                'idElecciones' => $eleccion->getKey(),
+                'idTipoVoto' => TipoVoto::ID_NO_APLICABLE,
+            ]);
+        }
+
+        $this->assertEquals(5, $partido->votos()->where('idElecciones', '=', $eleccion->getKey())->count());
+    }
+
+    public function test_obtener_votos_de_todos_los_partidos(): void
+    {
+        $eleccion = $this->crearEleccion();
+
+        $partido1 = $this->crearPartido();
+        $partido2 = $this->crearPartido();
+
+        // Asociar partidos a la elección
+        $eleccion->partidos()->attach([$partido1->getKey(), $partido2->getKey()]);
+
+        // Crear votos
+        for ($i = 0; $i < 4; $i++) {
+            VotoPartido::create([
+                'idPartido' => $partido1->getKey(),
+                'idElecciones' => $eleccion->getKey(),
+                'idTipoVoto' => TipoVoto::ID_NO_APLICABLE,
+            ]);
+        }
+
+        for ($i = 0; $i < 8; $i++) {
+            VotoPartido::create([
+                'idPartido' => $partido2->getKey(),
+                'idElecciones' => $eleccion->getKey(),
+                'idTipoVoto' => TipoVoto::ID_NO_APLICABLE,
+            ]);
+        }
+
+        // Verificar votos de cada partido
+        $votosPartido1 = $partido1->votos()->where('idElecciones', '=', $eleccion->getKey())->count();
+        $votosPartido2 = $partido2->votos()->where('idElecciones', '=', $eleccion->getKey())->count();
+
+        $this->assertEquals(4, $votosPartido1);
+        $this->assertEquals(8, $votosPartido2);
+    }
+
+    public function test_obtener_votos_de_partido_filtra_por_eleccion(): void
+    {
+        $eleccion1 = $this->crearEleccion();
+        $eleccion2 = $this->crearEleccion();
+
+        $partido = $this->crearPartido();
+
+        // Asociar partido a ambas elecciones
+        $eleccion1->partidos()->attach($partido->getKey());
+        $eleccion2->partidos()->attach($partido->getKey());
+
+        // Votos en elección 1
+        for ($i = 0; $i < 3; $i++) {
+            VotoPartido::create([
+                'idPartido' => $partido->getKey(),
+                'idElecciones' => $eleccion1->getKey(),
+                'idTipoVoto' => TipoVoto::ID_NO_APLICABLE,
+            ]);
+        }
+
+        // Votos en elección 2
+        for ($i = 0; $i < 6; $i++) {
+            VotoPartido::create([
+                'idPartido' => $partido->getKey(),
+                'idElecciones' => $eleccion2->getKey(),
+                'idTipoVoto' => TipoVoto::ID_NO_APLICABLE,
+            ]);
+        }
+
+        // Votos en elección 1
+        $votosEleccion1 = $partido->votos()->where('idElecciones', '=', $eleccion1->getKey())->count();
+        $this->assertEquals(3, $votosEleccion1);
+
+        // Votos en elección 2
+        $votosEleccion2 = $partido->votos()->where('idElecciones', '=', $eleccion2->getKey())->count();
+        $this->assertEquals(6, $votosEleccion2);
+    }
+
+    public function test_partido_sin_votos_retorna_cero(): void
+    {
+        $eleccion = $this->crearEleccion();
+        $partido = $this->crearPartido();
+
+        // Asociar partido a la elección pero sin votos
+        $eleccion->partidos()->attach($partido->getKey());
+
+        $votosPartido = $partido->votos()->where('idElecciones', '=', $eleccion->getKey())->count();
+
+        $this->assertEquals(0, $votosPartido);
+    }
+
+    public function test_votos_de_partido_y_candidato_son_independientes(): void
+    {
+        $eleccion = $this->crearEleccion();
+        $cargo = $this->crearCargo();
+        $partido = $this->crearPartido();
+        $candidato = $this->crearCandidato($eleccion, $cargo, $partido);
+
+        // Asociar partido a la elección
+        $eleccion->partidos()->attach($partido->getKey());
+
+        // Crear votos para el partido
+        for ($i = 0; $i < 3; $i++) {
+            VotoPartido::create([
+                'idPartido' => $partido->getKey(),
+                'idElecciones' => $eleccion->getKey(),
+                'idTipoVoto' => TipoVoto::ID_NO_APLICABLE,
+            ]);
+        }
+
+        // Crear votos para el candidato
+        for ($i = 0; $i < 5; $i++) {
+            VotoCandidato::create([
+                'idCandidato' => $candidato->getKey(),
+                'idElecciones' => $eleccion->getKey(),
+                'idTipoVoto' => TipoVoto::ID_MISMA_AREA,
+            ]);
+        }
+
+        // Verificar que los votos son independientes
+        $votosPartido = $partido->votos()->where('idElecciones', '=', $eleccion->getKey())->count();
+        $votosCandidato = $candidato->votos()->where('idElecciones', '=', $eleccion->getKey())->count();
+
+        $this->assertEquals(3, $votosPartido);
+        $this->assertEquals(5, $votosCandidato);
+    }
+
+    public function test_conteo_votos_ponderado_mixto(): void
+    {
+        $eleccion = $this->crearEleccion();
+        $candidato = $this->crearCandidato($eleccion);
+
+        // 2 votos de MISMA_AREA (Peso 2) -> 4 puntos
+        for ($i = 0; $i < 2; $i++) {
+            VotoCandidato::create([
+                'idCandidato' => $candidato->getKey(),
+                'idElecciones' => $eleccion->getKey(),
+                'idTipoVoto' => TipoVoto::ID_MISMA_AREA,
+            ]);
+        }
+
+        // 3 votos de OTRA_AREA (Peso 1) -> 3 puntos
+        for ($i = 0; $i < 3; $i++) {
+            VotoCandidato::create([
+                'idCandidato' => $candidato->getKey(),
+                'idElecciones' => $eleccion->getKey(),
+                'idTipoVoto' => TipoVoto::ID_OTRA_AREA,
+            ]);
+        }
+
+        $service = new EleccionesService($eleccion);
+        $resultado = $service->obtenerVotos($candidato, null);
+
+        // Total esperado: 4 + 3 = 7
+        $this->assertEquals(7, $resultado->getVotos());
     }
 }

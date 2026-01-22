@@ -13,6 +13,7 @@ use App\Models\Candidato;
 use Illuminate\Support\Collection;
 use App\Models\Cargo;
 use App\Models\Partido;
+use App\Models\VotoCandidato;
 
 class EleccionesService implements IEleccionesService
 {
@@ -82,6 +83,20 @@ class EleccionesService implements IEleccionesService
         return $eleccion->partidos()->get();
     }
 
+    protected function contarVotos(Candidato $candidato, Elecciones $eleccion): int
+    {
+        /** @var Collection<VotoCandidato> $votos */
+        $votos = $candidato->votos()
+            ->where('idElecciones', '=', $eleccion->getKey())
+            ->get();
+
+        $votosPonderados = $votos->reduce(function ($total, VotoCandidato $voto) {
+            return $total + $voto->tipoVoto->peso;
+        }, 0);
+
+        return $votosPonderados;
+    }
+
     public function obtenerVotos(?Candidato $candidato, ?Elecciones $eleccion): Collection|IVotosCandidatoDTO
     {
         $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
@@ -91,14 +106,14 @@ class EleccionesService implements IEleccionesService
             return $candidato->map(function (Candidato $candidato) use ($eleccion) {
                 return new VotosCandidatoDTO(
                     $candidato,
-                    $candidato->votos()->where('idElecciones', '=', $eleccion->getKey())->count()
+                    $this->contarVotos($candidato, $eleccion)
                 );
             });
         }
 
         return new VotosCandidatoDTO(
             $candidato,
-            $candidato->votos()->where('idElecciones', '=', $eleccion->getKey())->count()
+            $this->contarVotos($candidato, $eleccion)
         );
     }
 

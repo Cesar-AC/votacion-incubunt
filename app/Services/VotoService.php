@@ -3,13 +3,12 @@
 namespace App\Services;
 
 use App\Interfaces\Services\IVotoService;
-use App\Models\Candidato;
 use App\Models\User;
-use App\Models\Voto;
 use App\Interfaces\Services\IEleccionesService;
 use App\Interfaces\Services\IPermisoService;
 use App\Enum\Permiso;
 use App\Models\Elecciones;
+use App\Models\Interfaces\IElegibleAVoto;
 use App\Models\PadronElectoral;
 use Illuminate\Support\Facades\DB;
 
@@ -38,12 +37,15 @@ class VotoService implements IVotoService
             ->exists();
     }
 
-    protected function perteneceCandidatoAEleccion(Candidato $candidato, Elecciones $eleccion): bool
+    protected function perteneceEntidadAEleccion(IElegibleAVoto $entidad, Elecciones $eleccion): bool
     {
-        return $this->eleccionesService->perteneceCandidatoAEleccion($candidato, $eleccion);
+        return DB::table($entidad->obtenerTabla() . 'Eleccion')
+            ->where('idElecciones', '=', $eleccion->getKey())
+            ->where($entidad->obtenerNombrePK(), '=', $entidad->obtenerPK())
+            ->exists();
     }
 
-    public function votar(User $usuario, Candidato $candidato): void
+    public function votar(User $usuario, IElegibleAVoto $entidad): void
     {
         $eleccion = $this->eleccionesService->obtenerEleccionActiva();
 
@@ -55,8 +57,8 @@ class VotoService implements IVotoService
             throw new \Exception('No estás registrado en el padrón electoral.');
         }
 
-        if (!$this->perteneceCandidatoAEleccion($candidato, $eleccion)) {
-            throw new \Exception('El candidato a votar no pertenece a la elección.');
+        if (!$this->perteneceEntidadAEleccion($entidad, $eleccion)) {
+            throw new \Exception('La entidad no es elegible a voto en esta elección.');
         }
 
         if ($this->yaVoto($usuario, $eleccion)) {
@@ -64,20 +66,23 @@ class VotoService implements IVotoService
         }
 
         try {
-            DB::transaction(function () use ($usuario, $eleccion, $candidato) {
+            DB::transaction(function () use ($usuario, $eleccion, $entidad) {
                 PadronElectoral::where('idUsuario', '=', $usuario->getKey())
                     ->where('idElecciones', '=', $eleccion->getKey())
                     ->update([
                         'fechaVoto' => now()
                     ]);
 
-                Voto::create([
-                    'idCandidato' => $candidato->getKey(),
+                $data = [
+                    $entidad->obtenerNombrePK() => $entidad->obtenerPK(),
                     'idElecciones' => $eleccion->getKey(),
-                    'idUser' => $usuario->getKey()
-                ]);
+                    'idTipoVoto' => $entidad->obtenerTipoVoto($usuario)->getKey(),
+                ];
+
+                DB::table($entidad->obtenerTablaDeVoto())->insert($data);
             });
         } catch (\Exception $e) {
+            throw $e;
             throw new \Exception('Un error ha ocurrido al votar. Por favor, intenta de nuevo.');
         }
     }
