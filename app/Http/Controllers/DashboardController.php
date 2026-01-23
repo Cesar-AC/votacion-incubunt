@@ -9,7 +9,8 @@ use App\Models\Candidato;
 use App\Models\Partido;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
-use App\Models\Voto;
+use App\Models\VotoCandidato;
+use App\Models\VotoPartido;
 
 class DashboardController extends Controller
 {
@@ -37,7 +38,7 @@ class DashboardController extends Controller
                 return method_exists($e, 'estaActivo') ? $e->estaActivo() : false;
             })->count();
             $padrones = PadronElectoral::count();
-            $votos = Voto::count();
+            $votos = VotoCandidato::count() + VotoPartido::count();
 
             // Contar administradores mediante el validador de permisos
             $admins = collect(User::all())->filter(function ($u) {

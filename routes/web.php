@@ -40,14 +40,15 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Rutas del Votante 
+// Rutas del Votante
 
 Route::middleware(['auth'])->group(function () {
     Route::prefix('votante')->name('votante.')->group(function () {
         Route::get('/home', [VotanteController::class, 'home'])->name('home');
+        Route::get('/propuestas', [VotanteController::class, 'propuestas'])->name('propuestas');
         Route::get('/elecciones', [VotanteController::class, 'listarElecciones'])->name('elecciones');
         Route::get('/elecciones/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
-        
+
         Route::prefix('votar')->name('votar.')->group(function () {
             Route::get('/{eleccionId}/candidatos', [VotanteController::class, 'listarCandidatos'])->name('lista');
             Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
