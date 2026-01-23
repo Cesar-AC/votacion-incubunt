@@ -21,7 +21,7 @@
         box-shadow: 0 10px 30px rgba(124, 58, 237, 0.1);
         position: relative;
     }
-    
+
     .voter-card:hover {
         transform: translateY(-10px);
         box-shadow: 0 20px 40px rgba(124, 58, 237, 0.2);
@@ -31,7 +31,7 @@
         background: linear-gradient(145deg, #1e1b4b 0%, #4c1d95 100%);
         color: white;
     }
-    
+
     .card-proposals {
         background: #ffffff;
         color: #1e1b4b;
@@ -223,22 +223,22 @@
                         </div>
                         <h2>Elecciones</h2>
                         <span class="brand-text-sm">incubunt 2026</span>
-                        
+
                         @if(isset($eleccionActiva) && $eleccionActiva)
                             <p>Ejerce tu derecho y elige a los líderes que guiarán nuestra organización.</p>
                             {{-- CORREGIDO: Usar el campo correcto de ID --}}
-                            <a href="{{ route('votante.votar.lista', $eleccionActiva->id) }}" 
+                            <a href="{{ route('votante.votar.lista', $eleccionActiva->idElecciones) }}"
                                class="btn btn-voter btn-voter-light">
                                 Votar Ahora
                             </a>
                             <div class="mt-3 text-sm" style="color: #c4b5fd; font-size: 0.9rem;">
                                 <i class="fas fa-calendar-alt mr-1"></i>
-                                Cierra: {{ \Carbon\Carbon::parse($eleccionActiva->fechaFin)->format('d/m/Y') }}
+                                Cierra: {{ \Carbon\Carbon::parse($eleccionActiva->fechaCierre)->format('d/m/Y') }}
                             </div>
                         @else
                             <p>Por el momento no hay elecciones activas disponibles para votar.</p>
-                            <button class="btn btn-voter btn-voter-light" 
-                                    style="opacity: 0.5; cursor: not-allowed;" 
+                            <button class="btn btn-voter btn-voter-light"
+                                    style="opacity: 0.5; cursor: not-allowed;"
                                     disabled>
                                 Sin Elecciones
                             </button>
@@ -261,8 +261,8 @@
                         <h2>Propuestas</h2>
                         <span class="brand-text-sm" style="color: #7c3aed;">Conoce a tus candidatos</span>
                         <p>Infórmate sobre los planes de gobierno antes de emitir tu voto informado.</p>
-                        
-                        <a href="{{ route('votante.elecciones') }}" class="btn btn-voter btn-voter-outline">
+
+                        <a href="{{ route('votante.propuestas') }}" class="btn btn-voter btn-voter-outline">
                             Ver Propuestas
                         </a>
 
