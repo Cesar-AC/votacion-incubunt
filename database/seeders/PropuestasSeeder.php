@@ -264,11 +264,7 @@ class PropuestasSeeder extends Seeder
                 'planTrabajo' => 'https://google.com/',
             ]);
 
-            // Asociar candidato con elección
-            DB::table('CandidatoEleccion')->insert([
-                'idCandidato' => $candidatoPresidente->idCandidato,
-                'idElecciones' => $eleccion->idElecciones,
-            ]);
+            // Candidatos grupales se asocian via PartidoEleccion (ya creado arriba)
 
             foreach ($presidente['propuestas'] as $propuesta) {
                 PropuestaCandidato::create([
@@ -304,10 +300,7 @@ class PropuestasSeeder extends Seeder
                 'planTrabajo' => 'https://google.com/',
             ]);
 
-            DB::table('CandidatoEleccion')->insert([
-                'idCandidato' => $candidatoVice->idCandidato,
-                'idElecciones' => $eleccion->idElecciones,
-            ]);
+            // Candidatos grupales se asocian via PartidoEleccion (ya creado arriba)
 
             foreach ($vicepresidente['propuestas'] as $propuesta) {
                 PropuestaCandidato::create([
@@ -439,11 +432,9 @@ class PropuestasSeeder extends Seeder
                     'idArea' => $areaObj->idArea,
                 ]);
 
-                // Asignar un partido aleatorio
-                $partidoAleatorio = $partidosCreados[array_rand($partidosCreados)];
-
+                // Candidatos de área son INDIVIDUALES (sin partido)
                 $candidato = Candidato::create([
-                    'idPartido' => $partidoAleatorio->idPartido,
+                    'idPartido' => null,
                     'idCargo' => $cargo->idCargo,
                     'idUsuario' => $user->idUser,
                     'planTrabajo' => 'https://google.com/',

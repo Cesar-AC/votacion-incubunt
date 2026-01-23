@@ -26,6 +26,10 @@ class Candidato extends Model implements IElegibleAVoto
         'idUsuario'
     ];
 
+    protected $casts = [
+        'idPartido' => 'integer',
+    ];
+
     public function votos()
     {
         return $this->hasMany(VotoCandidato::class, 'idCandidato');
