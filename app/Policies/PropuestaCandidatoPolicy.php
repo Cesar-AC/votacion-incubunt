@@ -49,25 +49,53 @@ class PropuestaCandidatoPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user): bool
+    public function update(User $user, PropuestaCandidato $propuestaCandidato): bool
     {
-        return ValidadorPermisos::usuarioTienePermisos($user, [
+        // Verificar permisos generales
+        $tienePermiso = ValidadorPermisos::usuarioTienePermisos($user, [
             'propuesta_candidato:crud:editar',
             'propuesta_candidato:crud:*',
             'propuesta_candidato:*'
         ]);
+
+        if (!$tienePermiso) {
+            return false;
+        }
+
+        // Verificar que el usuario sea el dueño de la propuesta
+        $candidato = \App\Models\Candidato::where('idUsuario', $user->idUser)->first();
+        
+        if (!$candidato) {
+            return false;
+        }
+
+        return $propuestaCandidato->idCandidato == $candidato->idCandidato;
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user): bool
+    public function delete(User $user, PropuestaCandidato $propuestaCandidato): bool
     {
-        return ValidadorPermisos::usuarioTienePermisos($user, [
+        // Verificar permisos generales
+        $tienePermiso = ValidadorPermisos::usuarioTienePermisos($user, [
             'propuesta_candidato:crud:eliminar',
             'propuesta_candidato:crud:*',
             'propuesta_candidato:*'
         ]);
+
+        if (!$tienePermiso) {
+            return false;
+        }
+
+        // Verificar que el usuario sea el dueño de la propuesta
+        $candidato = \App\Models\Candidato::where('idUsuario', $user->idUser)->first();
+        
+        if (!$candidato) {
+            return false;
+        }
+
+        return $propuestaCandidato->idCandidato == $candidato->idCandidato;
     }
 
     /**

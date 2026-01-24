@@ -220,10 +220,40 @@
                             <i class="fas fa-user mr-3" style="color: #161349; font-size: 1.1rem;"></i>
                             <span>Mi Perfil</span>
                         </a>
-                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center py-3 px-4 border-0 menu-item">
-                            <i class="fas fa-cog mr-3" style="color: #161349; font-size: 1.1rem;"></i>
-                            <span>Configuración</span>
-                        </a>
+
+                        @php
+                            $esCandidato = Auth::check() && \App\Models\Candidato::where('idUsuario', Auth::id())->exists();
+                            $puedeGestionarPropuestas = Auth::check() && (
+                                Auth::user()->can('viewAny', \App\Models\PropuestaPartido::class) ||
+                                Auth::user()->can('viewAny', \App\Models\PropuestaCandidato::class)
+                            );
+                        @endphp
+
+                        @if($esCandidato && $puedeGestionarPropuestas)
+                            <!-- Sección Propuestas (solo para candidatos con permisos) -->
+                            <div class="list-group-item bg-light font-weight-bold text-uppercase small px-3 py-2" 
+                                 style="color: #161349; background-color: #f8f9fa !important;">
+                                <i class="fas fa-lightbulb mr-2"></i>Mis Propuestas
+                            </div>
+                            
+                            @can('viewAny', \App\Models\PropuestaPartido::class)
+                            <a href="{{ route('votante.propuestas_partido.index') }}" 
+                               class="list-group-item list-group-item-action d-flex align-items-center py-3 px-4 border-0 menu-item"
+                               data-dismiss="modal">
+                                <i class="fas fa-flag-checkered mr-3" style="color: #161349; font-size: 1.1rem;"></i>
+                                <span>Propuestas de Partido</span>
+                            </a>
+                            @endcan
+
+                            @can('viewAny', \App\Models\PropuestaCandidato::class)
+                            <a href="{{ route('votante.propuestas_candidato.index') }}" 
+                               class="list-group-item list-group-item-action d-flex align-items-center py-3 px-4 border-0 menu-item"
+                               data-dismiss="modal">
+                                <i class="fas fa-user-check mr-3" style="color: #161349; font-size: 1.1rem;"></i>
+                                <span>Mis Propuestas Personales</span>
+                            </a>
+                            @endcan
+                        @endif
                     @endif
 
                     <!-- Cerrar Sesión -->

@@ -54,6 +54,26 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
             Route::post('/{eleccionId}/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
         });
+
+        // Gestión de Propuestas de Partido
+        Route::prefix('mis-propuestas-partido')->name('propuestas_partido.')->group(function () {
+            Route::get('/', [VotanteController::class, 'misPropuestasPartido'])->name('index');
+            Route::get('/crear', [VotanteController::class, 'crearPropuestaPartido'])->name('crear');
+            Route::post('/crear', [VotanteController::class, 'guardarPropuestaPartido'])->name('guardar');
+            Route::get('/{id}/editar', [VotanteController::class, 'editarPropuestaPartido'])->name('editar');
+            Route::put('/{id}', [VotanteController::class, 'actualizarPropuestaPartido'])->name('actualizar');
+            Route::delete('/{id}', [VotanteController::class, 'eliminarPropuestaPartido'])->name('eliminar');
+        });
+
+        // Gestión de Propuestas de Candidato
+        Route::prefix('mis-propuestas-candidato')->name('propuestas_candidato.')->group(function () {
+            Route::get('/', [VotanteController::class, 'misPropuestasCandidato'])->name('index');
+            Route::get('/crear', [VotanteController::class, 'crearPropuestaCandidato'])->name('crear');
+            Route::post('/crear', [VotanteController::class, 'guardarPropuestaCandidato'])->name('guardar');
+            Route::get('/{id}/editar', [VotanteController::class, 'editarPropuestaCandidato'])->name('editar');
+            Route::put('/{id}', [VotanteController::class, 'actualizarPropuestaCandidato'])->name('actualizar');
+            Route::delete('/{id}', [VotanteController::class, 'eliminarPropuestaCandidato'])->name('eliminar');
+        });
     });
 });
 // Area
