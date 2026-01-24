@@ -1,5 +1,17 @@
 @php
     $isAdmin = Auth::check() && Auth::user()->roles->where('rol', 'administrador')->count() > 0;
+    
+    // Verificar permisos de propuestas
+    $permisoService = app(\App\Interfaces\Services\IPermisoService::class);
+    $permisoCandidato = $permisoService->permisoDesdeEnum(\App\Enum\Permiso::PROPUESTA_CANDIDATO_CRUD);
+    $permisoPartido = $permisoService->permisoDesdeEnum(\App\Enum\Permiso::PROPUESTA_PARTIDO_CRUD);
+    
+    $tienePropuestaCandidato = Auth::check() && $permisoService->comprobarUsuario(Auth::user(), $permisoCandidato);
+    $tienePropuestaPartido = Auth::check() && $permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+    $puedeGestionarPropuestas = $tienePropuestaCandidato || $tienePropuestaPartido;
+    
+    // Verificar si es candidato
+    $esCandidato = Auth::check() && \App\Models\Candidato::where('idUsuario', Auth::id())->exists();
 @endphp
 
 <!-- Bottom Navigation (visible en todas las pantallas) -->
@@ -221,14 +233,6 @@
                             <span>Mi Perfil</span>
                         </a>
 
-                        @php
-                            $esCandidato = Auth::check() && \App\Models\Candidato::where('idUsuario', Auth::id())->exists();
-                            $puedeGestionarPropuestas = Auth::check() && (
-                                Auth::user()->can('viewAny', \App\Models\PropuestaPartido::class) ||
-                                Auth::user()->can('viewAny', \App\Models\PropuestaCandidato::class)
-                            );
-                        @endphp
-
                         @if($esCandidato && $puedeGestionarPropuestas)
                             <!-- Sección Propuestas (solo para candidatos con permisos) -->
                             <div class="list-group-item bg-light font-weight-bold text-uppercase small px-3 py-2" 
@@ -236,23 +240,24 @@
                                 <i class="fas fa-lightbulb mr-2"></i>Mis Propuestas
                             </div>
                             
-                            @can('viewAny', \App\Models\PropuestaPartido::class)
+                            @if($tienePropuestaPartido)
                             <a href="{{ route('votante.propuestas_partido.index') }}" 
                                class="list-group-item list-group-item-action d-flex align-items-center py-3 px-4 border-0 menu-item"
                                data-dismiss="modal">
                                 <i class="fas fa-flag-checkered mr-3" style="color: #161349; font-size: 1.1rem;"></i>
                                 <span>Propuestas de Partido</span>
                             </a>
-                            @endcan
+                            @endif
 
-                            @can('viewAny', \App\Models\PropuestaCandidato::class)
+                            @if($tienePropuestaCandidato)
                             <a href="{{ route('votante.propuestas_candidato.index') }}" 
                                class="list-group-item list-group-item-action d-flex align-items-center py-3 px-4 border-0 menu-item"
                                data-dismiss="modal">
                                 <i class="fas fa-user-check mr-3" style="color: #161349; font-size: 1.1rem;"></i>
                                 <span>Mis Propuestas Personales</span>
                             </a>
-                            @endcan
+                            </a>
+                            @endif
                         @endif
                     @endif
 

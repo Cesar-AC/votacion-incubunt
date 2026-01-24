@@ -13,9 +13,17 @@ use App\Models\Area;
 use App\Models\Candidato;
 use App\Models\PropuestaPartido;
 use App\Models\PropuestaCandidato;
+use App\Interfaces\Services\IPermisoService;
+use App\Enum\Permiso as PermisoEnum;
 
 class VotanteController extends Controller
 {
+    protected $permisoService;
+
+    public function __construct(IPermisoService $permisoService)
+    {
+        $this->permisoService = $permisoService;
+    }
     /**
      * Página principal del votante
      */
@@ -322,8 +330,14 @@ class VotanteController extends Controller
      */
     public function misPropuestasPartido()
     {
-        // Verificar que el usuario tenga permiso
-        if (!Auth::user()->can('viewAny', PropuestaPartido::class)) {
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
             abort(403, 'No tienes permiso para acceder a esta sección.');
         }
 
@@ -350,8 +364,14 @@ class VotanteController extends Controller
      */
     public function crearPropuestaPartido()
     {
-        // Verificar que el usuario tenga permiso
-        if (!Auth::user()->can('create', PropuestaPartido::class)) {
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
             abort(403, 'No tienes permiso para crear propuestas de partido.');
         }
 
@@ -373,9 +393,15 @@ class VotanteController extends Controller
      */
     public function guardarPropuestaPartido(Request $request)
     {
-        // Verificar que el usuario tenga permiso
-        if (!Auth::user()->can('create', PropuestaPartido::class)) {
-            abort(403, 'No tienes permiso para crear propuestas de partido.');
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tiene permisos para guardar propuestas de partido.');
         }
 
         // Verificar que pertenezca a un partido
@@ -413,9 +439,15 @@ class VotanteController extends Controller
     {
         $propuesta = PropuestaPartido::findOrFail($id);
 
-        // Verificar que el usuario tenga permiso
-        if (!Auth::user()->can('update', $propuesta)) {
-            abort(403, 'No tienes permiso para editar esta propuesta.');
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tiene permisos para editar propuestas de partido.');
         }
 
         // Verificar que la propuesta pertenezca al partido del usuario
@@ -437,9 +469,15 @@ class VotanteController extends Controller
     {
         $propuesta = PropuestaPartido::findOrFail($id);
 
-        // Verificar que el usuario tenga permiso
-        if (!Auth::user()->can('update', $propuesta)) {
-            abort(403, 'No tienes permiso para editar esta propuesta.');
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tiene permisos para actualizar propuestas de partido.');
         }
 
         // Verificar que la propuesta pertenezca al partido del usuario
@@ -477,9 +515,15 @@ class VotanteController extends Controller
     {
         $propuesta = PropuestaPartido::findOrFail($id);
 
-        // Verificar que el usuario tenga permiso
-        if (!Auth::user()->can('delete', $propuesta)) {
-            abort(403, 'No tienes permiso para eliminar esta propuesta.');
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tiene permisos para eliminar propuestas de partido.');
         }
 
         // Verificar que la propuesta pertenezca al partido del usuario
@@ -508,9 +552,15 @@ class VotanteController extends Controller
      */
     public function misPropuestasCandidato()
     {
-        // Verificar que el usuario tenga permiso
-        if (!Auth::user()->can('viewAny', PropuestaCandidato::class)) {
-            abort(403, 'No tienes permiso para acceder a esta sección.');
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tiene permisos para gestionar propuestas de candidato.');
         }
 
         // Verificar si el usuario es candidato en alguna elección
