@@ -10,7 +10,7 @@
   @else
 
   <!-- Header -->
-  <form method="POST" action="{{ route('crud.partido.update', $partido->idPartido) }}">
+  <form method="POST" action="{{ route('crud.partido.editar', $partido->idPartido) }}">
     @csrf
     @method('PUT')
 
@@ -60,6 +60,17 @@
           @enderror
         </div>
 
+        <!-- Plan de Trabajo -->
+        <div class="form-group mt-3">
+          <label class="small font-weight-bold">Plan de Trabajo (opcional)</label>
+          <textarea name="planTrabajo"
+                    class="form-control @error('planTrabajo') is-invalid @enderror"
+                    rows="4">{{ old('planTrabajo', $partido->planTrabajo) }}</textarea>
+          @error('planTrabajo')
+            <div class="invalid-feedback">{{ $message }}</div>
+          @enderror
+        </div>
+
         <!-- Tipo -->
         <div class="form-group">
           <label class="small font-weight-bold">Tipo de Partido</label>
@@ -75,6 +86,24 @@
             </option>
           </select>
           @error('tipo')
+            <div class="invalid-feedback">{{ $message }}</div>
+          @enderror
+        </div>
+
+        <!-- Elecciones -->
+        <div class="form-group">
+          <label class="small font-weight-bold">Elecciones asociadas</label>
+          <select name="elecciones[]" multiple
+                  class="form-control @error('elecciones') is-invalid @enderror" required>
+            @php $seleccionadas = $partido->elecciones->pluck('idElecciones')->toArray(); @endphp
+            @foreach($elecciones as $eleccion)
+              <option value="{{ $eleccion->idElecciones }}"
+                {{ in_array($eleccion->idElecciones, old('elecciones', $seleccionadas)) ? 'selected' : '' }}>
+                {{ $eleccion->titulo }}
+              </option>
+            @endforeach
+          </select>
+          @error('elecciones')
             <div class="invalid-feedback">{{ $message }}</div>
           @enderror
         </div>
