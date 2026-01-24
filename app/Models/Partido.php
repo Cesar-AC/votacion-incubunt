@@ -24,7 +24,8 @@ class Partido extends Model implements IElegibleAVoto
         'partido',
         'urlPartido',
         'descripcion',
-        'tipo'
+        'tipo',
+        'planTrabajo'
     ];
 
     public function votos()

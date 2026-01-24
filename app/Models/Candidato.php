@@ -23,7 +23,8 @@ class Candidato extends Model implements IElegibleAVoto
         'idCandidato',
         'idPartido',
         'idCargo',
-        'idUsuario'
+        'idUsuario',
+        'planTrabajo'
     ];
 
     protected $casts = [
