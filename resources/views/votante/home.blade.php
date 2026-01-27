@@ -18,24 +18,24 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 10px 30px rgba(124, 58, 237, 0.1);
+        box-shadow: 0 10px 30px rgba(30, 58, 138, 0.15);
         position: relative;
     }
     
     .voter-card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 20px 40px rgba(124, 58, 237, 0.2);
+        box-shadow: 0 20px 40px rgba(30, 58, 138, 0.25);
     }
 
     .card-vote {
-        background: linear-gradient(145deg, #1e1b4b 0%, #4c1d95 100%);
+        background: linear-gradient(145deg, #1e3a8a 0%, #1e40af 100%);
         color: white;
     }
     
     .card-proposals {
         background: #ffffff;
-        color: #1e1b4b;
-        border: 1px solid rgba(124, 58, 237, 0.1);
+        color: #1e3a8a;
+        border: 2px solid #dbeafe;
     }
 
     .card-voter-body {
@@ -60,12 +60,12 @@
     }
 
     .card-vote .voter-icon-box {
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     }
 
     .card-proposals .voter-icon-box {
-        background-color: #f5f3ff;
-        border: 1px solid #ddd6fe;
+        background-color: #eff6ff;
+        border: 2px solid #bfdbfe;
     }
 
     .voter-icon-box i {
@@ -73,7 +73,7 @@
     }
 
     .card-vote .voter-icon-box i { color: white; }
-    .card-proposals .voter-icon-box i { color: #7c3aed; }
+    .card-proposals .voter-icon-box i { color: #1e40af; }
 
     .voter-card h2 {
         font-weight: 800;
@@ -83,7 +83,7 @@
     }
 
     .brand-text-sm {
-        color: #a78bfa;
+        color: #93c5fd;
         font-weight: 700;
         font-size: 1.3rem;
         display: block;
@@ -96,11 +96,10 @@
         line-height: 1.6;
         margin-bottom: 40px;
         max-width: 320px;
-        opacity: 0.9;
     }
 
-    .card-vote p { color: #c4b5fd; }
-    .card-proposals p { color: #6b7280; }
+    .card-vote p { color: #dbeafe; }
+    .card-proposals p { color: #4b5563; }
 
     .btn-voter {
         padding: 16px 50px;
@@ -117,28 +116,33 @@
         text-align: center;
     }
 
+    .btn-voter:focus {
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+    }
+
     .btn-voter-light {
         background-color: #ffffff;
-        color: #5b21b6;
+        color: #1e3a8a;
         border: 2px solid transparent;
         box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     }
 
     .btn-voter-light:hover {
-        background-color: #7c3aed;
+        background-color: #3b82f6;
         color: #ffffff;
         transform: scale(1.05);
-        border-color: #7c3aed;
+        border-color: #3b82f6;
     }
 
     .btn-voter-outline {
         background-color: transparent;
-        color: #7c3aed;
-        border: 2px solid #7c3aed;
+        color: #1e40af;
+        border: 2px solid #1e40af;
     }
 
     .btn-voter-outline:hover {
-        background-color: #7c3aed;
+        background-color: #1e40af;
         color: white;
         transform: scale(1.05);
     }
@@ -147,7 +151,7 @@
         position: absolute;
         top: 20px;
         right: 20px;
-        padding: 8px 16px;
+        padding: 10px 18px;
         border-radius: 20px;
         font-size: 0.85rem;
         font-weight: 700;
@@ -156,24 +160,25 @@
     }
 
     .badge-active {
-        background-color: rgba(16, 185, 129, 0.2);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.3);
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 2px solid #10b981;
     }
 
     .badge-inactive {
-        background-color: rgba(239, 68, 68, 0.2);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.3);
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 2px solid #ef4444;
     }
 
     .no-elections-message {
         font-size: 0.9rem;
         margin-top: 10px;
         padding: 12px 20px;
-        background-color: rgba(239, 68, 68, 0.1);
+        background-color: #fef2f2;
         border-radius: 10px;
-        color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
     }
 
     @media (max-width: 991px) {
@@ -226,7 +231,6 @@
                         
                         @if(isset($eleccionActiva) && $eleccionActiva)
                             <p>Ejerce tu derecho y elige a los líderes que guiarán nuestra organización.</p>
-                            {{-- CORREGIDO: Usar el campo correcto de ID --}}
                             <a href="{{ route('votante.votar.lista', $eleccionActiva->id) }}" 
                                class="btn btn-voter btn-voter-light">
                                 Votar Ahora
@@ -279,3 +283,7 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+@endpush
