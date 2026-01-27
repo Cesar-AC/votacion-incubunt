@@ -2,20 +2,22 @@
 
 namespace App\Models;
 
+use App\Models\Enum\TablasVoto;
 use Illuminate\Database\Eloquent\Model;
 
-class Voto extends Model
+class VotoCandidato extends Model
 {
-    protected $table = 'Voto';
+    protected $table = TablasVoto::CANDIDATO->value;
 
-    protected $primaryKey = 'idVoto';
+    protected $primaryKey = 'idVotoCandidato';
 
     public $timestamps = false;
 
     protected $fillable = [
-        'idVoto',
+        'idVotoCandidato',
         'idCandidato',
-        'idElecciones'
+        'idElecciones',
+        'idTipoVoto'
     ];
 
     public function candidato()
@@ -26,5 +28,10 @@ class Voto extends Model
     public function eleccion()
     {
         return $this->belongsTo(Elecciones::class, 'idElecciones');
+    }
+
+    public function tipoVoto()
+    {
+        return $this->belongsTo(TipoVoto::class, 'idTipoVoto');
     }
 }

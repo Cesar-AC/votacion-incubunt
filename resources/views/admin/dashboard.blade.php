@@ -22,9 +22,9 @@
         <div class="card-body text-center">
           <i class="fas fa-th-large fa-2x text-primary mb-3"></i>
           <h6 class="font-weight-bold">Procesos Electorales Activos</h6>
-          <p class="text-muted small mb-3">
-            No hay votaciones disponibles en este momento
-          </p>
+            <p class="text-muted small mb-3">
+              {{ $stats['elecciones_activas'] ?? 0 }} procesos electorales activos
+            </p>
           <a href="{{ route('crud.elecciones.crear') }}" class="btn btn-primary btn-sm">
             Crear Proceso Electoral
           </a>
@@ -39,7 +39,7 @@
           <i class="fas fa-th-large fa-2x text-info mb-3"></i>
           <h6 class="font-weight-bold">Patrones Electorales</h6>
           <p class="text-muted small mb-3">
-            No hay padrones electorales disponibles
+            {{ $stats['padrones'] ?? 0 }} padrones electorales
           </p>
           <a href="{{ route('crud.padron_electoral.crear') }}" class="btn btn-info btn-sm">
             Crear Patrón Electoral
@@ -55,7 +55,7 @@
           <i class="fas fa-users fa-2x text-warning mb-3"></i>
           <h6 class="font-weight-bold">Usuarios Registrados</h6>
           <p class="text-muted small mb-3">
-            No hay usuarios disponibles
+            {{ $stats['usuarios'] ?? 0 }} usuarios registrados
           </p>
           <a href="{{ route('crud.user.crear') }}" class="btn btn-warning btn-sm text-white">
             Crear Usuario
@@ -71,7 +71,7 @@
           <i class="fas fa-user-shield fa-2x text-success mb-3"></i>
           <h6 class="font-weight-bold">Administradores Registrados</h6>
           <p class="text-muted small mb-3">
-            Hay 2 administradores disponibles
+            {{ $stats['admins'] ?? 0 }} administradores
           </p>
           <a href="{{ route('crud.user.crear') }}" class="btn btn-success btn-sm">
             Crear Administrador
@@ -91,15 +91,44 @@
 
     <div class="card-body">
 
-      <p class="mb-2"><strong>Elección:</strong> Consejo Universitario 2025</p>
-      <p class="mb-4 text-muted"><strong>Estado actual:</strong> Jornada de votación en curso</p>
+      @if(isset($recentEleccion) && $recentEleccion)
+        <p class="mb-2"><strong>Elección:</strong> {{ $recentEleccion->nombre ?? $recentEleccion->titulo ?? 'Elección reciente' }}</p>
+        <p class="mb-4 text-muted"><strong>Estado actual:</strong>
+          @if(method_exists($recentEleccion, 'estaActivo') && $recentEleccion->estaActivo())
+            Jornada de votación en curso
+          @else
+            {{ $recentEleccion->estado ?? 'No activa' }}
+          @endif
+        </p>
 
-      <!-- Barra de progreso -->
-      <div class="progress mb-4" style="height: 20px;">
-        <div class="progress-bar bg-primary" style="width: 60%;">
-          60% completado
+        @php
+          $votes = null;
+          $padronCount = null;
+          if (method_exists($recentEleccion, 'votos')) {
+              try { $votes = $recentEleccion->votos()->count(); } catch (\Throwable $e) { $votes = null; }
+          }
+          if (method_exists($recentEleccion, 'padronElectoral')) {
+              try { $padronCount = $recentEleccion->padronElectoral()->count(); } catch (\Throwable $e) { $padronCount = null; }
+          }
+          $progress = null;
+          if ($votes !== null && $padronCount && $padronCount > 0) {
+              $progress = round(($votes / $padronCount) * 100);
+          }
+        @endphp
+
+        <!-- Barra de progreso -->
+        <div class="progress mb-4" style="height: 20px;">
+          <div class="progress-bar bg-primary" style="width: {{ $progress ?? 0 }}%;">
+            {{ $progress !== null ? $progress.'% completado' : 'Sin datos de progreso' }}
+          </div>
         </div>
-      </div>
+      @else
+        <p class="mb-2"><strong>Elección:</strong> No hay elecciones registradas</p>
+        <p class="mb-4 text-muted"><strong>Estado actual:</strong> N/A</p>
+        <div class="progress mb-4" style="height: 20px;">
+          <div class="progress-bar bg-primary" style="width: 0%;">0% completado</div>
+        </div>
+      @endif
 
       <!-- Estados -->
       <div class="row text-center">

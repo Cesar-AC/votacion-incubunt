@@ -2,10 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Enum\TablasVoto;
+use App\Models\Interfaces\IElegibleAVoto;
+use App\Models\Traits\ElegibleAVoto;
 use Illuminate\Database\Eloquent\Model;
 
-class Candidato extends Model
+class Candidato extends Model implements IElegibleAVoto
 {
+    use ElegibleAVoto;
+
+    protected $tablaVoto = TablasVoto::CANDIDATO->value;
+
     protected $table = 'Candidato';
 
     protected $primaryKey = 'idCandidato';
@@ -16,8 +23,18 @@ class Candidato extends Model
         'idCandidato',
         'idPartido',
         'idCargo',
-        'idUsuario'
+        'idUsuario',
+        'planTrabajo'
     ];
+
+    protected $casts = [
+        'idPartido' => 'integer',
+    ];
+
+    public function votos()
+    {
+        return $this->hasMany(VotoCandidato::class, 'idCandidato');
+    }
 
     public function usuario()
     {
@@ -39,13 +56,15 @@ class Candidato extends Model
         return $this->hasMany(PropuestaCandidato::class, 'idCandidato');
     }
 
-    public function votos()
-    {
-        return $this->hasMany(Voto::class, 'idCandidato');
-    }
-
     public function elecciones()
     {
         return $this->belongsToMany(Elecciones::class, 'CandidatoEleccion', 'idCandidato', 'idElecciones');
+    }
+
+    public function obtenerTipoVoto(User $votante): TipoVoto
+    {
+        return $this->usuario->perfil->area->getKey() == $votante->perfil->area->getKey()
+            ? TipoVoto::mismaArea()
+            : TipoVoto::otraArea();
     }
 }

@@ -72,6 +72,11 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label for="planTrabajoIndividual">Plan de Trabajo</label>
+                        <textarea class="form-control" id="planTrabajoIndividual" rows="3" placeholder="Ingrese el plan de trabajo (opcional)"></textarea>
+                    </div>
                 </div>
 
                 {{-- Sección Grupal --}}
@@ -119,6 +124,11 @@
 </select>
 
                     </div>
+
+                    <div class="form-group">
+                        <label for="planTrabajoGrupal">Plan de Trabajo</label>
+                        <textarea class="form-control" id="planTrabajoGrupal" rows="3" placeholder="Ingrese el plan de trabajo (opcional)"></textarea>
+                    </div>
                 </div>
 
                 <button type="button" class="btn btn-info mt-3" id="agregarCandidatoTemp">
@@ -139,6 +149,7 @@
                         <th>Usuario</th>
                         <th>Partido / Rol</th>
                         <th>Cargo</th>
+                        <th>Plan Trabajo</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -199,6 +210,7 @@ document.getElementById('agregarCandidatoTemp').addEventListener('click', functi
 
         const usuario = document.getElementById('usuarioIndividual');
         const cargo = document.getElementById('cargoIndividual');
+        const planTrabajo = document.getElementById('planTrabajoIndividual').value;
 
         if (!usuario.value || !cargo.value) {
             alert('Seleccione usuario y cargo');
@@ -211,7 +223,8 @@ document.getElementById('agregarCandidatoTemp').addEventListener('click', functi
             usuarioTexto: usuario.options[usuario.selectedIndex].text,
             idCargo: cargo.value,
             cargoTexto: cargo.options[cargo.selectedIndex].text,
-            partidoTexto: '—'
+            partidoTexto: '—',
+            planTrabajo: planTrabajo || '—'
         });
 
         renderTabla();
@@ -223,6 +236,7 @@ document.getElementById('agregarCandidatoTemp').addEventListener('click', functi
 
         const partido = document.getElementById('partido');
         const cargo = document.getElementById('cargoGrupal');
+        const planTrabajo = document.getElementById('planTrabajoGrupal').value;
         const usuariosChecked = Array.from(usuarioGrupalCheckboxes).filter(c => c.checked);
 
         if (!partido.value || !cargo.value || usuariosChecked.length === 0) {
@@ -240,7 +254,8 @@ document.getElementById('agregarCandidatoTemp').addEventListener('click', functi
                 idCargo: cargo.value,
                 cargoTexto: cargo.options[cargo.selectedIndex].text,
                 idPartido: partido.value,
-                partidoTexto: partido.options[partido.selectedIndex].text
+                partidoTexto: partido.options[partido.selectedIndex].text,
+                planTrabajo: planTrabajo || '—'
             });
         });
 
@@ -261,6 +276,7 @@ function renderTabla() {
             <td>${c.usuarioTexto}</td>
             <td>${c.partidoTexto}</td>
             <td>${c.cargoTexto}</td>
+            <td><small>${c.planTrabajo}</small></td>
             <td>
                 <button type="button" class="btn btn-sm btn-danger" onclick="eliminarTemp(${i})">
                     <i class="fas fa-trash"></i>
@@ -285,10 +301,10 @@ function eliminarTemp(index) {
 document.getElementById('guardarTodos').addEventListener('click', function () {
 
     const eleccionSelect = document.getElementById('eleccion');
-const idEleccion = eleccionSelect.value;
+    const idEleccion = eleccionSelect.value;
 
 
-    if (!eleccion.value) {
+    if (!idEleccion) {
         alert('Seleccione elección');
         return;
     }
@@ -311,6 +327,7 @@ const idEleccion = eleccionSelect.value;
         form.innerHTML += `<input type="hidden" name="candidatos[${i}][tipo]" value="${c.tipo}">`;
         form.innerHTML += `<input type="hidden" name="candidatos[${i}][idUsuario]" value="${c.idUsuario}">`;
         form.innerHTML += `<input type="hidden" name="candidatos[${i}][idCargo]" value="${c.idCargo}">`;
+        form.innerHTML += `<input type="hidden" name="candidatos[${i}][planTrabajo]" value="${c.planTrabajo === '—' ? '' : c.planTrabajo}">`;
 
         if (c.idPartido) {
             form.innerHTML += `<input type="hidden" name="candidatos[${i}][idPartido]" value="${c.idPartido}">`;

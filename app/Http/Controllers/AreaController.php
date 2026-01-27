@@ -28,14 +28,9 @@ class AreaController extends Controller
         $area = new Area($data);
         $area->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Área creada correctamente',
-            'data' => [
-                'id' => $area->getKey(),
-                'area' => $area->area,
-            ],
-        ], Response::HTTP_CREATED);
+        return redirect()
+            ->route('crud.area.ver')
+            ->with('success', 'Área creada correctamente');
     }
 
     public function show($id)
@@ -67,14 +62,9 @@ class AreaController extends Controller
 
         $area->update($data);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Área actualizada correctamente',
-            'data' => [
-                'id' => $area->getKey(),
-                'area' => $area->area,
-            ],
-        ]);
+        return redirect()
+            ->route('crud.area.ver')
+            ->with('success', 'Área actualizada correctamente');
     }
 
     public function destroy($id)

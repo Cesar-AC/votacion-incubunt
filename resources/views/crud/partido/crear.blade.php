@@ -63,6 +63,15 @@
           @error('descripcion')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 
+        <!-- Plan de Trabajo -->
+        <div class="form-group mt-3">
+          <label class="small font-weight-bold">Plan de Trabajo (opcional)</label>
+          <textarea name="planTrabajo"
+                    class="form-control @error('planTrabajo') is-invalid @enderror"
+                    rows="4">{{ old('planTrabajo') }}</textarea>
+          @error('planTrabajo')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+
       </div>
     </div>
   </form>

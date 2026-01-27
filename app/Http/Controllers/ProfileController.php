@@ -12,6 +12,18 @@ use Illuminate\View\View;
 class ProfileController extends Controller
 {
     /**
+     * Display the user's profile (read-only).
+     */
+    public function show(Request $request): View
+    {
+        $user = $request->user();
+        $user->load(['perfil.carrera', 'perfil.area', 'roles', 'estadoUsuario']);
+        
+       
+        return view('profile.show', compact('user'));
+    }
+
+    /**
      * Display the user's profile form.
      */
     public function edit(Request $request): View

@@ -66,15 +66,9 @@ class CargoController extends Controller
             'idArea' => 'required|integer',
         ]);
         $c->update($data);
-        return response()->json([
-            'success' => true,
-            'message' => 'Cargo actualizado',
-            'data' => [
-                'id' => $c->getKey(),
-                'cargo' => $c->cargo,
-                'idArea' => $c->idArea,
-            ],
-        ]);
+        return redirect()
+            ->route('crud.cargo.ver')
+            ->with('success', 'Cargo actualizado correctamente');
     }
 
     public function destroy($id)

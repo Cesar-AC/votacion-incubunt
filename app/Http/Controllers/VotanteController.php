@@ -8,121 +8,134 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\Voto;
+use App\Models\Partido;
+use App\Models\Area;
+use App\Models\Candidato;
+use App\Models\PropuestaPartido;
+use App\Models\PropuestaCandidato;
+use App\Interfaces\Services\IPermisoService;
+use App\Enum\Permiso as PermisoEnum;
 
 class VotanteController extends Controller
 {
+    protected $permisoService;
+
+    public function __construct(IPermisoService $permisoService)
+    {
+        $this->permisoService = $permisoService;
+    }
     /**
-     * Página principal del votante - CON DATOS DE PRUEBA
+     * Página principal del votante
      */
     public function home()
     {
-        // Datos estáticos de prueba
-        $eleccionActiva = (object)[
-            'id' => 1,
-            'nombreEleccion' => 'Elecciones Estudiantiles 2026',
-            'descripcion' => 'Elecciones para renovar el Consejo Estudiantil',
-            'fechaInicio' => now()->subDays(2),
-            'fechaFin' => now()->addDays(5),
-            'estadoEleccionesId' => 1
-        ];
+        // Obtener elección activa (estado 1 o donde la fecha sea vigente)
+        // Asumiendo estado 1 = Activa. Campo correcto: idEstado
+        $eleccionActiva = Elecciones::where('idEstado', 1) 
+            ->orWhere(function($q) {
+                $q->where('fechaInicio', '<=', now())
+                  ->where('fechaCierre', '>=', now());
+            })
+            ->first();
         
-        $totalElecciones = 3;
+        $totalElecciones = Elecciones::count();
         
         return view('votante.home', compact('eleccionActiva', 'totalElecciones'));
     }
 
     /**
-     * Lista todas las elecciones - CON DATOS DE PRUEBA
+     * Ver propuestas (Candidatos y Partidos)
+     */
+    public function propuestas()
+    {
+        // Solo permitir si el usuario tiene permisos de propuestas (partido o candidato)
+        if (!Auth::user()->can('viewAny', \App\Models\PropuestaPartido::class)
+            && !Auth::user()->can('viewAny', \App\Models\PropuestaCandidato::class)) {
+            abort(403, 'No tienes permiso para ver propuestas.');
+        }
+
+        // Obtener la elección activa
+        $eleccionActiva = Elecciones::where('idEstado', 1) 
+            ->orWhere(function($q) {
+                $q->where('fechaInicio', '<=', now())
+                  ->where('fechaCierre', '>=', now());
+            })
+            ->first();
+
+        if (!$eleccionActiva) {
+            return view('votante.propuestas.index', [
+                'partidos' => collect([]), 
+                'areas' => collect([]),
+                'eleccion' => null
+            ]);
+        }
+        
+        // Obtener Partidos que tienen candidatos en esta elección
+        // Relación implícita por candidatos que están en la elección via tablas pivote o relaciones directas
+        // Partido belongsToMany Elecciones en modelo Partido
+        $partidos = Partido::whereHas('elecciones', function($q) use ($eleccionActiva) {
+                $q->where('Elecciones.idElecciones', $eleccionActiva->idElecciones);
+            })
+            ->with(['candidatos' => function($q) use ($eleccionActiva) {
+                 // Filtrar candidatos de este partido que están en esta elección
+                 // Candidato belongsTo Partido, Candidato belongsToMany Elecciones
+                 $q->whereHas('elecciones', function($sq) use ($eleccionActiva) {
+                     $sq->where('Elecciones.idElecciones', $eleccionActiva->idElecciones);
+                 })->with(['usuario.perfil.carrera', 'cargo', 'propuestas']);
+            }, 'propuestas'])
+            ->get();
+
+        // Obtener Áreas
+         $areas = Area::with(['cargos' => function($qCargo) use ($eleccionActiva) {
+             // Cargas cargos
+             $qCargo->whereHas('candidatos', function($qCand) use ($eleccionActiva) {
+                 // Filtrar cargos que tienen candidatos en esta elección
+                 $qCand->whereHas('elecciones', function($sq) use ($eleccionActiva) {
+                     $sq->where('Elecciones.idElecciones', $eleccionActiva->idElecciones);
+                 });
+             })->with(['candidatos' => function($qCand) use ($eleccionActiva) {
+                 // Traer los candidatos de ese cargo en esa elección
+                 $qCand->whereHas('elecciones', function($sq) use ($eleccionActiva) {
+                     $sq->where('Elecciones.idElecciones', $eleccionActiva->idElecciones);
+                 })->with(['usuario.perfil.carrera', 'propuestas']);
+             }]);
+        }])->get();
+
+        return view('votante.propuestas.index', compact('eleccionActiva', 'partidos', 'areas'));
+    }
+
+    /**
+     * Lista todas las elecciones
      */
     public function listarElecciones()
     {
-        // Crear datos de prueba
-        $elecciones = collect([
-            (object)[
-                'id' => 1,
-                'nombreEleccion' => 'Elecciones Estudiantiles 2026',
-                'descripcion' => 'Elecciones para renovar el Consejo Estudiantil',
-                'fechaInicio' => now()->subDays(2),
-                'fechaFin' => now()->addDays(5),
-                'estadoEleccionesId' => 1,
-                'estadoEleccion' => (object)['nombre' => 'Activo'],
-                'candidatos' => collect([
-                    (object)['id' => 1], (object)['id' => 2], (object)['id' => 3]
-                ])
-            ],
-            (object)[
-                'id' => 2,
-                'nombreEleccion' => 'Elecciones de Facultad 2026',
-                'descripcion' => 'Elecciones para delegados de facultad',
-                'fechaInicio' => now()->addDays(10),
-                'fechaFin' => now()->addDays(17),
-                'estadoEleccionesId' => 2,
-                'estadoEleccion' => (object)['nombre' => 'Programado'],
-                'candidatos' => collect([
-                    (object)['id' => 4], (object)['id' => 5]
-                ])
-            ]
-        ]);
-
-        // Simular paginación
-        $elecciones = new \Illuminate\Pagination\LengthAwarePaginator(
-            $elecciones,
-            $elecciones->count(),
-            10,
-            1,
-            ['path' => request()->url()]
-        );
-        
+        $elecciones = Elecciones::with('estadoEleccion')
+            ->orderBy('fechaInicio', 'desc')
+            ->paginate(9);
+            
         return view('votante.elecciones.index', compact('elecciones'));
     }
 
     /**
-     * Ver detalle de una elección - CON DATOS DE PRUEBA
+     * Ver detalle de una elección
      */
     public function verDetalleEleccion($id)
     {
-        $eleccion = (object)[
-            'id' => $id,
-            'nombreEleccion' => 'Elecciones Estudiantiles 2026',
-            'descripcion' => 'Elecciones para renovar el Consejo Estudiantil',
-            'fechaInicio' => now()->subDays(2),
-            'fechaFin' => now()->addDays(5),
-            'estadoEleccionesId' => 1,
-            'estadoEleccion' => (object)['nombre' => 'Activo']
-        ];
-
-        $candidatos = collect([
-            (object)[
-                'id' => 1,
-                'usuario' => (object)[
-                    'perfil' => (object)[
-                        'nombres' => 'Juan Carlos',
-                        'apellidoPaterno' => 'Pérez',
-                        'carrera' => (object)['nombreCarrera' => 'Ingeniería de Sistemas']
-                    ]
-                ],
-                'partido' => (object)['nombrePartido' => 'MEP'],
-                'cargo' => (object)['nombreCargo' => 'Presidente']
-            ]
-        ]);
-
-        $yaVoto = false;
-
-        // Cuando conectes con BD, descomentar:
-        /*
         $eleccion = Elecciones::with(['estadoEleccion', 'candidatos.usuario.perfil'])
             ->findOrFail($id);
         
-        $yaVoto = Voto::where('idPadronElectoral', function($query) use ($id) {
-            $query->select('id')
-                  ->from('padron_electoral')
-                  ->where('idUser', Auth::id())
-                  ->where('idEleccion', $id)
-                  ->limit(1);
-        })->exists();
+        // Verificar si el usuario ya votó en esta elección
+        // Primero obtener el registro del padrón electoral del usuario para esta elección
+        $padron = PadronElectoral::where('idUsuario', Auth::id())
+            ->where('idElecciones', $id)
+            ->first();
+            
+        $yaVoto = false;
+        if ($padron) {
+            $yaVoto = Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists();
+        }
         
         $candidatos = $eleccion->candidatos;
-        */
 
         return view('votante.elecciones.detalle', compact('eleccion', 'candidatos', 'yaVoto'));
     }
@@ -132,19 +145,17 @@ class VotanteController extends Controller
      */
     public function iniciarVotacion($eleccionId)
     {
-        // Cuando conectes con BD, descomentar:
-        /*
         $eleccion = Elecciones::findOrFail($eleccionId);
 
         // Verificar que la elección esté activa
-        if (!method_exists($eleccion, 'estaActivo') || !$eleccion->estaActivo()) {
+        if (!$eleccion->estaActivo()) {
             return redirect()->route('votante.elecciones')
                 ->with('error', 'Esta elección no está activa.');
         }
 
         // Verificar que el usuario esté en el padrón electoral
-        $padron = PadronElectoral::where('idUser', Auth::id())
-            ->where('idEleccion', $eleccionId)
+        $padron = PadronElectoral::where('idUsuario', Auth::id())
+            ->where('idElecciones', $eleccionId)
             ->first();
 
         if (!$padron) {
@@ -153,267 +164,32 @@ class VotanteController extends Controller
         }
 
         // Verificar si ya votó
-        $yaVoto = Voto::where('idPadronElectoral', $padron->id)->exists();
+        $yaVoto = Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists();
 
         if ($yaVoto) {
             return redirect()->route('votante.elecciones.detalle', $eleccionId)
                 ->with('info', 'Ya has emitido tu voto en esta elección.');
         }
-        */
 
         return redirect()->route('votante.votar.lista', $eleccionId);
     }
 
     /**
-     * Listar candidatos para votar - CON DATOS DE PRUEBA
+     * Listar candidatos para votar
      */
     public function listarCandidatos($eleccionId)
     {
-        // Elección de prueba
-        $eleccion = (object)[
-            'id' => $eleccionId,
-            'nombreEleccion' => 'Elecciones Estudiantiles 2026',
-            'descripcion' => 'Elecciones para renovar el Consejo Estudiantil del periodo 2026',
-            'fechaInicio' => now()->subDays(2),
-            'fechaFin' => now()->addDays(5),
-            'estadoEleccionesId' => 1
-        ];
-
-        // Cargos de prueba
-        $cargos = collect([
-            (object)[
-                'id' => 1,
-                'nombreCargo' => 'Presidente',
-                'descripcionCargo' => 'Presidente del Consejo Estudiantil'
-            ],
-            (object)[
-                'id' => 2,
-                'nombreCargo' => 'Vicepresidente',
-                'descripcionCargo' => 'Vicepresidente del Consejo Estudiantil'
-            ],
-            (object)[
-                'id' => 3,
-                'nombreCargo' => 'Secretario',
-                'descripcionCargo' => 'Secretario General'
-            ]
-        ]);
-
-        // Candidatos de prueba agrupados por cargo
-        $candidatosPorCargo = [
-            1 => collect([
-                (object)[
-                    'id' => 1,
-                    'cargoId' => 1,
-                    'partidoId' => 1,
-                    'biografia' => 'Estudiante comprometido con el cambio',
-                    'usuario' => (object)[
-                        'id' => 1,
-                        'email' => 'candidato1@ejemplo.com',
-                        'perfil' => (object)[
-                            'nombres' => 'Juan Carlos',
-                            'apellidoPaterno' => 'Pérez',
-                            'apellidoMaterno' => 'García',
-                            'fotoPerfil' => null,
-                            'telefono' => '987654321',
-                            'ciclo' => '8vo Ciclo',
-                            'carrera' => (object)['nombreCarrera' => 'Ingeniería de Sistemas']
-                        ]
-                    ],
-                    'partido' => (object)[
-                        'id' => 1,
-                        'nombrePartido' => 'Movimiento Estudiantil Progresista',
-                        'siglas' => 'MEP',
-                        'color1' => '#3B82F6',
-                        'color2' => '#1E40AF',
-                        'logo' => null
-                    ],
-                    'cargo' => (object)['nombreCargo' => 'Presidente'],
-                    'propuestas' => collect([
-                        (object)[
-                            'titulo' => 'Mejora de infraestructura',
-                            'descripcion' => 'Renovar las instalaciones deportivas y académicas'
-                        ],
-                        (object)[
-                            'titulo' => 'Becas estudiantiles',
-                            'descripcion' => 'Ampliar el programa de becas para estudiantes de bajos recursos'
-                        ]
-                    ])
-                ],
-                (object)[
-                    'id' => 2,
-                    'cargoId' => 1,
-                    'partidoId' => 2,
-                    'biografia' => 'Experiencia en liderazgo estudiantil',
-                    'usuario' => (object)[
-                        'id' => 2,
-                        'email' => 'candidato2@ejemplo.com',
-                        'perfil' => (object)[
-                            'nombres' => 'María Elena',
-                            'apellidoPaterno' => 'López',
-                            'apellidoMaterno' => 'Martínez',
-                            'fotoPerfil' => null,
-                            'telefono' => '987654322',
-                            'ciclo' => '7mo Ciclo',
-                            'carrera' => (object)['nombreCarrera' => 'Administración']
-                        ]
-                    ],
-                    'partido' => (object)[
-                        'id' => 2,
-                        'nombrePartido' => 'Frente Universitario Unido',
-                        'siglas' => 'FUU',
-                        'color1' => '#EF4444',
-                        'color2' => '#B91C1C',
-                        'logo' => null
-                    ],
-                    'cargo' => (object)['nombreCargo' => 'Presidente'],
-                    'propuestas' => collect([
-                        (object)[
-                            'titulo' => 'Digitalización universitaria',
-                            'descripcion' => 'Implementar plataformas digitales modernas'
-                        ]
-                    ])
-                ],
-                (object)[
-                    'id' => 3,
-                    'cargoId' => 1,
-                    'partidoId' => 3,
-                    'biografia' => 'Comprometido con la transparencia',
-                    'usuario' => (object)[
-                        'id' => 3,
-                        'email' => 'candidato3@ejemplo.com',
-                        'perfil' => (object)[
-                            'nombres' => 'Roberto',
-                            'apellidoPaterno' => 'Sánchez',
-                            'apellidoMaterno' => 'Torres',
-                            'fotoPerfil' => null,
-                            'telefono' => '987654323',
-                            'ciclo' => '9no Ciclo',
-                            'carrera' => (object)['nombreCarrera' => 'Derecho']
-                        ]
-                    ],
-                    'partido' => (object)[
-                        'id' => 3,
-                        'nombrePartido' => 'Alianza Estudiantil',
-                        'siglas' => 'AE',
-                        'color1' => '#10B981',
-                        'color2' => '#047857',
-                        'logo' => null
-                    ],
-                    'cargo' => (object)['nombreCargo' => 'Presidente'],
-                    'propuestas' => collect([
-                        (object)[
-                            'titulo' => 'Participación estudiantil',
-                            'descripcion' => 'Crear espacios de diálogo permanente'
-                        ]
-                    ])
-                ]
-            ]),
-            2 => collect([
-                (object)[
-                    'id' => 4,
-                    'cargoId' => 2,
-                    'partidoId' => 1,
-                    'biografia' => 'Experiencia en gestión',
-                    'usuario' => (object)[
-                        'id' => 4,
-                        'email' => 'candidato4@ejemplo.com',
-                        'perfil' => (object)[
-                            'nombres' => 'Ana',
-                            'apellidoPaterno' => 'Rodríguez',
-                            'apellidoMaterno' => 'Vega',
-                            'fotoPerfil' => null,
-                            'telefono' => '987654324',
-                            'ciclo' => '6to Ciclo',
-                            'carrera' => (object)['nombreCarrera' => 'Contabilidad']
-                        ]
-                    ],
-                    'partido' => (object)[
-                        'id' => 1,
-                        'nombrePartido' => 'Movimiento Estudiantil Progresista',
-                        'siglas' => 'MEP',
-                        'color1' => '#3B82F6',
-                        'color2' => '#1E40AF',
-                        'logo' => null
-                    ],
-                    'cargo' => (object)['nombreCargo' => 'Vicepresidente'],
-                    'propuestas' => collect([])
-                ],
-                (object)[
-                    'id' => 5,
-                    'cargoId' => 2,
-                    'partidoId' => 2,
-                    'biografia' => 'Líder nato',
-                    'usuario' => (object)[
-                        'id' => 5,
-                        'email' => 'candidato5@ejemplo.com',
-                        'perfil' => (object)[
-                            'nombres' => 'Carlos',
-                            'apellidoPaterno' => 'Mendoza',
-                            'apellidoMaterno' => 'Ríos',
-                            'fotoPerfil' => null,
-                            'telefono' => '987654325',
-                            'ciclo' => '8vo Ciclo',
-                            'carrera' => (object)['nombreCarrera' => 'Marketing']
-                        ]
-                    ],
-                    'partido' => (object)[
-                        'id' => 2,
-                        'nombrePartido' => 'Frente Universitario Unido',
-                        'siglas' => 'FUU',
-                        'color1' => '#EF4444',
-                        'color2' => '#B91C1C',
-                        'logo' => null
-                    ],
-                    'cargo' => (object)['nombreCargo' => 'Vicepresidente'],
-                    'propuestas' => collect([])
-                ]
-            ]),
-            3 => collect([
-                (object)[
-                    'id' => 6,
-                    'cargoId' => 3,
-                    'partidoId' => 1,
-                    'biografia' => 'Organizado y responsable',
-                    'usuario' => (object)[
-                        'id' => 6,
-                        'email' => 'candidato6@ejemplo.com',
-                        'perfil' => (object)[
-                            'nombres' => 'Laura',
-                            'apellidoPaterno' => 'Flores',
-                            'apellidoMaterno' => 'Cruz',
-                            'fotoPerfil' => null,
-                            'telefono' => '987654326',
-                            'ciclo' => '5to Ciclo',
-                            'carrera' => (object)['nombreCarrera' => 'Comunicaciones']
-                        ]
-                    ],
-                    'partido' => (object)[
-                        'id' => 1,
-                        'nombrePartido' => 'Movimiento Estudiantil Progresista',
-                        'siglas' => 'MEP',
-                        'color1' => '#3B82F6',
-                        'color2' => '#1E40AF',
-                        'logo' => null
-                    ],
-                    'cargo' => (object)['nombreCargo' => 'Secretario'],
-                    'propuestas' => collect([])
-                ]
-            ])
-        ];
-
-        // Cuando conectes con BD, descomentar:
-        /*
         $eleccion = Elecciones::findOrFail($eleccionId);
 
         // Verificar estado
-        if (!method_exists($eleccion, 'estaActivo') || !$eleccion->estaActivo()) {
+        if (!$eleccion->estaActivo()) {
             return redirect()->route('votante.elecciones')
                 ->with('error', 'Esta elección no está activa.');
         }
 
         // Verificar padrón
-        $padron = PadronElectoral::where('idUser', Auth::id())
-            ->where('idEleccion', $eleccionId)
+        $padron = PadronElectoral::where('idUsuario', Auth::id())
+            ->where('idElecciones', $eleccionId)
             ->first();
 
         if (!$padron) {
@@ -421,98 +197,55 @@ class VotanteController extends Controller
                 ->with('error', 'No estás registrado en el padrón electoral.');
         }
 
-        // Obtener cargos y candidatos
-        $cargos = Cargo::whereHas('candidatos', function($query) use ($eleccionId) {
-            $query->where('idEleccion', $eleccionId);
+        // Obtener cargos que participan en esta elección (a través de los candidatos asignados)
+        // Ojo: Esto depende de cómo modeles la relación Elección->Cargos. 
+        // Si no hay tabla directa, lo inferimos de CandidatoEleccion->Candidato->Cargo
+        
+        /* 
+           Lógica: Traer los cargos únicos de los candidatos que están en la tabla pivot CandidatoEleccion para esta elección.
+        */
+        $cargos = \App\Models\Cargo::whereHas('candidatos', function($q) use ($eleccionId) {
+            $q->whereHas('elecciones', function($dq) use ($eleccionId) {
+                $dq->where('Elecciones.idElecciones', $eleccionId);
+            });
         })->get();
 
         $candidatosPorCargo = [];
         foreach ($cargos as $cargo) {
-            $candidatosPorCargo[$cargo->id] = Candidato::with([
+            // Obtener candidatos de este cargo y de esta elección
+            $candidatosPorCargo[$cargo->idCargo] = \App\Models\Candidato::with([
                 'usuario.perfil.carrera',
                 'partido',
                 'cargo',
                 'propuestas'
             ])
-            ->where('idCargo', $cargo->id)
-            ->where('idEleccion', $eleccionId)
+            ->where('idCargo', $cargo->idCargo)
+            ->whereHas('elecciones', function($q) use ($eleccionId) {
+                 $q->where('Elecciones.idElecciones', $eleccionId);
+            })
             ->get();
         }
-        */
 
         return view('votante.votar.lista', compact('eleccion', 'cargos', 'candidatosPorCargo'));
     }
 
     /**
-     * Detalle de un candidato - CON DATOS DE PRUEBA
+     * Detalle de un candidato
      */
     public function verDetalleCandidato($eleccionId, $candidatoId)
     {
-        $eleccion = (object)[
-            'id' => $eleccionId,
-            'nombreEleccion' => 'Elecciones Estudiantiles 2026'
-        ];
-        
-        $candidato = (object)[
-            'id' => $candidatoId,
-            'biografia' => 'Estudiante comprometido con el cambio y la mejora continua de nuestra institución. Con 3 años de experiencia en organizaciones estudiantiles.',
-            'usuario' => (object)[
-                'id' => 1,
-                'email' => 'candidato@ejemplo.com',
-                'perfil' => (object)[
-                    'nombres' => 'Juan Carlos',
-                    'apellidoPaterno' => 'Pérez',
-                    'apellidoMaterno' => 'García',
-                    'fotoPerfil' => null,
-                    'telefono' => '987654321',
-                    'ciclo' => '8vo Ciclo',
-                    'carrera' => (object)['nombreCarrera' => 'Ingeniería de Sistemas']
-                ]
-            ],
-            'partido' => (object)[
-                'id' => 1,
-                'nombrePartido' => 'Movimiento Estudiantil Progresista',
-                'siglas' => 'MEP',
-                'color1' => '#3B82F6',
-                'color2' => '#1E40AF',
-                'logo' => null,
-                'propuestas' => collect([
-                    (object)[
-                        'titulo' => 'Transparencia total',
-                        'descripcion' => 'Rendición de cuentas mensual'
-                    ]
-                ])
-            ],
-            'cargo' => (object)['nombreCargo' => 'Presidente'],
-            'propuestas' => collect([
-                (object)[
-                    'titulo' => 'Mejora de infraestructura',
-                    'descripcion' => 'Renovar las instalaciones deportivas y académicas para brindar un mejor ambiente de estudio'
-                ],
-                (object)[
-                    'titulo' => 'Becas estudiantiles',
-                    'descripcion' => 'Ampliar el programa de becas para estudiantes de bajos recursos económicos'
-                ],
-                (object)[
-                    'titulo' => 'Programa de tutorías',
-                    'descripcion' => 'Implementar un sistema de tutorías entre estudiantes de ciclos superiores e inferiores'
-                ]
-            ])
-        ];
-
-        // Cuando conectes con BD, descomentar:
-        /*
         $eleccion = Elecciones::findOrFail($eleccionId);
         
-        $candidato = Candidato::with([
+        $candidato = \App\Models\Candidato::with([
             'usuario.perfil.carrera',
             'partido.propuestas',
             'cargo',
             'propuestas'
         ])
-        ->where('idEleccion', $eleccionId)
+        ->whereHas('elecciones', function($q) use ($eleccionId) {
+                 $q->where('Elecciones.idElecciones', $eleccionId);
+        })
         ->findOrFail($candidatoId);
-        */
         
         return view('votante.votar.detalle_candidato', compact('eleccion', 'candidato'));
     }
@@ -522,55 +255,20 @@ class VotanteController extends Controller
      */
     public function emitirVoto(Request $request, $eleccionId)
     {
-        // SIMULACIÓN - Cuando conectes con BD, reemplazar todo esto:
-        $eleccion = (object)[
-            'id' => $eleccionId,
-            'nombreEleccion' => 'Elecciones Estudiantiles 2026',
-            'descripcion' => 'Elecciones para renovar el Consejo Estudiantil'
-        ];
-
-        // Simular votos registrados
-        $votos = collect([
-            (object)[
-                'fechaVoto' => now(),
-                'candidato' => (object)[
-                    'usuario' => (object)[
-                        'perfil' => (object)[
-                            'nombres' => 'Juan Carlos',
-                            'apellidoPaterno' => 'Pérez',
-                            'fotoPerfil' => null,
-                            'carrera' => (object)['nombreCarrera' => 'Ingeniería de Sistemas']
-                        ]
-                    ],
-                    'partido' => (object)[
-                        'nombrePartido' => 'Movimiento Estudiantil Progresista',
-                        'logo' => null
-                    ],
-                    'cargo' => (object)['nombreCargo' => 'Presidente']
-                ]
-            ]
-        ]);
-
-        // Redirigir a página de éxito
-        return redirect()->route('votante.votar.exito', $eleccionId)
-            ->with('success', '¡Tu voto ha sido registrado exitosamente!');
-
-        // CÓDIGO REAL - Descomentar cuando conectes con BD:
-        /*
         $eleccion = Elecciones::findOrFail($eleccionId);
 
         // Verificar estado
-        if (!method_exists($eleccion, 'estaActivo') || !$eleccion->estaActivo()) {
+        if (!$eleccion->estaActivo()) {
             return back()->with('error', 'Esta elección no está activa.');
         }
 
         // Obtener padrón
-        $padron = PadronElectoral::where('idUser', Auth::id())
-            ->where('idEleccion', $eleccionId)
+        $padron = PadronElectoral::where('idUsuario', Auth::id())
+            ->where('idElecciones', $eleccionId)
             ->firstOrFail();
 
         // Verificar si ya votó
-        if (Voto::where('idPadronElectoral', $padron->id)->exists()) {
+        if (Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists()) {
             return redirect()->route('votante.elecciones.detalle', $eleccionId)
                 ->with('error', 'Ya has votado en esta elección.');
         }
@@ -578,7 +276,7 @@ class VotanteController extends Controller
         // Validar datos
         $request->validate([
             'candidatos' => 'required|array',
-            'candidatos.*' => 'required|exists:candidatos,id'
+            'candidatos.*' => 'required|exists:Candidato,idCandidato'
         ]);
 
         try {
@@ -588,7 +286,7 @@ class VotanteController extends Controller
             foreach ($request->candidatos as $cargoId => $candidatoId) {
                 Voto::create([
                     'idCandidato' => $candidatoId,
-                    'idPadronElectoral' => $padron->id,
+                    'idPadronElectoral' => $padron->idPadronElectoral,
                     'fechaVoto' => now(),
                 ]);
             }
@@ -600,10 +298,8 @@ class VotanteController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            return back()->with('error', 'Hubo un error al registrar tu voto. Por favor, intenta nuevamente.');
+            return back()->with('error', 'Hubo un error al registrar tu voto: ' . $e->getMessage());
         }
-        */
     }
 
     /**
@@ -611,66 +307,449 @@ class VotanteController extends Controller
      */
     public function votoExitoso($eleccionId)
     {
-        // SIMULACIÓN - Datos de prueba
-        $eleccion = (object)[
-            'id' => $eleccionId,
-            'nombreEleccion' => 'Elecciones Estudiantiles 2026',
-            'descripcion' => 'Elecciones para renovar el Consejo Estudiantil'
-        ];
-
-        $votos = collect([
-            (object)[
-                'fechaVoto' => now(),
-                'candidato' => (object)[
-                    'usuario' => (object)[
-                        'perfil' => (object)[
-                            'nombres' => 'Juan Carlos',
-                            'apellidoPaterno' => 'Pérez',
-                            'fotoPerfil' => null,
-                            'carrera' => (object)['nombreCarrera' => 'Ingeniería de Sistemas']
-                        ]
-                    ],
-                    'partido' => (object)[
-                        'nombrePartido' => 'Movimiento Estudiantil Progresista',
-                        'logo' => null
-                    ],
-                    'cargo' => (object)['nombreCargo' => 'Presidente']
-                ]
-            ],
-            (object)[
-                'fechaVoto' => now(),
-                'candidato' => (object)[
-                    'usuario' => (object)[
-                        'perfil' => (object)[
-                            'nombres' => 'Ana',
-                            'apellidoPaterno' => 'Rodríguez',
-                            'fotoPerfil' => null,
-                            'carrera' => (object)['nombreCarrera' => 'Contabilidad']
-                        ]
-                    ],
-                    'partido' => (object)[
-                        'nombrePartido' => 'Movimiento Estudiantil Progresista',
-                        'logo' => null
-                    ],
-                    'cargo' => (object)['nombreCargo' => 'Vicepresidente']
-                ]
-            ]
-        ]);
-
-        // CÓDIGO REAL - Descomentar cuando conectes con BD:
-        /*
         $eleccion = Elecciones::findOrFail($eleccionId);
         
         // Obtener el padrón y votos del usuario
-        $padron = PadronElectoral::where('idUser', Auth::id())
-            ->where('idEleccion', $eleccionId)
+        $padron = PadronElectoral::where('idUsuario', Auth::id())
+            ->where('idElecciones', $eleccionId)
             ->firstOrFail();
 
         $votos = Voto::with(['candidato.usuario.perfil', 'candidato.partido', 'candidato.cargo'])
-            ->where('idPadronElectoral', $padron->id)
+            ->where('idPadronElectoral', $padron->idPadronElectoral)
             ->get();
-        */
 
         return view('votante.votar.exito', compact('eleccion', 'votos'));
+    }
+
+    // =============================================
+    // GESTIÓN DE PROPUESTAS DE PARTIDO
+    // =============================================
+
+    /**
+     * Listar mis propuestas de partido
+     */
+    public function misPropuestasPartido()
+    {
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tienes permiso para acceder a esta sección.');
+        }
+
+        // Verificar si el usuario es candidato y obtener su partido
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        
+        if (!$candidato || !$candidato->idPartido) {
+            return view('votante.propuestas_partido.index', [
+                'propuestas' => collect([]),
+                'mensaje' => 'No perteneces a ningún partido político. Solo los candidatos afiliados a un partido pueden gestionar propuestas de partido.'
+            ]);
+        }
+
+        $partido = Partido::findOrFail($candidato->idPartido);
+        $propuestas = PropuestaPartido::where('idPartido', $candidato->idPartido)
+            ->orderBy('idPropuesta', 'desc')
+            ->get();
+
+        return view('votante.propuestas_partido.index', compact('propuestas', 'partido'));
+    }
+
+    /**
+     * Formulario para crear propuesta de partido
+     */
+    public function crearPropuestaPartido()
+    {
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tienes permiso para crear propuestas de partido.');
+        }
+
+        // Verificar que pertenezca a un partido
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        
+        if (!$candidato || !$candidato->idPartido) {
+            return redirect()->route('votante.propuestas_partido.index')
+                ->with('error', 'No perteneces a ningún partido político.');
+        }
+
+        $partido = Partido::findOrFail($candidato->idPartido);
+
+        return view('votante.propuestas_partido.crear', compact('partido'));
+    }
+
+    /**
+     * Guardar nueva propuesta de partido
+     */
+    public function guardarPropuestaPartido(Request $request)
+    {
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tiene permisos para guardar propuestas de partido.');
+        }
+
+        // Verificar que pertenezca a un partido
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        
+        if (!$candidato || !$candidato->idPartido) {
+            return redirect()->route('votante.propuestas_partido.index')
+                ->with('error', 'No perteneces a ningún partido político.');
+        }
+
+        $request->validate([
+            'propuesta' => 'required|string|max:255',
+            'descripcion' => 'required|string|max:1000'
+        ]);
+
+        try {
+            PropuestaPartido::create([
+                'propuesta' => $request->propuesta,
+                'descripcion' => $request->descripcion,
+                'idPartido' => $candidato->idPartido
+            ]);
+
+            return redirect()->route('votante.propuestas_partido.index')
+                ->with('success', 'Propuesta de partido creada exitosamente.');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                ->with('error', 'Error al crear la propuesta: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Formulario para editar propuesta de partido
+     */
+    public function editarPropuestaPartido($id)
+    {
+        $propuesta = PropuestaPartido::findOrFail($id);
+
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tiene permisos para editar propuestas de partido.');
+        }
+
+        // Verificar que la propuesta pertenezca al partido del usuario
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        
+        if (!$candidato || $propuesta->idPartido != $candidato->idPartido) {
+            abort(403, 'Solo puedes editar propuestas de tu partido.');
+        }
+
+        $partido = Partido::findOrFail($candidato->idPartido);
+
+        return view('votante.propuestas_partido.editar', compact('propuesta', 'partido'));
+    }
+
+    /**
+     * Actualizar propuesta de partido
+     */
+    public function actualizarPropuestaPartido(Request $request, $id)
+    {
+        $propuesta = PropuestaPartido::findOrFail($id);
+
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tiene permisos para actualizar propuestas de partido.');
+        }
+
+        // Verificar que la propuesta pertenezca al partido del usuario
+        $candidato = Candidato::where('idUsuario', Auth::id())
+            ->with('usuario.perfil', 'cargo', 'partido')
+            ->first();
+        
+        if (!$candidato || $propuesta->idPartido != $candidato->idPartido) {
+            abort(403, 'Solo puedes editar propuestas de tu partido.');
+        }
+
+        $request->validate([
+            'propuesta' => 'required|string|max:255',
+            'descripcion' => 'required|string|max:1000'
+        ]);
+
+        try {
+            $propuesta->update([
+                'propuesta' => $request->propuesta,
+                'descripcion' => $request->descripcion
+            ]);
+
+            return redirect()->route('votante.propuestas_partido.index')
+                ->with('success', 'Propuesta de partido actualizada exitosamente.');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                ->with('error', 'Error al actualizar la propuesta: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Eliminar propuesta de partido
+     */
+    public function eliminarPropuestaPartido($id)
+    {
+        $propuesta = PropuestaPartido::findOrFail($id);
+
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tiene permisos para eliminar propuestas de partido.');
+        }
+
+        // Verificar que la propuesta pertenezca al partido del usuario
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        
+        if (!$candidato || $propuesta->idPartido != $candidato->idPartido) {
+            abort(403, 'Solo puedes eliminar propuestas de tu partido.');
+        }
+
+        try {
+            $propuesta->delete();
+
+            return redirect()->route('votante.propuestas_partido.index')
+                ->with('success', 'Propuesta de partido eliminada exitosamente.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al eliminar la propuesta: ' . $e->getMessage());
+        }
+    }
+
+    // =============================================
+    // GESTIÓN DE PROPUESTAS DE CANDIDATO
+    // =============================================
+
+    /**
+     * Listar mis propuestas como candidato
+     */
+    public function misPropuestasCandidato()
+    {
+        // Verificar que el usuario tenga permiso usando el servicio
+        $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
+        $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
+        
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
+                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+        
+        if (!$tienePermiso) {
+            abort(403, 'No tiene permisos para gestionar propuestas de candidato.');
+        }
+
+        // Verificar si el usuario es candidato en alguna elección
+        $candidato = Candidato::where('idUsuario', Auth::id())
+            ->with('usuario.perfil', 'cargo', 'partido')
+            ->first();
+        
+        if (!$candidato) {
+            return view('votante.propuestas_candidato.index', [
+                'propuestas' => collect([]),
+                'mensaje' => 'No estás registrado como candidato en ninguna elección. Solo los candidatos pueden gestionar sus propuestas.'
+            ]);
+        }
+
+        // Verificar si está participando en alguna elección
+        $elecciones = $candidato->elecciones;
+        
+        if ($elecciones->isEmpty()) {
+            return view('votante.propuestas_candidato.index', [
+                'propuestas' => collect([]),
+                'candidato' => $candidato,
+                'mensaje' => 'No estás participando en ninguna elección actualmente.'
+            ]);
+        }
+
+        $propuestas = PropuestaCandidato::where('idCandidato', $candidato->idCandidato)
+            ->orderBy('idPropuesta', 'desc')
+            ->get();
+
+        return view('votante.propuestas_candidato.index', compact('propuestas', 'candidato', 'elecciones'));
+    }
+
+    /**
+     * Formulario para crear propuesta de candidato
+     */
+    public function crearPropuestaCandidato()
+    {
+        // Verificar que el usuario tenga permiso
+        if (!Auth::user()->can('create', PropuestaCandidato::class)) {
+            abort(403, 'No tienes permiso para crear propuestas de candidato.');
+        }
+
+        // Verificar que sea candidato
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        
+        if (!$candidato) {
+            return redirect()->route('votante.propuestas_candidato.index')
+                ->with('error', 'No estás registrado como candidato.');
+        }
+
+        // Verificar si está participando en alguna elección
+        $elecciones = $candidato->elecciones;
+        
+        if ($elecciones->isEmpty()) {
+            return redirect()->route('votante.propuestas_candidato.index')
+                ->with('error', 'No estás participando en ninguna elección actualmente.');
+        }
+
+        return view('votante.propuestas_candidato.crear', compact('candidato'));
+    }
+
+    /**
+     * Guardar nueva propuesta de candidato
+     */
+    public function guardarPropuestaCandidato(Request $request)
+    {
+        // Verificar que el usuario tenga permiso
+        if (!Auth::user()->can('create', PropuestaCandidato::class)) {
+            abort(403, 'No tienes permiso para crear propuestas de candidato.');
+        }
+
+        // Verificar que sea candidato
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        
+        if (!$candidato) {
+            return redirect()->route('votante.propuestas_candidato.index')
+                ->with('error', 'No estás registrado como candidato.');
+        }
+
+        $request->validate([
+            'propuesta' => 'required|string|max:255',
+            'descripcion' => 'required|string|max:1000'
+        ]);
+
+        try {
+            PropuestaCandidato::create([
+                'propuesta' => $request->propuesta,
+                'descripcion' => $request->descripcion,
+                'idCandidato' => $candidato->idCandidato
+            ]);
+
+            return redirect()->route('votante.propuestas_candidato.index')
+                ->with('success', 'Propuesta de candidato creada exitosamente.');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                ->with('error', 'Error al crear la propuesta: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Formulario para editar propuesta de candidato
+     */
+    public function editarPropuestaCandidato($id)
+    {
+        $propuesta = PropuestaCandidato::findOrFail($id);
+
+        // Verificar que el usuario tenga permiso
+        if (!Auth::user()->can('update', $propuesta)) {
+            abort(403, 'No tienes permiso para editar esta propuesta.');
+        }
+
+        // Verificar que la propuesta pertenezca al usuario
+        $candidato = Candidato::where('idUsuario', Auth::id())
+            ->with('usuario.perfil', 'cargo', 'partido')
+            ->first();
+        
+        if (!$candidato || $propuesta->idCandidato != $candidato->idCandidato) {
+            abort(403, 'Solo puedes editar tus propias propuestas.');
+        }
+
+        return view('votante.propuestas_candidato.editar', compact('propuesta', 'candidato'));
+    }
+
+    /**
+     * Actualizar propuesta de candidato
+     */
+    public function actualizarPropuestaCandidato(Request $request, $id)
+    {
+        $propuesta = PropuestaCandidato::findOrFail($id);
+
+        // Verificar que el usuario tenga permiso
+        if (!Auth::user()->can('update', $propuesta)) {
+            abort(403, 'No tienes permiso para editar esta propuesta.');
+        }
+
+        // Verificar que la propuesta pertenezca al usuario
+        $candidato = Candidato::where('idUsuario', Auth::id())
+            ->with('usuario.perfil', 'cargo', 'partido')
+            ->first();
+        
+        if (!$candidato || $propuesta->idCandidato != $candidato->idCandidato) {
+            abort(403, 'Solo puedes editar tus propias propuestas.');
+        }
+
+        $request->validate([
+            'propuesta' => 'required|string|max:255',
+            'descripcion' => 'required|string|max:1000'
+        ]);
+
+        try {
+            $propuesta->update([
+                'propuesta' => $request->propuesta,
+                'descripcion' => $request->descripcion
+            ]);
+
+            return redirect()->route('votante.propuestas_candidato.index')
+                ->with('success', 'Propuesta de candidato actualizada exitosamente.');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                ->with('error', 'Error al actualizar la propuesta: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Eliminar propuesta de candidato
+     */
+    public function eliminarPropuestaCandidato($id)
+    {
+        $propuesta = PropuestaCandidato::findOrFail($id);
+
+        // Verificar que el usuario tenga permiso
+        if (!Auth::user()->can('delete', $propuesta)) {
+            abort(403, 'No tienes permiso para eliminar esta propuesta.');
+        }
+
+        // Verificar que la propuesta pertenezca al usuario
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        
+        if (!$candidato || $propuesta->idCandidato != $candidato->idCandidato) {
+            abort(403, 'Solo puedes eliminar tus propias propuestas.');
+        }
+
+        try {
+            $propuesta->delete();
+
+            return redirect()->route('votante.propuestas_candidato.index')
+                ->with('success', 'Propuesta de candidato eliminada exitosamente.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al eliminar la propuesta: ' . $e->getMessage());
+        }
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\PerfilUsuario;
 use App\Models\RolUser;
+use App\Models\Permiso;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,9 @@ class UserController extends Controller
 
     public function create()
     {
-        return view('crud.user.crear');
+        $carreras = \App\Models\Carrera::all();
+        $areas = \App\Models\Area::all();
+        return view('crud.user.crear', compact('carreras', 'areas'));
     }
 
     public function store(Request $request)
@@ -45,44 +48,44 @@ class UserController extends Controller
 
         $user = null;
 
-        DB::transaction(function () use ($request, &$user) {
+        try {
+            DB::transaction(function () use ($request, &$user) {
 
-            // 1️⃣ USER
-            $user = User::create([
-                'correo' => $request->correo,
-                'contraseña' => Hash::make($request->password),
-                'idEstadoUsuario' => $request->idEstadoUsuario,
-            ]);
+                // 1️⃣ USER
+                $user = User::create([
+                    'correo' => $request->correo,
+                    'contraseña' => Hash::make($request->password),
+                    'idEstadoUsuario' => $request->idEstadoUsuario,
+                ]);
 
-            // 2️⃣ PERFIL
-            PerfilUsuario::create([
-                'idUser' => $user->idUser,
-                'apellidoPaterno' => $request->apellidoPaterno,
-                'apellidoMaterno' => $request->apellidoMaterno,
-                'nombre' => $request->nombre,
-                'otrosNombres' => $request->otrosNombres,
-                'dni' => $request->dni,
-                'telefono' => $request->telefono,
-                'idCarrera' => $request->idCarrera,
-                'idArea' => $request->idArea,
-            ]);
+                // 2️⃣ PERFIL
+                PerfilUsuario::create([
+                    'idUser' => $user->idUser,
+                    'apellidoPaterno' => $request->apellidoPaterno,
+                    'apellidoMaterno' => $request->apellidoMaterno,
+                    'nombre' => $request->nombre,
+                    'otrosNombres' => $request->otrosNombres,
+                    'dni' => $request->dni,
+                    'telefono' => $request->telefono,
+                    'idCarrera' => $request->idCarrera,
+                    'idArea' => $request->idArea,
+                ]);
 
-            // 3️⃣ ROL
-            RolUser::create([
-                'idUser' => $user->idUser,
-                'idRol' => $request->idRol,
-            ]);
-        });
+                // 3️⃣ ROL
+                RolUser::create([
+                    'idUser' => $user->idUser,
+                    'idRol' => $request->idRol,
+                ]);
+            });
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuario creado correctamente',
-            'data' => [
-                'idUser' => $user->idUser,
-                'correo' => $user->correo,
-                'estado' => $user->idEstadoUsuario,
-            ],
-        ], Response::HTTP_CREATED);
+            return redirect()
+                ->route('crud.user.ver')
+                ->with('success', 'Usuario creado correctamente');
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'error' => 'Error al crear el usuario: ' . $e->getMessage()
+            ])->withInput();
+        }
     }
 
 
@@ -101,7 +104,9 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        return view('crud.user.editar', compact('user'));
+        $carreras = \App\Models\Carrera::all();
+        $areas = \App\Models\Area::all();
+        return view('crud.user.editar', compact('user', 'carreras', 'areas'));
     }
 
     public function update(Request $request, $id)
@@ -111,14 +116,41 @@ class UserController extends Controller
             'correo' => 'required|email|unique:User,correo,' . $u->getKey() . ',idUser',
         ]);
         $u->update($data);
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuario actualizado',
-            'data' => [
-                'id' => $u->getKey(),
-                'correo' => $u->correo,
-            ],
+        return redirect()
+            ->route('crud.user.ver')
+            ->with('success', 'Usuario actualizado correctamente');
+    }
+
+    public function permisos($id)
+    {
+        $user = User::with(['perfil', 'roles', 'permisos'])->findOrFail($id);
+        $permisos = Permiso::orderBy('permiso')->get();
+
+        return view('crud.user.permisos', compact('user', 'permisos'));
+    }
+
+    public function asignarPermiso(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $data = $request->validate([
+            'permiso_id' => 'required|integer|exists:Permiso,idPermiso',
         ]);
+
+        $user->permisos()->syncWithoutDetaching([$data['permiso_id']]);
+
+        return redirect()
+            ->route('crud.user.permisos', $user->getKey())
+            ->with('success', 'Permiso asignado correctamente');
+    }
+
+    public function quitarPermiso($id, $permisoId)
+    {
+        $user = User::findOrFail($id);
+        $user->permisos()->detach($permisoId);
+
+        return redirect()
+            ->route('crud.user.permisos', $user->getKey())
+            ->with('success', 'Permiso eliminado correctamente');
     }
 
     public function destroy($id)

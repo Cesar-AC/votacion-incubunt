@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('Candidato', function (Blueprint $table) {
             $table->increments('idCandidato');
-            $table->unsignedInteger('idPartido');
+            $table->unsignedInteger('idPartido')->nullable();
             $table->unsignedInteger('idCargo');
             $table->unsignedInteger('idUsuario');
 

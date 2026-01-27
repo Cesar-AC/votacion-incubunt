@@ -1,112 +1,213 @@
 @extends('layouts.admin')
 
 @section('content')
-<form method="POST" action="{{ route('crud.user.crear') }}">
-@csrf
-
 <div class="container-fluid px-3">
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="font-weight-bold mb-0">Nuevo Usuario</h5>
-    <button type="submit" class="btn btn-primary btn-sm shadow">
-      Guardar
-    </button>
   </div>
 
-  <!-- PERFIL -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
-      <h6 class="font-weight-bold mb-3">Perfil</h6>
-
-      <input name="apellidoPaterno" class="form-control mb-2" placeholder="Apellido Paterno" required>
-      <input name="apellidoMaterno" class="form-control mb-2" placeholder="Apellido Materno" required>
-      <input name="nombre" class="form-control mb-2" placeholder="Nombre" required>
-      <input name="otrosNombres" class="form-control mb-2" placeholder="Otros Nombres">
-
-      <input name="dni" class="form-control mb-2" maxlength="8" placeholder="DNI" required>
-      <input name="telefono" class="form-control mb-2" placeholder="Teléfono">
-
-      <select name="idCarrera" class="form-control mb-2">
-        <option value="">Seleccione carrera</option>
-        <option value="1">Ingeniería de Sistemas</option>
-        <option value="2">Administración</option>
-      </select>
-
-      <select name="idArea" class="form-control">
-        <option value="">Seleccione área</option>
-        <option value="1">GTH</option>
-        <option value="2">RRHH</option>
-      </select>
+  <!-- Errores -->
+  @if ($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <strong>Error:</strong>
+      <ul class="mb-0">
+        @foreach ($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
     </div>
-  </div>
+  @endif
 
-  <!-- CUENTA -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
-      <h6 class="font-weight-bold mb-3">Cuenta</h6>
+  <form method="POST" action="{{ route('crud.user.crear') }}">
+    @csrf
 
-      <input name="correo" type="email" class="form-control mb-2" placeholder="Correo" required>
-      <input name="password" type="password" class="form-control mb-2" placeholder="Contraseña" required>
+    <!-- PERFIL -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h6 class="font-weight-bold mb-3">Perfil</h6>
 
-      <select name="idEstadoUsuario" class="form-control">
-        <option value="1">Activo</option>
-        <option value="2">Inactivo</option>
-      </select>
+        <input 
+          name="apellidoPaterno" 
+          class="form-control mb-2 @error('apellidoPaterno') is-invalid @enderror" 
+          placeholder="Apellido Paterno" 
+          value="{{ old('apellidoPaterno') }}"
+          required>
+        @error('apellidoPaterno')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+
+        <input 
+          name="apellidoMaterno" 
+          class="form-control mb-2 @error('apellidoMaterno') is-invalid @enderror" 
+          placeholder="Apellido Materno" 
+          value="{{ old('apellidoMaterno') }}"
+          required>
+        @error('apellidoMaterno')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+
+        <input 
+          name="nombre" 
+          class="form-control mb-2 @error('nombre') is-invalid @enderror" 
+          placeholder="Nombre" 
+          value="{{ old('nombre') }}"
+          required>
+        @error('nombre')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+
+        <input 
+          name="otrosNombres" 
+          class="form-control mb-2 @error('otrosNombres') is-invalid @enderror" 
+          placeholder="Otros Nombres"
+          value="{{ old('otrosNombres') }}">
+        @error('otrosNombres')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+
+        <input 
+          name="dni" 
+          class="form-control mb-2 @error('dni') is-invalid @enderror" 
+          maxlength="8" 
+          placeholder="DNI" 
+          value="{{ old('dni') }}"
+          required>
+        @error('dni')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+
+        <input 
+          name="telefono" 
+          class="form-control mb-2 @error('telefono') is-invalid @enderror" 
+          placeholder="Teléfono"
+          value="{{ old('telefono') }}">
+        @error('telefono')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+
+        <select 
+          name="idCarrera" 
+          class="form-control mb-2 @error('idCarrera') is-invalid @enderror">
+          <option value="">Seleccione carrera</option>
+          @foreach($carreras as $carrera)
+            <option value="{{ $carrera->idCarrera }}" {{ old('idCarrera') == $carrera->idCarrera ? 'selected' : '' }}>
+              {{ $carrera->carrera }}
+            </option>
+          @endforeach
+        </select>
+        @error('idCarrera')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+
+        <select 
+          name="idArea" 
+          class="form-control @error('idArea') is-invalid @enderror">
+          <option value="">Seleccione área</option>
+          @foreach($areas as $area)
+            <option value="{{ $area->idArea }}" {{ old('idArea') == $area->idArea ? 'selected' : '' }}>
+              {{ $area->area }}
+            </option>
+          @endforeach
+        </select>
+        @error('idArea')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+      </div>
     </div>
-  </div>
 
-  <!-- ROL -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h6 class="font-weight-bold mb-3">Rol</h6>
+    <!-- CUENTA -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h6 class="font-weight-bold mb-3">Cuenta</h6>
 
-      <select name="idRol" class="form-control" required>
-        <option value="">Seleccione rol</option>
-        <option value="1">Administrador</option>
-        <option value="2">Votante</option>
-      </select>
+        <input 
+          name="correo" 
+          type="email" 
+          class="form-control mb-2 @error('correo') is-invalid @enderror" 
+          placeholder="Correo" 
+          value="{{ old('correo') }}"
+          required>
+        @error('correo')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+
+        <input 
+          name="password" 
+          type="password" 
+          class="form-control mb-2 @error('password') is-invalid @enderror" 
+          placeholder="Contraseña" 
+          required>
+        @error('password')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+
+        <select 
+          name="idEstadoUsuario" 
+          class="form-control @error('idEstadoUsuario') is-invalid @enderror"
+          required>
+          <option value="1" {{ old('idEstadoUsuario') == 1 ? 'selected' : '' }}>Activo</option>
+          <option value="2" {{ old('idEstadoUsuario') == 2 ? 'selected' : '' }}>Inactivo</option>
+        </select>
+        @error('idEstadoUsuario')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+      </div>
     </div>
-  </div>
+
+    <!-- ROL -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h6 class="font-weight-bold mb-3">Rol</h6>
+
+        <select 
+          name="idRol" 
+          class="form-control @error('idRol') is-invalid @enderror" 
+          required>
+          <option value="">Seleccione rol</option>
+          <option value="1" {{ old('idRol') == 1 ? 'selected' : '' }}>Administrador</option>
+          <option value="2" {{ old('idRol') == 2 ? 'selected' : '' }}>Votante</option>
+        </select>
+        @error('idRol')
+          <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+      </div>
+    </div>
+
+    <div class="text-right mb-4">
+      <a href="{{ route('crud.user.ver') }}" class="btn btn-secondary px-4 mr-2">
+        Volver
+      </a>
+      <button type="submit" class="btn btn-primary px-4">
+        Guardar Usuario
+      </button>
+    </div>
+
+  </form>
 
 </div>
-</form>
-@endsection
-@section('scripts')
+
+@push('scripts')
 <script>
-document.getElementById('formUser').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const form = this;
-    const formData = new FormData(form);
-
-    fetch(form.action, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value,
-            'Accept': 'application/json'
-        },
-        body: formData
-    })
-    .then(async response => {
-        const data = await response.json();
-        if (!response.ok) throw data;
-        return data;
-    })
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            window.location.href = "{{ route('crud.user.ver') }}";
-        }
-    })
-    .catch(error => {
-        if (error.errors) {
-            let msg = '';
-            Object.values(error.errors).forEach(e => msg += e[0] + '\n');
-            alert(msg);
-        } else {
-            alert('Error inesperado');
-        }
+  // Mostrar SweetAlert si hay errores
+  @if ($errors->any())
+    Swal.fire({
+      icon: 'error',
+      title: 'Error al crear el usuario',
+      html: `
+        <ul style="text-align: left;">
+          @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+          @endforeach
+        </ul>
+      `,
+      confirmButtonText: 'Entendido'
     });
-});
+  @endif
 </script>
+@endpush
+
 @endsection

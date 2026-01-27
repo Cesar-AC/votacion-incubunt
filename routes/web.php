@@ -34,23 +34,45 @@ Route::middleware(['auth', 'throttle:login'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Rutas del Votante 
+// Rutas del Votante
 
 Route::middleware(['auth'])->group(function () {
     Route::prefix('votante')->name('votante.')->group(function () {
         Route::get('/home', [VotanteController::class, 'home'])->name('home');
+        Route::get('/propuestas', [VotanteController::class, 'propuestas'])->name('propuestas');
         Route::get('/elecciones', [VotanteController::class, 'listarElecciones'])->name('elecciones');
         Route::get('/elecciones/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
-        
+
         Route::prefix('votar')->name('votar.')->group(function () {
             Route::get('/{eleccionId}/candidatos', [VotanteController::class, 'listarCandidatos'])->name('lista');
             Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
             Route::post('/{eleccionId}/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
+        });
+
+        // Gestión de Propuestas de Partido
+        Route::prefix('mis-propuestas-partido')->name('propuestas_partido.')->group(function () {
+            Route::get('/', [VotanteController::class, 'misPropuestasPartido'])->name('index');
+            Route::get('/crear', [VotanteController::class, 'crearPropuestaPartido'])->name('crear');
+            Route::post('/crear', [VotanteController::class, 'guardarPropuestaPartido'])->name('guardar');
+            Route::get('/{id}/editar', [VotanteController::class, 'editarPropuestaPartido'])->name('editar');
+            Route::put('/{id}', [VotanteController::class, 'actualizarPropuestaPartido'])->name('actualizar');
+            Route::delete('/{id}', [VotanteController::class, 'eliminarPropuestaPartido'])->name('eliminar');
+        });
+
+        // Gestión de Propuestas de Candidato
+        Route::prefix('mis-propuestas-candidato')->name('propuestas_candidato.')->group(function () {
+            Route::get('/', [VotanteController::class, 'misPropuestasCandidato'])->name('index');
+            Route::get('/crear', [VotanteController::class, 'crearPropuestaCandidato'])->name('crear');
+            Route::post('/crear', [VotanteController::class, 'guardarPropuestaCandidato'])->name('guardar');
+            Route::get('/{id}/editar', [VotanteController::class, 'editarPropuestaCandidato'])->name('editar');
+            Route::put('/{id}', [VotanteController::class, 'actualizarPropuestaCandidato'])->name('actualizar');
+            Route::delete('/{id}', [VotanteController::class, 'eliminarPropuestaCandidato'])->name('eliminar');
         });
     });
 });
@@ -131,6 +153,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/users/crear', [UserController::class, 'store'])->name('crud.user.crear')->middleware('can:create,App\Models\User');
     Route::get('/users/{id}/editar', [UserController::class, 'edit'])->name('crud.user.editar')->middleware('can:update,App\Models\User');
     Route::put('/users/{id}/editar', [UserController::class, 'update'])->name('crud.user.editar')->middleware('can:update,App\Models\User');
+    Route::get('/users/{id}/permisos', [UserController::class, 'permisos'])->name('crud.user.permisos')->middleware('can:update,App\Models\User');
+    Route::post('/users/{id}/permisos', [UserController::class, 'asignarPermiso'])->name('crud.user.permisos.asignar')->middleware('can:update,App\Models\User');
+    Route::delete('/users/{id}/permisos/{permisoId}', [UserController::class, 'quitarPermiso'])->name('crud.user.permisos.quitar')->middleware('can:update,App\Models\User');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('crud.user.eliminar')->middleware('can:delete,App\Models\User');
     Route::get('/users/{id}', [UserController::class, 'show'])->name('crud.user.ver_datos')->middleware('can:view,App\Models\User');
 });

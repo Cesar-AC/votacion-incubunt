@@ -27,7 +27,8 @@ class PartidoController extends Controller
         'partido'     => 'required|string|max:255',
         'urlPartido'  => 'required|string',
         'descripcion' => 'required|string',
-        'tipo'        => 'required|in:LISTA,INDIVIDUAL'
+        'tipo'        => 'required|in:LISTA,INDIVIDUAL',
+        'planTrabajo' => 'nullable|string'
     ]);
 
     $p = Partido::create([
@@ -35,6 +36,7 @@ class PartidoController extends Controller
         'urlPartido'  => $data['urlPartido'],
         'descripcion' => $data['descripcion'],
         'tipo'        => $data['tipo'],
+        'planTrabajo' => $data['planTrabajo'] ?? null,
     ]);
     return redirect()
     ->route('crud.partido.ver')
@@ -54,6 +56,7 @@ class PartidoController extends Controller
                 'urlPartido' => $p->urlPartido,
                 'descripcion' => $p->descripcion,
                 'tipo' => $p->tipo,
+                'planTrabajo' => $p->planTrabajo,
                 'elecciones' => $p->elecciones()->pluck('idElecciones'),
             ],
         ]);
@@ -62,8 +65,8 @@ class PartidoController extends Controller
     public function edit($id)
     {
         $partido = Partido::findOrFail($id);
-
-        return view('crud.partido.editar', compact('partido'));
+        $elecciones = \App\Models\Elecciones::all();
+        return view('crud.partido.editar', compact('partido', 'elecciones'));
     }
 
     public function update(Request $request, $id)
@@ -74,6 +77,7 @@ class PartidoController extends Controller
             'urlPartido' => 'required|string',
             'descripcion' => 'required|string',
             'tipo' => 'required|in:LISTA,INDIVIDUAL',
+            'planTrabajo' => 'nullable|string',
             'elecciones' => 'required|array',
             'elecciones.*' => 'integer',
         ]);
@@ -82,20 +86,12 @@ class PartidoController extends Controller
             'urlPartido' => $data['urlPartido'],
             'descripcion' => $data['descripcion'],
             'tipo' => $data['tipo'],
+            'planTrabajo' => $data['planTrabajo'] ?? $p->planTrabajo,
         ]);
         $p->elecciones()->sync($data['elecciones']);
-        return response()->json([
-            'success' => true,
-            'message' => 'Partido actualizado',
-            'data' => [
-                'id' => $p->getKey(),
-                'partido' => $p->partido,
-                'urlPartido' => $p->urlPartido,
-                'descripcion' => $p->descripcion,
-                'tipo' => $p->tipo,
-                'elecciones' => $p->elecciones()->pluck('idElecciones'),
-            ],
-        ]);
+        return redirect()
+            ->route('crud.partido.ver')
+            ->with('success', 'Partido actualizado correctamente');
     }
 
     public function destroy($id)
