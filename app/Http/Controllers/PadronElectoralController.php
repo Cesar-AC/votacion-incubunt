@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Interfaces\Services\PadronElectoral\IImportadorFactory;
+use App\Interfaces\Services\PadronElectoral\IImportadorService;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\User;
@@ -19,46 +21,45 @@ class PadronElectoralController extends Controller
     public function index()
     {
         $elecciones = Elecciones::withCount([
-        'usuarios as participantes_count'
-    ])
-    ->having('participantes_count', '>', 0)
-    ->orderBy('fechaInicio', 'desc')
-    ->get();
+            'usuarios as participantes_count'
+        ])
+            ->having('participantes_count', '>', 0)
+            ->orderBy('fechaInicio', 'desc')
+            ->get();
 
-    return view('crud.padron_electoral.ver', compact('elecciones'));
+        return view('crud.padron_electoral.ver', compact('elecciones'));
     }
 
     public function create()
     {
         $elecciones = Elecciones::where('idEstado', EstadoElecciones::PROGRAMADO)
-        ->orderBy('fechaInicio', 'desc')
-        ->get();
+            ->orderBy('fechaInicio', 'desc')
+            ->get();
 
-    $usuarios = User::with('perfil')->orderBy('idUser')->get();
+        $usuarios = User::with('perfil')->orderBy('idUser')->get();
 
-    return view('crud.padron_electoral.crear', compact('elecciones', 'usuarios'));
-
+        return view('crud.padron_electoral.crear', compact('elecciones', 'usuarios'));
     }
 
     public function store(Request $request)
-{
-    $data = $request->validate([
-        'idElecciones' => 'required|exists:Elecciones,idElecciones',
-        'usuarios' => 'required|array',
-        'usuarios.*' => 'exists:User,idUser',
-    ]);
-
-    foreach ($data['usuarios'] as $idUsuario) {
-        PadronElectoral::firstOrCreate([
-            'idElecciones' => $data['idElecciones'],
-            'idUsuario' => $idUsuario,
+    {
+        $data = $request->validate([
+            'idElecciones' => 'required|exists:Elecciones,idElecciones',
+            'usuarios' => 'required|array',
+            'usuarios.*' => 'exists:User,idUser',
         ]);
-    }
 
-    return redirect()
-        ->route('crud.padron_electoral.ver')
-        ->with('success', 'Padrón creado correctamente');
-}
+        foreach ($data['usuarios'] as $idUsuario) {
+            PadronElectoral::firstOrCreate([
+                'idElecciones' => $data['idElecciones'],
+                'idUsuario' => $idUsuario,
+            ]);
+        }
+
+        return redirect()
+            ->route('crud.padron_electoral.ver')
+            ->with('success', 'Padrón creado correctamente');
+    }
 
     public function show($id)
     {
@@ -169,153 +170,21 @@ class PadronElectoralController extends Controller
         ]);
     }
 
-    private static function importFromCSV(string $path): Iterator{
-        $csv = Reader::createFromPath($path, 'r');
-        $csv->setHeaderOffset(0);
-        $registros = $csv->getRecords();
+    public function importar(Request $request, IImportadorService $importadorService)
+    {
+        $data = $request->validate([
+            'idElecciones' => 'required|integer',
+            'archivo' => 'required|file|mimes:csv,xlsx',
+        ]);
 
-        $mapa = [
-            'correo' => 0,
-            // 'area' => 1,
-            'nombres' => 2,
-            'apellidos' => 3,
-            'dni' => 4,
-            'telefono' => 5,
-        ];
+        $eleccion = Elecciones::findOrFail($data['idElecciones']);
+        $path = $request->file('archivo')->store('padron_electoral');
 
-        return new CSVIteratorAdapter($registros, $mapa);
-    }
+        $importadorService->importar(storage_path('app/private/' . $path), $eleccion);
 
-    private static function importFromXLSX(string $path, bool $hasHeader = true): Iterator{
-        $lector = new XLSXReader();
-        $lector->open($path);
-        $lector->changeSheet(0);
+        unlink(storage_path('app/private/' . $path));
 
-        if ($hasHeader) $lector->next();
- 
-        return $lector;
-    }
-
-    private static function readFile(string $path): Iterator {
-        $extension = pathinfo($path, PATHINFO_EXTENSION);
-        return match ($extension) {
-            'csv' => self::importFromCSV($path),
-            'xlsx' => self::importFromXLSX($path),
-            default => throw new \InvalidArgumentException("Formato de archivo no soportado: $extension"),
-        };
-    }
-
-    public static function importFromFile(Elecciones $eleccion, string $path) {
-        $registros = self::readFile($path);
-
-        $correosExistentes = PadronElectoral::query()
-            ->where('idElecciones', '=', $eleccion->getKey())
-            ->join('User', 'PadronElectoral.idUsuario', '=', 'User.idUser')
-            ->get()
-            ->pluck('correo');
-
-        $dniExistentes = PadronElectoral::query()
-            ->where('idElecciones', '=', $eleccion->getKey())
-            ->join('User', 'PadronElectoral.idUsuario', '=', 'User.idUser')
-            ->join('PerfilUsuario', 'User.idUser', '=', 'PerfilUsuario.idUser')
-            ->get()
-            ->pluck('dni');
-
-        foreach ($registros as $indice => $registro) {
-            $correo = (string) $registro[0];
-            /* Area por implementar */
-            // $area = (int) $registro[1];
-            $nombres = explode(' ',(string) $registro[2]);
-            $apellidos = explode(' ', (string) $registro[3]);
-            $dni = (string) $registro[4];
-            $telefono = (string) $registro[5];
-
-            $correoDuplicado = $correosExistentes->contains($correo);
-            $dniDuplicado = $dniExistentes->contains($dni);
-
-            if ($correoDuplicado || $dniDuplicado) {
-                $datosOmitidos[] = [
-                    'indice' => $indice,
-                    'correo' => $correo,
-                    'nombres' => join(' ', $nombres),
-                    'apellidos' => join(' ', $apellidos),
-                    'dni' => $dni,
-                    'telefono' => $telefono,
-                    'razon' => $correoDuplicado ? 'Correo duplicado' : 'DNI duplicado',
-                ];
-
-                continue;
-            }
-
-            $correosExistentes->push($correo);
-            $dniExistentes->push($dni);
-
-            $user = User::createOrFirst([
-                'correo' => $correo,
-                'contraseña' => bcrypt($dni),
-                'idEstadoUsuario' => 1, // Activo
-            ]);
-
-            $user->save();
-
-            $perfil = $user->perfil()->createOrFirst([
-                'apellidoPaterno' => $apellidos[0] ?? '',
-                'apellidoMaterno' => $apellidos[1] ?? '',
-                'nombre' => $nombres[0] ?? '',
-                'otrosNombres' => join(' ', array_slice($nombres, 1)) ?? '',
-                'dni' => $dni,
-                'telefono' => $telefono,
-                'idCarrera' => 1, // Temporal: sin carrera asignada
-                'idArea' => 1, // Temporal: sin área asignada
-            ]);
-
-            $perfil->save();
-
-            $registroEnPadron = PadronElectoral::createOrFirst([
-                'idElecciones' => $eleccion->getKey(),
-                'idUsuario' => $user->getKey(),
-                'fechaVoto' => Carbon::now(),
-            ]);
-
-            $registroEnPadron->save();
-        }
-
-        $message = 'Importación completada';
-        if (count($datosOmitidos) > 0) $message .= ' con ' . count($datosOmitidos) . ' registros omitidos';
-
-        return [
-            'success' => true,
-            'message' => $message,
-            'data' => [
-                'registrosOmitidos' => $datosOmitidos,
-            ],
-        ];
-    }
-}
-
-class CSVIteratorAdapter implements Iterator {
-    private Iterator $iterator;
-    private array $map;
-
-    public function __construct(Iterator $reader, array $map) {
-        $this->iterator = $reader;
-        $this->map = $map;
-    }
-
-    public function rewind(): void { $this->iterator->rewind(); }
-
-    public function valid(): bool { return $this->iterator->valid(); }
-
-    public function next(): void { $this->iterator->next(); }
-
-    public function key(): int { return $this->iterator->key(); }
-
-    public function current(): array { 
-        $row = $this->iterator->current();
-        $mappedRow = [];
-        foreach ($this->map as $key => $value) {
-            $mappedRow[$value] = $row[$key] ?? null;
-        }
-        return $mappedRow;
+        return redirect()->route('crud.padron_electoral.ver')
+            ->with('success', 'Padrón importado correctamente');
     }
 }

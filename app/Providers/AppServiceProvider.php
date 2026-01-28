@@ -11,8 +11,12 @@ use App\Services\EleccionesService;
 use App\Interfaces\Services\IEleccionesService;
 use App\Interfaces\Services\IPermisoService;
 use App\Interfaces\Services\IVotoService;
+use App\Interfaces\Services\PadronElectoral\IImportadorFactory;
+use App\Interfaces\Services\PadronElectoral\IImportadorService;
 use App\Models\Configuracion;
 use App\Models\Elecciones;
+use App\Services\PadronElectoral\ImportadorFactory;
+use App\Services\PadronElectoral\ImportadorService;
 use App\Services\PermisoService;
 use App\Services\VotoService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -44,6 +48,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(IVotosCandidatoDTO::class, VotosCandidatoDTO::class);
+
+        $this->app->singleton(IImportadorFactory::class, ImportadorFactory::class);
+        $this->app->singleton(IImportadorService::class, ImportadorService::class);
     }
 
     /**

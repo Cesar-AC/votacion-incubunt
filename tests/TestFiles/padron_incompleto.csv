@@ -1,0 +1,5 @@
+correo,area,nombres,apellidos,dni,telefono
+usuario_sin_area@test.com,,Juan,Perez,12345678,999888777
+usuario_sin_nombres@test.com,TI,,Garcia Lopez,87654321,999777666
+usuario_sin_dni@test.com,MKT,Maria,Sanchez,,999666555
+usuario_valido@test.com,PMO,Carlos,Rodriguez Martinez,11223344,999555444
