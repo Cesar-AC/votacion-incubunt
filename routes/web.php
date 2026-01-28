@@ -21,6 +21,7 @@ use App\Http\Controllers\PropuestaCandidatoController;
 use App\Http\Controllers\PropuestaPartidoController;
 use App\Http\Controllers\RolController;
 use App\Http\Controllers\VotanteController;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 
 Route::get('/login', [AutenticacionController::class, 'verInicioSesion'])->name('vistaLogin');
 
@@ -140,11 +141,11 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/padron-electoral/{id}/editar', [PadronElectoralController::class, 'update'])->name('crud.padron_electoral.editar')->middleware('can:update,App\Models\PadronElectoral');
     Route::delete('/padron-electoral/{id}', [PadronElectoralController::class, 'destroy'])->name('crud.padron_electoral.eliminar')->middleware('can:delete,App\Models\PadronElectoral');
     Route::get('/padron-electoral/{id}', [PadronElectoralController::class, 'show'])->name('crud.padron_electoral.ver_datos')->middleware('can:view,App\Models\PadronElectoral');
-    // Importación de padrón
-    Route::get('/padron/import', [PadronElectoralController::class, 'importForm'])->name('crud.padron_electoral.importar')->middleware('can:create,App\Models\PadronElectoral');
-    Route::post('/padron/import', [PadronElectoralController::class, 'import'])->name('crud.padron_electoral.importar')->middleware('can:create,App\Models\PadronElectoral');
-    Route::post('/padron/import-file', [PadronElectoralController::class, 'importFile'])->name('crud.padron_electoral.importar_archivo')->middleware('can:create,App\Models\PadronElectoral');
+    Route::get('/padron-electoral/importar', [PadronElectoralController::class, 'importForm'])->name('crud.padron_electoral.importar')->middleware('can:create,App\Models\PadronElectoral');
 });
+
+Route::post('/padron-electoral/importar', [PadronElectoralController::class, 'importar'])->name('crud.padron_electoral.importar')
+    ->withoutMiddleware(VerifyCsrfToken::class);
 
 // User
 Route::middleware(['auth'])->group(function () {
@@ -276,4 +277,3 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('votante.home')->with('info', 'La sección de elecciones está temporalmente inactiva.');
     })->name('votante.elecciones');
 });
-
