@@ -322,11 +322,13 @@ class VotanteController extends Controller
 
         // Obtener los candidatos del request
         $candidatos = $request->input('candidatos', []);
+        $partidoSeleccionado = $request->input('partidoSeleccionado', null);
 
         // Log de los datos recibidos
         \Log::info('=== VOTACIÓN INICIADA ===');
         \Log::info('Usuario: ' . Auth::id());
         \Log::info('Elección: ' . $eleccionId);
+        \Log::info('Partido seleccionado: ' . ($partidoSeleccionado ?? 'Ninguno'));
         \Log::info('Candidatos recibidos:', $candidatos);
 
         // Validar que haya candidatos
@@ -342,18 +344,40 @@ class VotanteController extends Controller
             // Cuando se vota por un partido, se registra en VotoPartido, no en VotoCandidato
             $cargosPartido = [1, 2, 3]; // IDs de cargos de partido
             $votosRegistrados = 0;
+            $registroPartido = false;
 
+            // Primero: Registrar voto del partido si fue seleccionado
+            if ($partidoSeleccionado) {
+                $partido = Partido::find($partidoSeleccionado);
+                if ($partido) {
+                    // Determinar tipo de voto (tipo 2 para votos normales)
+                    $idTipoVoto = 2;
+                    
+                    // Registrar en VotoPartido con el padrón electoral
+                    $votoPartido = VotoPartido::create([
+                        'idPadronElectoral' => $padron->idPadronElectoral,
+                        'idPartido' => $partidoSeleccionado,
+                        'idElecciones' => $eleccionId,
+                        'idTipoVoto' => $idTipoVoto
+                    ]);
+                    
+                    $registroPartido = true;
+                    \Log::info("Voto de partido registrado en VotoPartido - Partido ID: {$partidoSeleccionado}, Padrón ID: {$padron->idPadronElectoral}");
+                }
+            }
+
+            // Segundo: Registrar votos de candidatos individuales (excluir cargos de partido)
             foreach ($candidatos as $cargoId => $candidatoData) {
+                $cargoId = (int)$cargoId;
+                
                 // Asegurar que candidatoData es un array con información del candidato
                 if (is_array($candidatoData)) {
                     $candidatoId = $candidatoData['candidatoId'] ?? null;
-                    $partidoId = $candidatoData['partidoId'] ?? null;
                     $nombreCandidato = $candidatoData['nombre'] ?? 'Sin nombre';
                 } else {
                     // Si es solo el ID del candidato
                     $candidatoId = $candidatoData;
                     $candidato = Candidato::find($candidatoId);
-                    $partidoId = $candidato ? $candidato->idPartido : null;
                     $nombreCandidato = $candidato ? ($candidato->usuario->perfil->nombre ?? 'Sin nombre') : 'Sin nombre';
                 }
 
@@ -363,24 +387,33 @@ class VotanteController extends Controller
                     throw new \Exception("El candidato con ID {$candidatoId} no existe.");
                 }
 
-                // Determinar tipo de voto (asumiendo tipo 2 para votos normales)
-                $idTipoVoto = 2; // Voto de la misma área por defecto
+                // Determinar tipo de voto (tipo 2 para votos normales)
+                $idTipoVoto = 2;
 
-                \Log::info("Procesando voto - Cargo: {$cargoId}, Candidato: {$candidatoId} ({$nombreCandidato}), Partido: {$partidoId}");
+                \Log::info("Procesando voto - Cargo: {$cargoId}, Candidato: {$candidatoId} ({$nombreCandidato})");
 
-                // Si es un cargo de partido y tiene partido, registrar en VotoPartido
-                if (in_array($cargoId, $cargosPartido) && $partidoId) {
-                    // Registrar en VotoPartido
-                    VotoPartido::create([
-                        'idPartido' => $partidoId,
+                // Si es un cargo de partido, solo registrar si no se registró el partido completo
+                if (in_array($cargoId, $cargosPartido)) {
+                    // Si ya se registró un voto de partido, saltar los candidatos de partido individuales
+                    // para evitar duplicados
+                    if ($registroPartido) {
+                        \Log::info("Saltando candidato de partido (ya registrado via VotoPartido)");
+                        continue;
+                    }
+                    
+                    // Si no se registró partido, registrar el candidato individual
+                    VotoCandidato::create([
+                        'idPadronElectoral' => $padron->idPadronElectoral,
+                        'idCandidato' => $candidatoId,
                         'idElecciones' => $eleccionId,
                         'idTipoVoto' => $idTipoVoto
                     ]);
                     
-                    \Log::info("Voto registrado en VotoPartido - Partido: {$partidoId}");
+                    \Log::info("Voto de candidato de partido registrado en VotoCandidato");
                 } else {
-                    // Registrar en VotoCandidato para candidatos individuales
+                    // Registrar en VotoCandidato para candidatos individuales de áreas
                     VotoCandidato::create([
+                        'idPadronElectoral' => $padron->idPadronElectoral,
                         'idCandidato' => $candidatoId,
                         'idElecciones' => $eleccionId,
                         'idTipoVoto' => $idTipoVoto

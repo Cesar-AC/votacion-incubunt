@@ -412,6 +412,39 @@ function votingForm() {
             console.log(`Candidato ${candidatoId} seleccionado para cargo ${cargoId}`);
         },
         
+        getVotosActuales() {
+            let votos = 0;
+            
+            // Si hay un partido seleccionado, cuenta como 1 voto
+            if (this.selectedParty !== null) {
+                votos += 1;
+            }
+            
+            // Contar votos individuales (excluyendo cargos de partido: 1, 2, 3)
+            const cargosPartido = [1, 2, 3]; // Presidencia, Vicepresidencia, Coordinador
+            for (const cargoId in this.selectedCandidates) {
+                if (!cargosPartido.includes(parseInt(cargoId))) {
+                    votos += 1;
+                }
+            }
+            
+            return votos;
+        },
+        
+        getVotosDirectores() {
+            let directores = 0;
+            
+            // Contar votos individuales (excluyendo cargos de partido: 1, 2, 3)
+            const cargosPartido = [1, 2, 3];
+            for (const cargoId in this.selectedCandidates) {
+                if (!cargosPartido.includes(parseInt(cargoId))) {
+                    directores += 1;
+                }
+            }
+            
+            return directores;
+        },
+        
         confirmVote() {
             console.log('🔵 confirmVote() llamado');
             
@@ -537,6 +570,7 @@ function votingForm() {
             }
             
             console.log('Votos a registrar:', votos);
+            console.log('Partido seleccionado:', this.selectedParty);
             
             // Enviar al servidor
             const form = document.getElementById('votingForm');
@@ -544,6 +578,7 @@ function votingForm() {
             
             const datosVoto = {
                 candidatos: votos,
+                partidoSeleccionado: this.selectedParty,
                 _token: document.querySelector('input[name="_token"]').value
             };
             
