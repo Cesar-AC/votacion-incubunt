@@ -7,9 +7,15 @@ use App\Enum\Config;
 use App\Interfaces\DTO\Services\IVotosCandidatoDTO;
 use App\Services\EstadisticasElectoralesService;
 use App\Interfaces\IEstadisticasElectoralesService;
+use App\Interfaces\Services\IAreaService;
+use App\Interfaces\Services\ICandidatoService;
+use App\Interfaces\Services\ICarreraService;
 use App\Services\EleccionesService;
 use App\Interfaces\Services\IEleccionesService;
+use App\Interfaces\Services\IPadronElectoralService;
+use App\Interfaces\Services\IPartidoService;
 use App\Interfaces\Services\IPermisoService;
+use App\Interfaces\Services\IUserService;
 use App\Interfaces\Services\IVotoService;
 use App\Interfaces\Services\PadronElectoral\IImportadorFactory;
 use App\Interfaces\Services\PadronElectoral\IImportadorService;
@@ -17,7 +23,13 @@ use App\Models\Configuracion;
 use App\Models\Elecciones;
 use App\Services\PadronElectoral\ImportadorFactory;
 use App\Services\PadronElectoral\ImportadorService;
+use App\Services\AreaService;
+use App\Services\CandidatoService;
+use App\Services\CarreraService;
+use App\Services\PadronElectoralService;
+use App\Services\PartidoService;
 use App\Services\PermisoService;
+use App\Services\UserService;
 use App\Services\VotoService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
@@ -47,10 +59,24 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->bind(IVotosCandidatoDTO::class, VotosCandidatoDTO::class);
-
         $this->app->singleton(IImportadorFactory::class, ImportadorFactory::class);
         $this->app->singleton(IImportadorService::class, ImportadorService::class);
+        $this->app->singleton(IAreaService::class, AreaService::class);
+        $this->app->singleton(ICandidatoService::class, CandidatoService::class);
+        $this->app->singleton(ICarreraService::class, CarreraService::class);
+        $this->app->singleton(IPadronElectoralService::class, function () {
+            return new PadronElectoralService(
+                $this->app->make(IEleccionesService::class)
+            );
+        });
+
+        $this->app->singleton(IPartidoService::class, function () {
+            return new PartidoService(
+                $this->app->make(IEleccionesService::class)
+            );
+        });
+
+        $this->app->singleton(IUserService::class, UserService::class);
     }
 
     /**

@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Thiagoprz\CompositeKey\HasCompositeKey;
 
 class RolUser extends Model
 {
+    use HasCompositeKey;
     protected $table = 'RolUser';
 
-    protected $primaryKey = null;
+    protected $primaryKey = ['idRol', 'idUser'];
 
     public $incrementing = false;
 

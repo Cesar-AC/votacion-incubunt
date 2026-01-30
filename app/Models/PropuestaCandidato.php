@@ -16,11 +16,17 @@ class PropuestaCandidato extends Model
         'idPropuesta',
         'propuesta',
         'descripcion',
-        'idCandidato'
+        'idCandidato',
+        'idElecciones',
     ];
 
     public function candidato()
     {
         return $this->belongsTo(Candidato::class, 'idCandidato');
+    }
+
+    public function elecciones()
+    {
+        return $this->belongsTo(Elecciones::class, 'idElecciones');
     }
 }

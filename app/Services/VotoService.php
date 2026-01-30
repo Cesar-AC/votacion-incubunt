@@ -45,15 +45,15 @@ class VotoService implements IVotoService
             ->exists();
     }
 
-    public function votar(User $usuario, IElegibleAVoto $entidad): void
+    public function votar(User $votante, IElegibleAVoto $entidad): void
     {
         $eleccion = $this->eleccionesService->obtenerEleccionActiva();
 
-        if (!$this->tienePermisoVotar($usuario)) {
+        if (!$this->tienePermisoVotar($votante)) {
             throw new \Exception('No tienes permiso para votar.');
         }
 
-        if (!$this->estaUsuarioEnPadron($usuario, $eleccion)) {
+        if (!$this->estaUsuarioEnPadron($votante, $eleccion)) {
             throw new \Exception('No estás registrado en el padrón electoral.');
         }
 
@@ -61,13 +61,13 @@ class VotoService implements IVotoService
             throw new \Exception('La entidad no es elegible a voto en esta elección.');
         }
 
-        if ($this->yaVoto($usuario, $eleccion)) {
+        if ($this->yaVoto($votante, $eleccion)) {
             throw new \Exception('Ya has votado en esta elección.');
         }
 
         try {
-            DB::transaction(function () use ($usuario, $eleccion, $entidad) {
-                PadronElectoral::where('idUsuario', '=', $usuario->getKey())
+            DB::transaction(function () use ($votante, $eleccion, $entidad) {
+                PadronElectoral::where('idUsuario', '=', $votante->getKey())
                     ->where('idElecciones', '=', $eleccion->getKey())
                     ->update([
                         'fechaVoto' => now()
@@ -76,7 +76,7 @@ class VotoService implements IVotoService
                 $data = [
                     $entidad->obtenerNombrePK() => $entidad->obtenerPK(),
                     'idElecciones' => $eleccion->getKey(),
-                    'idTipoVoto' => $entidad->obtenerTipoVoto($usuario)->getKey(),
+                    'idTipoVoto' => $entidad->obtenerTipoVoto($votante)->getKey(),
                 ];
 
                 DB::table($entidad->obtenerTablaDeVoto())->insert($data);
@@ -85,5 +85,21 @@ class VotoService implements IVotoService
             throw $e;
             throw new \Exception('Un error ha ocurrido al votar. Por favor, intenta de nuevo.');
         }
+    }
+
+    public function contarVotos(IElegibleAVoto $entidad, ?Elecciones $eleccion): int
+    {
+        $eleccion = $eleccion ?? $this->eleccionesService->obtenerEleccionActiva();
+
+        $votos = DB::table($entidad->obtenerTablaDeVoto())
+            ->where('idElecciones', '=', $eleccion->getKey())
+            ->where($entidad->obtenerNombrePK(), '=', $entidad->obtenerPK())
+            ->get();
+
+        $votosPonderados = $votos->reduce(function ($total, $voto) {
+            return $total + $voto->tipoVoto->peso;
+        }, 0);
+
+        return $votosPonderados;
     }
 }

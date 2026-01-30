@@ -136,4 +136,14 @@ interface IPermisoService
      *      Retorna el permiso.
      */
     public function permisoDesdeEnum(\App\Enum\Permiso $permisoEnum): Permiso;
+
+    /**
+     * Obtiene un permiso desde su ID.
+     * @param int $idPermiso
+     *      Obligatorio.
+     *      ID del permiso que se desea obtener.
+     * @return Permiso
+     *      Retorna el permiso.
+     */
+    public function obtenerPermisoPorId(int $idPermiso): Permiso;
 }

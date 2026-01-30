@@ -16,11 +16,17 @@ class PropuestaPartido extends Model
         'idPropuesta',
         'propuesta',
         'descripcion',
-        'idPartido'
+        'idPartido',
+        'idElecciones'
     ];
 
     public function partido()
     {
         return $this->belongsTo(Partido::class, 'idPartido');
+    }
+
+    public function elecciones()
+    {
+        return $this->belongsTo(Elecciones::class, 'idElecciones');
     }
 }

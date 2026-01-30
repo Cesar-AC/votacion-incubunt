@@ -79,4 +79,9 @@ class PermisoService implements IPermisoService
     {
         return Permiso::desdeEnum($permisoEnum);
     }
+
+    public function obtenerPermisoPorId(int $idPermiso): Permiso
+    {
+        return Permiso::findOrFail($idPermiso);
+    }
 }

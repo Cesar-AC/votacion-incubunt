@@ -62,30 +62,12 @@
 
         <!-- Plan de Trabajo -->
         <div class="form-group mt-3">
-          <label class="small font-weight-bold">Plan de Trabajo (opcional)</label>
-          <textarea name="planTrabajo"
-                    class="form-control @error('planTrabajo') is-invalid @enderror"
-                    rows="4">{{ old('planTrabajo', $partido->planTrabajo) }}</textarea>
+          <label class="small font-weight-bold">Enlace al plan de trabajo (opcional)</label>
+          <input type="url"
+                 name="planTrabajo"
+                 class="form-control @error('planTrabajo') is-invalid @enderror"
+                 value="{{ old('planTrabajo', $partido->planTrabajo) }}">
           @error('planTrabajo')
-            <div class="invalid-feedback">{{ $message }}</div>
-          @enderror
-        </div>
-
-        <!-- Tipo -->
-        <div class="form-group">
-          <label class="small font-weight-bold">Tipo de Partido</label>
-          <select name="tipo"
-                  class="form-control @error('tipo') is-invalid @enderror"
-                  required>
-            <option value="">Seleccione tipo</option>
-            <option value="LISTA" {{ old('tipo', $partido->tipo)=='LISTA'?'selected':'' }}>
-              Lista (Junta Directiva)
-            </option>
-            <option value="INDIVIDUAL" {{ old('tipo', $partido->tipo)=='INDIVIDUAL'?'selected':'' }}>
-              Individual (uso interno)
-            </option>
-          </select>
-          @error('tipo')
             <div class="invalid-feedback">{{ $message }}</div>
           @enderror
         </div>

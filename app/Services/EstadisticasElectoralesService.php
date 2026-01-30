@@ -8,16 +8,20 @@ use App\Models\EstadoElecciones;
 use App\Models\PadronElectoral;
 use App\Models\Area;
 
-class EstadisticasElectoralesService implements IEstadisticasElectoralesService {
-    public function contarEleccionesActivas(): int {
-        return Elecciones::where('idEstado', '=', EstadoElecciones::ACTIVO)->count();
+class EstadisticasElectoralesService implements IEstadisticasElectoralesService
+{
+    public function contarEleccionesActivas(): int
+    {
+        return Elecciones::where('idEstado', '=', EstadoElecciones::PROGRAMADO)->count();
     }
 
-    public function contarElectoresHabilitadosPorEleccion(Elecciones $eleccion): int {
+    public function contarElectoresHabilitadosPorEleccion(Elecciones $eleccion): int
+    {
         return PadronElectoral::where('idElecciones', '=', $eleccion->getKey())->count();
     }
 
-    public function contarElectoresHabilitadosPorEleccionYArea(Elecciones $eleccion, Area $area): int {
+    public function contarElectoresHabilitadosPorEleccionYArea(Elecciones $eleccion, Area $area): int
+    {
         return PadronElectoral::where('idElecciones', '=', $eleccion->getKey())
             ->join('User', 'PadronElectoral.idUsuario', '=', 'User.idUser')
             ->join('PerfilUsuario', 'User.idUser', '=', 'PerfilUsuario.idUser')
@@ -25,13 +29,15 @@ class EstadisticasElectoralesService implements IEstadisticasElectoralesService 
             ->count();
     }
 
-    public function contarCantidadVotosPorEleccion(Elecciones $eleccion): int {
+    public function contarCantidadVotosPorEleccion(Elecciones $eleccion): int
+    {
         return PadronElectoral::where('idElecciones', '=', $eleccion->getKey())
             ->whereNotNull('fechaVoto')
             ->count();
     }
 
-    public function contarCantidadVotosPorEleccionYArea(Elecciones $eleccion, Area $area): int {
+    public function contarCantidadVotosPorEleccionYArea(Elecciones $eleccion, Area $area): int
+    {
         return PadronElectoral::where('idElecciones', '=', $eleccion->getKey())
             ->join('User', 'PadronElectoral.idUsuario', '=', 'User.idUser')
             ->join('PerfilUsuario', 'User.idUser', '=', 'PerfilUsuario.idUser')
@@ -40,7 +46,8 @@ class EstadisticasElectoralesService implements IEstadisticasElectoralesService 
             ->count();
     }
 
-    public function calcularPorcentajeParticipacionPorEleccion(Elecciones $eleccion): float {
+    public function calcularPorcentajeParticipacionPorEleccion(Elecciones $eleccion): float
+    {
         $totalHabilitados = $this->contarElectoresHabilitadosPorEleccion($eleccion);
         if ($totalHabilitados === 0) return -1;
 
@@ -49,7 +56,8 @@ class EstadisticasElectoralesService implements IEstadisticasElectoralesService 
         return ($votosEmitidos / $totalHabilitados) * 100;
     }
 
-    public function calcularPorcentajeParticipacionPorEleccionYArea(Elecciones $eleccion, Area $area): float {
+    public function calcularPorcentajeParticipacionPorEleccionYArea(Elecciones $eleccion, Area $area): float
+    {
         $totalHabilitados = $this->contarElectoresHabilitadosPorEleccionYArea($eleccion, $area);
         if ($totalHabilitados === 0) return -1;
 

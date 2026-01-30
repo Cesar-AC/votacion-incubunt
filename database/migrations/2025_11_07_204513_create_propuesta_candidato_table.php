@@ -16,8 +16,10 @@ return new class extends Migration
             $table->string('propuesta', 255);
             $table->text('descripcion');
             $table->unsignedInteger('idCandidato');
-            
+            $table->unsignedInteger('idElecciones');
+
             $table->foreign('idCandidato')->references('idCandidato')->on('Candidato');
+            $table->foreign('idElecciones')->references('idElecciones')->on('Elecciones');
         });
     }
 

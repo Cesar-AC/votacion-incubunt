@@ -107,6 +107,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/elecciones/{id}/editar', [EleccionesController::class, 'update'])->name('crud.elecciones.editar')->middleware('can:update,App\Models\Elecciones');
     Route::delete('/elecciones/{id}', [EleccionesController::class, 'destroy'])->name('crud.elecciones.eliminar')->middleware('can:delete,App\Models\Elecciones');
     Route::get('/elecciones/{id}', [EleccionesController::class, 'show'])->name('crud.elecciones.ver_datos')->middleware('can:view,App\Models\Elecciones');
+    Route::post('/elecciones/{id}/activar', [EleccionesController::class, 'activar'])->name('crud.elecciones.activar')->middleware('can:update,App\Models\Elecciones');
+    Route::post('/elecciones/{id}/restaurar', [EleccionesController::class, 'restaurar'])->name('crud.elecciones.restaurar')->middleware('can:update,App\Models\Elecciones');
 });
 
 // Candidato
@@ -136,12 +138,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/padron-electoral', [PadronElectoralController::class, 'index'])->name('crud.padron_electoral.ver')->middleware('can:viewAny,App\Models\PadronElectoral');
     Route::get('/padron-electoral/crear', [PadronElectoralController::class, 'create'])->name('crud.padron_electoral.crear')->middleware('can:create,App\Models\PadronElectoral');
     Route::post('/padron-electoral/crear', [PadronElectoralController::class, 'store'])->name('crud.padron_electoral.crear')->middleware('can:create,App\Models\PadronElectoral');
+    Route::get('/padron-electoral/importar', [PadronElectoralController::class, 'importForm'])->name('crud.padron_electoral.importar')->middleware('can:import,App\Models\PadronElectoral');
+    Route::post('/padron-electoral/importar', [PadronElectoralController::class, 'importar'])->name('crud.padron_electoral.importar_archivo')->middleware('can:import,App\Models\PadronElectoral');
     Route::get('/padron-electoral/{id}/editar', [PadronElectoralController::class, 'edit'])->name('crud.padron_electoral.editar')->middleware('can:update,App\Models\PadronElectoral');
     Route::put('/padron-electoral/{id}/editar', [PadronElectoralController::class, 'update'])->name('crud.padron_electoral.editar')->middleware('can:update,App\Models\PadronElectoral');
     Route::delete('/padron-electoral/{id}', [PadronElectoralController::class, 'destroy'])->name('crud.padron_electoral.eliminar')->middleware('can:delete,App\Models\PadronElectoral');
     Route::get('/padron-electoral/{id}', [PadronElectoralController::class, 'show'])->name('crud.padron_electoral.ver_datos')->middleware('can:view,App\Models\PadronElectoral');
-    Route::get('/padron-electoral/importar', [PadronElectoralController::class, 'importForm'])->name('crud.padron_electoral.importar')->middleware('can:create,App\Models\PadronElectoral');
-    Route::post('/padron-electoral/importar', [PadronElectoralController::class, 'importar'])->name('crud.padron_electoral.importar')->middleware('can:create,App\Models\PadronElectoral');
 });
 
 // User
