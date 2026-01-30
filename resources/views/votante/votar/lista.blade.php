@@ -94,17 +94,17 @@
                             <div class="flex items-center space-x-3 bg-gray-50 rounded-lg p-3">
                                 @if($candidato->usuario && $candidato->usuario->perfil && $candidato->usuario->perfil->fotoPerfil)
                                 <img src="{{ asset('storage/' . $candidato->usuario->perfil->fotoPerfil) }}" 
-                                     alt="{{ $candidato->usuario->perfil->nombres }}"
+                                     alt="{{ $candidato->usuario->perfil->nombre }}"
                                      class="w-10 h-10 rounded-full object-cover border-2 border-blue-600">
                                 @else
                                 <div class="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold text-sm">
-                                    {{ substr($candidato->usuario->perfil->nombres ?? 'NC', 0, 1) }}
+                                    {{ substr($candidato->usuario->perfil->nombre ?? 'NC', 0, 1) }}
                                 </div>
                                 @endif
                                 <div class="flex-1">
                                     <p class="text-xs font-bold uppercase text-blue-600">{{ $candidato->cargo->nombreCargo ?? 'Cargo' }}</p>
                                     <p class="font-semibold text-sm text-gray-900">
-                                        {{ $candidato->usuario->perfil->nombres ?? 'Sin nombre' }} 
+                                        {{ $candidato->usuario->perfil->nombre ?? 'Sin nombre' }} 
                                         {{ $candidato->usuario->perfil->apellidoPaterno ?? '' }}
                                     </p>
                                 </div>
@@ -152,16 +152,16 @@
                             <div class="flex items-center space-x-3">
                                 @if($candidato->usuario && $candidato->usuario->perfil && $candidato->usuario->perfil->fotoPerfil)
                                 <img src="{{ asset('storage/' . $candidato->usuario->perfil->fotoPerfil) }}" 
-                                     alt="{{ $candidato->usuario->perfil->nombres }}"
+                                     alt="{{ $candidato->usuario->perfil->nombre }}"
                                      class="w-12 h-12 rounded-full object-cover border-2 border-gray-300">
                                 @else
                                 <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold">
-                                    {{ substr($candidato->usuario->perfil->nombres ?? 'NC', 0, 1) }}
+                                    {{ substr($candidato->usuario->perfil->nombre ?? 'NC', 0, 1) }}
                                 </div>
                                 @endif
                                 <div class="flex-1">
                                     <p class="font-bold text-gray-900">
-                                        {{ $candidato->usuario->perfil->nombres ?? 'Sin nombre' }} 
+                                        {{ $candidato->usuario->perfil->nombre ?? 'Sin nombre' }} 
                                         {{ $candidato->usuario->perfil->apellidoPaterno ?? '' }}
                                     </p>
                                     @if($candidato->partido)
