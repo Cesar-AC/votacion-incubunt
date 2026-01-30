@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\Voto;
+use App\Models\VotoPartido;
+use App\Models\VotoCandidato;
 use App\Models\Partido;
 use App\Models\Area;
 use App\Models\Candidato;
@@ -258,7 +260,7 @@ class VotanteController extends Controller
             $partidosHabilitados = $partidos->filter(function($partido) {
                 return $partido->candidatos->count() > 0;
             })->count() > 0 ? 1 : 0;
-            $votosRequeridos = $cargosHabilitados + ($partidosHabilitados * 3);
+            $votosRequeridos = $cargosHabilitados + ($partidosHabilitados);
 
         } catch (\Exception $e) {
             \Log::error('Error en listarCandidatos: ' . $e->getMessage());
@@ -302,10 +304,10 @@ class VotanteController extends Controller
 
         // Verificar estado
         if (!$eleccion->estaActivo()) {
-            return back()->with('error', 'Esta elección no está activa.');
+            return response()->json(['error' => 'Esta elección no está activa.'], 400);
         }
 
-        // TEMPORAL: Desactivar validación de padrón electoral
+        // Obtener o crear registro en padrón electoral
         $padron = PadronElectoral::where('idUsuario', Auth::id())
             ->where('idElecciones', $eleccionId)
             ->first();
@@ -318,39 +320,97 @@ class VotanteController extends Controller
             $padron->save();
         }
 
-        // TEMPORAL: Desactivar validación de voto duplicado para demo
-        // if (Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists()) {
-        //     return redirect()->route('votante.elecciones.detalle', $eleccionId)
-        //         ->with('error', 'Ya has votado en esta elección.');
-        // }
+        // Obtener los candidatos del request
+        $candidatos = $request->input('candidatos', []);
 
-        // Validar datos
-        $request->validate([
-            'candidatos' => 'required|array',
-            'candidatos.*' => 'required|integer'
-        ]);
+        // Log de los datos recibidos
+        \Log::info('=== VOTACIÓN INICIADA ===');
+        \Log::info('Usuario: ' . Auth::id());
+        \Log::info('Elección: ' . $eleccionId);
+        \Log::info('Candidatos recibidos:', $candidatos);
+
+        // Validar que haya candidatos
+        if (empty($candidatos)) {
+            \Log::error('No se recibieron candidatos');
+            return response()->json(['error' => 'No se han seleccionado candidatos.'], 400);
+        }
 
         try {
             DB::beginTransaction();
 
-            // Registrar votos
-            foreach ($request->candidatos as $cargoId => $candidatoId) {
-                // TEMPORAL: No validar que el candidato exista en la BD
-                Voto::create([
-                    'idCandidato' => $candidatoId,
-                    'idPadronElectoral' => $padron->idPadronElectoral,
-                    'fechaVoto' => now(),
-                ]);
+            // Obtener candidatos de partido (presidencia = cargo 1, vicepresidencia = cargo 2, coordinador = cargo 3)
+            // Cuando se vota por un partido, se registra en VotoPartido, no en VotoCandidato
+            $cargosPartido = [1, 2, 3]; // IDs de cargos de partido
+            $votosRegistrados = 0;
+
+            foreach ($candidatos as $cargoId => $candidatoData) {
+                // Asegurar que candidatoData es un array con información del candidato
+                if (is_array($candidatoData)) {
+                    $candidatoId = $candidatoData['candidatoId'] ?? null;
+                    $partidoId = $candidatoData['partidoId'] ?? null;
+                    $nombreCandidato = $candidatoData['nombre'] ?? 'Sin nombre';
+                } else {
+                    // Si es solo el ID del candidato
+                    $candidatoId = $candidatoData;
+                    $candidato = Candidato::find($candidatoId);
+                    $partidoId = $candidato ? $candidato->idPartido : null;
+                    $nombreCandidato = $candidato ? ($candidato->usuario->perfil->nombre ?? 'Sin nombre') : 'Sin nombre';
+                }
+
+                // Validar que el candidato exista
+                $candidato = Candidato::find($candidatoId);
+                if (!$candidato) {
+                    throw new \Exception("El candidato con ID {$candidatoId} no existe.");
+                }
+
+                // Determinar tipo de voto (asumiendo tipo 2 para votos normales)
+                $idTipoVoto = 2; // Voto de la misma área por defecto
+
+                \Log::info("Procesando voto - Cargo: {$cargoId}, Candidato: {$candidatoId} ({$nombreCandidato}), Partido: {$partidoId}");
+
+                // Si es un cargo de partido y tiene partido, registrar en VotoPartido
+                if (in_array($cargoId, $cargosPartido) && $partidoId) {
+                    // Registrar en VotoPartido
+                    VotoPartido::create([
+                        'idPartido' => $partidoId,
+                        'idElecciones' => $eleccionId,
+                        'idTipoVoto' => $idTipoVoto
+                    ]);
+                    
+                    \Log::info("Voto registrado en VotoPartido - Partido: {$partidoId}");
+                } else {
+                    // Registrar en VotoCandidato para candidatos individuales
+                    VotoCandidato::create([
+                        'idCandidato' => $candidatoId,
+                        'idElecciones' => $eleccionId,
+                        'idTipoVoto' => $idTipoVoto
+                    ]);
+                    
+                    \Log::info("Voto registrado en VotoCandidato - Candidato: {$candidatoId}");
+                }
+
+                $votosRegistrados++;
             }
+
+            \Log::info("Total de votos registrados: {$votosRegistrados}");
+            \Log::info('=== VOTACIÓN COMPLETADA EXITOSAMENTE ===');
 
             DB::commit();
 
-            return redirect()->route('votante.votar.exito', $eleccionId)
-                ->with('success', '¡Tu voto ha sido registrado exitosamente!');
+            return response()->json([
+                'success' => true,
+                'message' => '¡Tu voto ha sido registrado exitosamente!',
+                'votos_registrados' => $votosRegistrados
+            ], 200);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Hubo un error al registrar tu voto: ' . $e->getMessage());
+            \Log::error('Error al registrar voto: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            
+            return response()->json([
+                'error' => 'Hubo un error al registrar tu voto: ' . $e->getMessage()
+            ], 500);
         }
     }
 

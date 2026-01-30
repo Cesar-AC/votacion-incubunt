@@ -2,7 +2,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8" x-data="votingForm()">
     <div class="max-w-7xl mx-auto">
         
         {{-- Header --}}
@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <form id="votingForm" action="#" method="POST" x-data="votingForm()">
+        <form id="votingForm" action="#" method="POST" data-eleccion-id="{{ $eleccion->idElecciones }}">
             @csrf
 
             {{-- Instructions --}}
@@ -91,7 +91,13 @@
 
                         <div class="space-y-3 mb-4">
                             @foreach($partido->candidatos->take(3) as $candidato)
-                            <div class="flex items-center space-x-3 bg-gray-50 rounded-lg p-3">
+                            <div class="flex items-center space-x-3 bg-gray-50 rounded-lg p-3"
+                                 data-candidato-id="{{ $candidato->idCandidato }}"
+                                 data-candidato-nombre="{{ $candidato->usuario->perfil->nombre ?? 'Sin nombre' }}"
+                                 data-candidato-apellido="{{ $candidato->usuario->perfil->apellidoPaterno ?? '' }}"
+                                 data-cargo-nombre="{{ $candidato->cargo->cargo ?? 'Cargo' }}"
+                                 data-partido-id="{{ $partido->idPartido }}"
+                                 data-partido-nombre="{{ $partido->partido }}">
                                 @if($candidato->usuario && $candidato->usuario->perfil && $candidato->usuario->perfil->fotoPerfil)
                                 <img src="{{ asset('storage/' . $candidato->usuario->perfil->fotoPerfil) }}" 
                                      alt="{{ $candidato->usuario->perfil->nombre }}"
@@ -148,7 +154,14 @@
                         @forelse($cargo->candidatos as $candidato)
                         <div class="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all duration-300 hover:shadow-xl border-2"
                              :class="selectedCandidates[{{ $cargo->idCargo }}] === {{ $candidato->idCandidato }} ? 'border-purple-600 bg-purple-50' : 'border-gray-200'"
-                             @click="selectCandidate({{ $cargo->idCargo }}, {{ $candidato->idCandidato }})">
+                             @click="selectCandidate({{ $cargo->idCargo }}, {{ $candidato->idCandidato }})"
+                             data-candidato-id="{{ $candidato->idCandidato }}"
+                             data-candidato-nombre="{{ $candidato->usuario->perfil->nombre ?? 'Sin nombre' }}"
+                             data-candidato-apellido="{{ $candidato->usuario->perfil->apellidoPaterno ?? '' }}"
+                             data-cargo-nombre="{{ $cargo->cargo ?? 'Cargo' }}"
+                             data-cargo-id="{{ $cargo->idCargo }}"
+                             data-partido-id="{{ $candidato->idPartido ?? '' }}"
+                             data-partido-nombre="{{ $candidato->partido->partido ?? 'Independiente' }}">
                             <div class="flex items-center space-x-3">
                                 @if($candidato->usuario && $candidato->usuario->perfil && $candidato->usuario->perfil->fotoPerfil)
                                 <img src="{{ asset('storage/' . $candidato->usuario->perfil->fotoPerfil) }}" 
@@ -209,13 +222,17 @@
                         <div class="text-center sm:text-left">
                             <p class="text-sm text-gray-600">Votos seleccionados</p>
                             <p class="text-2xl font-bold text-blue-900">
-                                <span x-text="Object.keys(selectedCandidates).length"></span> / <span x-text="votosRequeridos"></span>
+                                <span x-text="getVotosActuales()"></span> / <span x-text="votosRequeridos"></span>
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1" x-show="selectedParty !== null">
+                                <i class="fas fa-info-circle"></i> 
+                                Partido: 1 voto + <span x-text="getVotosDirectores()"></span> directores
                             </p>
                         </div>
                         <button type="button"
                                 @click="confirmVote()"
-                                :disabled="Object.keys(selectedCandidates).length !== votosRequeridos"
-                                :class="Object.keys(selectedCandidates).length === votosRequeridos ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'"
+                                :disabled="getVotosActuales() !== votosRequeridos"
+                                :class="getVotosActuales() === votosRequeridos ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'"
                                 class="w-full sm:w-auto px-8 py-4 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl text-lg">
                             <i class="fas fa-check-circle mr-2"></i>
                             Confirmar y Votar
@@ -225,7 +242,7 @@
             </div>
 
             {{-- Hidden Inputs --}}
-            <template x-for="(candidatoId, cargoId) in selectedCandidates">
+            <template x-for="(candidatoId, cargoId) in selectedCandidates" :key="cargoId">
                 <input type="hidden" :name="'candidatos[' + cargoId + ']'" :value="candidatoId">
             </template>
         </form>
@@ -233,9 +250,23 @@
         {{-- Confirmation Modal --}}
         <div x-show="showConfirmModal" 
              x-cloak
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
              class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-             @click.self="showConfirmModal = false">
-            <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+             @click.self="showConfirmModal = false"
+             style="display: none;">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 scale-90"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-90"
+                 @click.stop>
                 <div class="sticky top-0 bg-gradient-to-r from-blue-700 to-blue-900 text-white p-6 rounded-t-3xl">
                     <h2 class="text-2xl font-bold flex items-center">
                         <i class="fas fa-check-circle mr-3"></i>
@@ -281,8 +312,18 @@
         {{-- Success Modal --}}
         <div x-show="showSuccessModal" 
              x-cloak
-             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full text-center p-8 animate-bounce">
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+             style="display: none;">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full text-center p-8"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 scale-90"
+                 x-transition:enter-end="opacity-100 scale-100">
                 <div class="mb-6">
                     <div class="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-check-circle text-green-600 text-5xl"></i>
@@ -311,6 +352,11 @@
 
 @push('scripts')
 <script>
+// Verificar que Alpine.js está cargado
+document.addEventListener('alpine:init', () => {
+    console.log('✅ Alpine.js inicializado correctamente');
+});
+
 function votingForm() {
     return {
         selectedCandidates: {},
@@ -320,136 +366,225 @@ function votingForm() {
         votosRequeridos: {{ $votosRequeridos ?? 0 }},
         partidosHabilitados: {{ $partidosHabilitados ?? 0 }},
         
-        // Datos estáticos de candidatos
-        candidatesData: {
-            1: { cargo: 'Presidencia', nombre: 'Carlos Mendez', partido: 'Sinergia' },
-            2: { cargo: 'Vicepresidencia', nombre: 'Ana Torres', partido: 'Sinergia' },
-            3: { cargo: 'Coordinador', nombre: 'Luis Puma', partido: 'Sinergia' },
-            11: { cargo: 'Presidencia', nombre: 'Juan Verde', partido: 'Progreso' },
-            12: { cargo: 'Vicepresidencia', nombre: 'Maria Flores', partido: 'Progreso' },
-            13: { cargo: 'Coordinador', nombre: 'Pedro Silva', partido: 'Progreso' },
-            21: { cargo: 'Presidencia', nombre: 'Sofia Ramos', partido: 'Unidad' },
-            22: { cargo: 'Vicepresidencia', nombre: 'Diego Vargas', partido: 'Unidad' },
-            23: { cargo: 'Coordinador', nombre: 'Laura Castro', partido: 'Unidad' },
-            31: { cargo: 'Director de Marketing', nombre: 'Roberto Marketing', partido: 'Independiente' },
-            32: { cargo: 'Director de Marketing', nombre: 'Lucia Brand', partido: 'Independiente' },
-            41: { cargo: 'Director de Finanzas', nombre: 'Carmen Finanzas', partido: 'Independiente' },
-            42: { cargo: 'Director de Finanzas', nombre: 'Jorge Contador', partido: 'Independiente' },
-            51: { cargo: 'Director de RRHH', nombre: 'Patricia RRHH', partido: 'Independiente' },
-            52: { cargo: 'Director de RRHH', nombre: 'Miguel Talento', partido: 'Independiente' },
+        init() {
+            console.log('✅ Componente votingForm inicializado');
+            console.log('Votos requeridos:', this.votosRequeridos);
+            console.log('Partidos habilitados:', this.partidosHabilitados);
+            
+            // Forzar que Alpine reconozca los cambios de estado
+            this.$watch('showConfirmModal', value => {
+                console.log('📋 Modal de confirmación cambió a:', value);
+            });
+            
+            this.$watch('showSuccessModal', value => {
+                console.log('✅ Modal de éxito cambió a:', value);
+            });
         },
         
-        selectParty(partidoId, presidenteId, vicepresidenteId, coordinadorId) {
+        selectParty(partidoId) {
             this.selectedParty = partidoId;
             
-            // Cargar automáticamente los candidatos del partido
-            this.selectedCandidates[1] = presidenteId;
-            this.selectedCandidates[2] = vicepresidenteId;
-            this.selectedCandidates[3] = coordinadorId;
+            // Buscar los candidatos del partido en el DOM y seleccionarlos automáticamente
+            const partidoElements = document.querySelectorAll(`[data-partido-id="${partidoId}"]`);
+            
+            partidoElements.forEach(element => {
+                const candidatoId = parseInt(element.getAttribute('data-candidato-id'));
+                const cargoNombre = element.getAttribute('data-cargo-nombre');
+                
+                // Solo auto-seleccionar para cargos de partido (Presidencia, Vicepresidencia, Coordinador)
+                if (cargoNombre === 'Presidencia' || cargoNombre === 'Vicepresidencia' || cargoNombre === 'Coordinador') {
+                    // Determinar el cargo ID basado en el nombre
+                    let cargoId;
+                    if (cargoNombre === 'Presidencia') cargoId = 1;
+                    else if (cargoNombre === 'Vicepresidencia') cargoId = 2;
+                    else if (cargoNombre === 'Coordinador') cargoId = 3;
+                    
+                    this.selectedCandidates[cargoId] = candidatoId;
+                }
+            });
+            
+            console.log('Partido seleccionado:', partidoId);
+            console.log('Candidatos actualizados:', this.selectedCandidates);
         },
         
         selectCandidate(cargoId, candidatoId) {
             this.selectedCandidates[cargoId] = candidatoId;
+            console.log(`Candidato ${candidatoId} seleccionado para cargo ${cargoId}`);
         },
         
         confirmVote() {
-            // Validar que tenga los votos requeridos
-            const votosActuales = Object.keys(this.selectedCandidates).length;
+            console.log('🔵 confirmVote() llamado');
+            
+            // Contar votos: partido cuenta como 1 voto, resto son individuales
+            let votosActuales = 0;
+            
+            // Si hay un partido seleccionado, cuenta como 1 voto
+            if (this.selectedParty !== null) {
+                votosActuales += 1;
+            }
+            
+            // Contar votos individuales (excluyendo cargos de partido: 1, 2, 3)
+            const cargosPartido = [1, 2, 3]; // Presidencia, Vicepresidencia, Coordinador
+            for (const cargoId in this.selectedCandidates) {
+                if (!cargosPartido.includes(parseInt(cargoId))) {
+                    votosActuales += 1;
+                }
+            }
+            
+            console.log('Partido seleccionado:', this.selectedParty);
+            console.log('Votos actuales:', votosActuales);
+            console.log('Votos requeridos:', this.votosRequeridos);
+            console.log('Candidatos seleccionados:', this.selectedCandidates);
             
             if (votosActuales === 0) {
-                alert('Por favor selecciona al menos un candidato.');
+                alert('Por favor selecciona al menos un candidato o partido.');
                 return;
             }
             
             if (this.votosRequeridos > 0 && votosActuales < this.votosRequeridos) {
-                alert(`Debes seleccionar ${this.votosRequeridos} candidato(s). Has seleccionado ${votosActuales}.`);
+                const mensaje = this.selectedParty 
+                    ? `Debes seleccionar ${this.votosRequeridos} votos. Has seleccionado: 1 partido + ${votosActuales - 1} directores = ${votosActuales} votos.`
+                    : `Debes seleccionar ${this.votosRequeridos} candidato(s). Has seleccionado ${votosActuales}.`;
+                alert(mensaje);
                 return;
             }
             
-            this.showConfirmModal = true;
+            console.log('✅ Validaciones pasadas, mostrando modal...');
+            
+            // Actualizar la lista de candidatos antes de mostrar el modal
             this.updateConfirmationList();
+            
+            // Mostrar el modal usando Alpine.js
+            this.showConfirmModal = true;
+            
+            console.log('showConfirmModal =', this.showConfirmModal);
         },
         
         updateConfirmationList() {
             const container = document.getElementById('selectedCandidatesList');
+            if (!container) {
+                console.error('❌ No se encontró el contenedor selectedCandidatesList');
+                return;
+            }
+            
             container.innerHTML = '';
             
+            console.log('📋 Actualizando lista de confirmación...');
+            
+            // Obtener información de candidatos desde el DOM
             for (const [cargoId, candidatoId] of Object.entries(this.selectedCandidates)) {
-                const candidato = this.candidatesData[candidatoId];
+                // Buscar el elemento del candidato seleccionado en el DOM para obtener datos reales
+                const candidatoElement = document.querySelector(`[data-candidato-id="${candidatoId}"]`);
                 
-                if (candidato) {
+                if (candidatoElement) {
+                    const nombre = candidatoElement.getAttribute('data-candidato-nombre');
+                    const apellido = candidatoElement.getAttribute('data-candidato-apellido') || '';
+                    const cargo = candidatoElement.getAttribute('data-cargo-nombre');
+                    const partido = candidatoElement.getAttribute('data-partido-nombre') || 'Independiente';
+                    
+                    console.log(`- ${cargo}: ${nombre} ${apellido} (${partido})`);
+                    
                     const div = document.createElement('div');
                     div.className = 'bg-blue-50 rounded-lg p-4 border-2 border-blue-200';
                     div.innerHTML = `
-                        <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">${candidato.cargo}</p>
+                        <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">${cargo}</p>
                         <div class="flex items-center space-x-3">
                             <div class="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold">
-                                ${candidato.nombre.split(' ').map(n => n[0]).join('')}
+                                ${nombre.charAt(0)}${apellido.charAt(0) || ''}
                             </div>
                             <div>
-                                <p class="font-bold text-gray-900">${candidato.nombre}</p>
-                                <p class="text-sm text-gray-600">${candidato.partido}</p>
+                                <p class="font-bold text-gray-900">${nombre} ${apellido}</p>
+                                <p class="text-sm text-gray-600">${partido}</p>
                             </div>
                         </div>
                     `;
                     container.appendChild(div);
+                } else {
+                    console.warn(`⚠️ No se encontró elemento para candidato ${candidatoId}`);
                 }
             }
         },
         
-        handleSubmit() {
-            // Construir el objeto de candidatos
-            const candidatos = {};
+        submitVote() {
+            console.log('🚀 Iniciando envío de voto...');
+            
+            // Construir el objeto de votos con información de candidatos
+            const votos = {};
+            
             for (const [cargoId, candidatoId] of Object.entries(this.selectedCandidates)) {
-                candidatos[cargoId] = candidatoId;
+                // Buscar el elemento del candidato en el DOM para obtener datos reales
+                const candidatoElement = document.querySelector(`[data-candidato-id="${candidatoId}"]`);
+                
+                if (candidatoElement) {
+                    const nombre = candidatoElement.getAttribute('data-candidato-nombre');
+                    const apellido = candidatoElement.getAttribute('data-candidato-apellido') || '';
+                    const cargo = candidatoElement.getAttribute('data-cargo-nombre');
+                    const partidoId = candidatoElement.getAttribute('data-partido-id');
+                    const partidoNombre = candidatoElement.getAttribute('data-partido-nombre') || 'Independiente';
+                    
+                    votos[cargoId] = {
+                        candidatoId: parseInt(candidatoId),
+                        cargoId: parseInt(cargoId),
+                        nombre: nombre,
+                        apellido: apellido,
+                        cargo: cargo,
+                        partidoId: partidoId ? parseInt(partidoId) : null,
+                        partidoNombre: partidoNombre
+                    };
+                    
+                    console.log(`Cargo ${cargoId}: ${nombre} ${apellido} (${cargo}) - Partido: ${partidoNombre}`);
+                }
             }
             
-            // Validar que haya candidatos seleccionados
-            if (Object.keys(candidatos).length === 0) {
-                alert('Por favor selecciona al menos un candidato.');
-                return;
-            }
+            console.log('Votos a registrar:', votos);
             
-            // Crear un formulario temporal para enviar los datos
+            // Enviar al servidor
             const form = document.getElementById('votingForm');
-            const formData = new FormData(form);
+            const eleccionId = form.getAttribute('data-eleccion-id');
             
-            // Agregar los candidatos seleccionados
-            for (const [cargoId, candidatoId] of Object.entries(candidatos)) {
-                formData.append('candidatos[' + cargoId + ']', candidatoId);
-            }
+            const datosVoto = {
+                candidatos: votos,
+                _token: document.querySelector('input[name="_token"]').value
+            };
             
-            // Mostrar modal de éxito
-            this.showSuccessModal = true;
-            this.showConfirmModal = false;
+            console.log('Datos enviados al servidor:', datosVoto);
             
-            // Enviar el formulario después de 1 segundo
-            setTimeout(() => {
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                }).then(response => {
-                    if (response.ok || response.status === 302 || response.status === 200) {
-                        // Esperar 2 segundos más y luego redirigir a la página de éxito
-                        setTimeout(() => {
-                            // Obtener el ID de la elección desde el atributo data del formulario
-                            const eleccionId = form.getAttribute('data-eleccion-id');
-                            window.location.href = `/votante/votar/${eleccionId}/exito`;
-                        }, 2000);
-                    } else {
-                        throw new Error('Error en la respuesta del servidor');
-                    }
-                }).catch(error => {
-                    console.error('Error:', error);
-                    alert('Error al registrar el voto. Por favor intenta de nuevo.');
-                    this.showSuccessModal = false;
-                    this.showConfirmModal = true;
-                });
-            }, 1000);
+            fetch(`/votante/votar/${eleccionId}/emitir`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(datosVoto)
+            })
+            .then(response => {
+                console.log('Respuesta del servidor - Estado:', response.status);
+                if (response.status === 200 || response.status === 201) {
+                    return response.json();
+                } else {
+                    return response.json().then(err => {
+                        console.error('Error en respuesta:', err);
+                        throw new Error(err.message || 'Error al registrar el voto');
+                    });
+                }
+            })
+            .then(data => {
+                console.log('✅ Respuesta exitosa:', data);
+                this.showSuccessModal = true;
+                this.showConfirmModal = false;
+                
+                // Redirigir después de 3 segundos
+                setTimeout(() => {
+                    window.location.href = `/votante/votar/${eleccionId}/exito`;
+                }, 3000);
+            })
+            .catch(error => {
+                console.error('❌ Error en la petición:', error);
+                alert('Error al registrar el voto: ' + error.message);
+                this.showSuccessModal = false;
+                this.showConfirmModal = true;
+            });
         }
     }
 }
@@ -459,15 +594,31 @@ function votingForm() {
 @push('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-[x-cloak] { display: none !important; }
+/* Ocultar elementos con x-cloak hasta que Alpine.js esté listo */
+[x-cloak] { 
+    display: none !important; 
+}
 
 @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
     animation: fade-in 0.6s ease-out;
+}
+
+/* Animación para el modal de éxito */
+@keyframes bounce-in {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Asegurar que los modales estén visibles cuando Alpine.js los active */
+div[x-show] {
+    transition: opacity 0.3s ease;
 }
 </style>
 @endpush
