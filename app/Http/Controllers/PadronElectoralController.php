@@ -2,22 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Interfaces\Services\PadronElectoral\IImportadorFactory;
 use App\Interfaces\Services\PadronElectoral\IImportadorService;
 use App\Interfaces\Services\IEleccionesService;
 use App\Interfaces\Services\IPadronElectoralService;
-use App\Interfaces\Services\IUserService;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\User;
 use App\Models\EstadoElecciones;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
-use Iterator;
-use League\Csv\Reader;
-use Aspera\Spreadsheet\XLSX\Reader as XLSXReader;
 
 class PadronElectoralController extends Controller
 {

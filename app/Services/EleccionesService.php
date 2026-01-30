@@ -47,12 +47,8 @@ class EleccionesService implements IEleccionesService
         }
     }
 
-    public function obtenerEleccionActiva(): Elecciones
+    public function obtenerEleccionActiva(): ?Elecciones
     {
-        if ($this->eleccionActiva === null) {
-            throw new \Exception('No se ha configurado una elección activa.');
-        }
-
         return $this->eleccionActiva;
     }
 
@@ -63,7 +59,7 @@ class EleccionesService implements IEleccionesService
 
     public function esEleccionActiva(Elecciones $eleccion): bool
     {
-        return $this->obtenerEleccionActiva()->getKey() == $eleccion->getKey();
+        return $this->obtenerEleccionActiva()?->getKey() == $eleccion->getKey();
     }
 
     public function estaEnPadronElectoral(User $usuario, ?Elecciones $eleccion): bool
@@ -146,7 +142,20 @@ class EleccionesService implements IEleccionesService
     {
         $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
 
-        $eleccion->update($datos);
+        $eleccion->update([
+            'titulo' => $datos['titulo'],
+            'descripcion' => $datos['descripcion'],
+            'fechaInicio' => $datos['fechaInicio'],
+            'fechaCierre' => $datos['fechaCierre'],
+        ]);
+
+        if (isset($datos['idEstado']) && $datos['idEstado'] == EstadoElecciones::ANULADO) {
+            $this->anularElecciones($eleccion);
+        }
+
+        if (isset($datos['idEstado']) && $datos['idEstado'] == EstadoElecciones::FINALIZADO) {
+            $this->finalizarElecciones($eleccion);
+        }
 
         return $eleccion;
     }
@@ -160,6 +169,7 @@ class EleccionesService implements IEleccionesService
 
         if ($this->esEleccionActiva($eleccion)) {
             $this->eleccionActiva = null;
+            Configuracion::definirClave(Config::ELECCION_ACTIVA, '-1');
         }
 
         $eleccion->update([
@@ -176,6 +186,7 @@ class EleccionesService implements IEleccionesService
 
         if ($this->esEleccionActiva($eleccion)) {
             $this->eleccionActiva = null;
+            Configuracion::definirClave(Config::ELECCION_ACTIVA, '-1');
         }
 
         $eleccion->update([

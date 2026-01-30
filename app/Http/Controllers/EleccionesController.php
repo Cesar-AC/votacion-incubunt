@@ -128,58 +128,75 @@ class EleccionesController extends Controller
     {
         $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-        $this->eleccionesService->anularElecciones($eleccion);
-        return response()->json([
-            'success' => true,
-            'message' => 'Elección anulada',
-            'data' => [
-                'id' => $eleccion->getKey(),
-                'titulo' => $eleccion->titulo,
-                'descripcion' => $eleccion->descripcion,
-                'fechaInicio' => $eleccion->fechaInicio,
-                'fechaCierre' => $eleccion->fechaCierre,
-                'estado' => $eleccion->estadoEleccion(),
-            ],
-        ]);
+        try {
+            $this->eleccionesService->anularElecciones($eleccion);
+
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->with('success', 'Elección anulada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->withErrors([
+                    'error' => 'Error al anular la elección: ' . $e->getMessage(),
+                ]);
+        }
     }
 
     public function finalizar(Request $request, int $id)
     {
         $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-        $this->eleccionesService->finalizarElecciones($eleccion);
+        try {
+            $this->eleccionesService->finalizarElecciones($eleccion);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Elección finalizada',
-            'data' => [
-                'id' => $eleccion->getKey(),
-                'titulo' => $eleccion->titulo,
-                'descripcion' => $eleccion->descripcion,
-                'fechaInicio' => $eleccion->fechaInicio,
-                'fechaCierre' => $eleccion->fechaCierre,
-                'estado' => $eleccion->estadoEleccion(),
-            ],
-        ]);
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->with('success', 'Elección finalizada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->withErrors([
+                    'error' => 'Error al finalizar la elección: ' . $e->getMessage(),
+                ]);
+        }
     }
 
-    public function restaurar(Request $request, int $id)
+    public function activar(int $id)
     {
         $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-        $this->eleccionesService->restaurarElecciones($eleccion);
+        try {
+            $this->eleccionesService->cambiarEleccionActiva($eleccion);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Elección restaurada',
-            'data' => [
-                'id' => $eleccion->getKey(),
-                'titulo' => $eleccion->titulo,
-                'descripcion' => $eleccion->descripcion,
-                'fechaInicio' => $eleccion->fechaInicio,
-                'fechaCierre' => $eleccion->fechaCierre,
-                'estado' => $eleccion->estadoEleccion(),
-            ],
-        ]);
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->with('success', 'Elección activada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->withErrors([
+                    'error' => 'Error al activar la elección: ' . $e->getMessage(),
+                ]);
+        }
+    }
+
+    public function restaurar(int $id)
+    {
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+
+        try {
+            $this->eleccionesService->restaurarElecciones($eleccion);
+
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->with('success', 'Elección restaurada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->withErrors([
+                    'error' => 'Error al restaurar la elección: ' . $e->getMessage(),
+                ]);
+        }
     }
 }

@@ -47,7 +47,7 @@
             {{ $eleccion->titulo }}
           </h6>
           <small class="text-muted">
-            {{ $eleccion->participantes_count ?? 0 }} participantes
+            {{ $eleccion->padronElectoral()->count() }} participantes
           </small>
         </div>
 

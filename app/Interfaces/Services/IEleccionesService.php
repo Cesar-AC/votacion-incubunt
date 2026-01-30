@@ -20,8 +20,9 @@ interface IEleccionesService
 {
     /**
      * @return Elecciones Retorna la elección activa.
+     *      Si no se ha configurado una elección activa, retornará null.
      */
-    public function obtenerEleccionActiva(): Elecciones;
+    public function obtenerEleccionActiva(): ?Elecciones;
 
     /**
      * @param Elecciones $eleccion

@@ -26,9 +26,9 @@ class PartidoController extends Controller
     {
         $request->validate([
             'partido' => 'required|string|max:255|unique:Partido,partido',
-            'urlPartido' => 'required|url|max:255',
+            'urlPartido' => 'required|url',
             'descripcion' => 'required|string',
-            'tipo' => 'nullable|string|max:255',
+            'planTrabajo' => 'nullable|url',
         ], [
             'partido.required' => 'El nombre del partido es obligatorio.',
             'partido.string' => 'El nombre del partido debe ser texto.',
@@ -36,11 +36,9 @@ class PartidoController extends Controller
             'partido.unique' => 'El nombre del partido ya existe.',
             'urlPartido.required' => 'La URL del partido es obligatoria.',
             'urlPartido.url' => 'La URL del partido debe ser válida.',
-            'urlPartido.max' => 'La URL del partido no puede exceder los 255 caracteres.',
             'descripcion.required' => 'La descripción es obligatoria.',
             'descripcion.string' => 'La descripción debe ser texto.',
-            'tipo.string' => 'El tipo debe ser texto.',
-            'tipo.max' => 'El tipo no puede exceder los 255 caracteres.',
+            'planTrabajo.url' => 'El plan de trabajo debe ser una URL válida.',
         ]);
 
         $this->partidoService->crearPartido($request->all());

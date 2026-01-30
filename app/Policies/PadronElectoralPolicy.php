@@ -27,7 +27,7 @@ class PadronElectoralPolicy
     public function view(User $user, PadronElectoral $padronElectoral): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "padron_electoral:crud:ver:{$padronElectoral->id}",
+            "padron_electoral:crud:ver:{$padronElectoral->getKey()}",
             'padron_electoral:crud:ver:*',
             'padron_electoral:crud:*',
             'padron_electoral:*'
@@ -89,6 +89,15 @@ class PadronElectoralPolicy
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
             'padron_electoral:crud:eliminar',
+            'padron_electoral:crud:*',
+            'padron_electoral:*'
+        ]);
+    }
+
+    public function import(User $user): bool
+    {
+        return ValidadorPermisos::usuarioTienePermisos($user, [
+            'padron_electoral:crud:agregar',
             'padron_electoral:crud:*',
             'padron_electoral:*'
         ]);
