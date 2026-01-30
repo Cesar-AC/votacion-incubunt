@@ -317,6 +317,8 @@ function votingForm() {
         selectedParty: null,
         showConfirmModal: false,
         showSuccessModal: false,
+        votosRequeridos: {{ $votosRequeridos ?? 0 }},
+        partidosHabilitados: {{ $partidosHabilitados ?? 0 }},
         
         // Datos estáticos de candidatos
         candidatesData: {
@@ -351,11 +353,19 @@ function votingForm() {
         },
         
         confirmVote() {
-            // TEMPORAL: Permitir confirmar con cualquier cantidad de candidatos seleccionados
-            if (Object.keys(this.selectedCandidates).length === 0) {
+            // Validar que tenga los votos requeridos
+            const votosActuales = Object.keys(this.selectedCandidates).length;
+            
+            if (votosActuales === 0) {
                 alert('Por favor selecciona al menos un candidato.');
                 return;
             }
+            
+            if (this.votosRequeridos > 0 && votosActuales < this.votosRequeridos) {
+                alert(`Debes seleccionar ${this.votosRequeridos} candidato(s). Has seleccionado ${votosActuales}.`);
+                return;
+            }
+            
             this.showConfirmModal = true;
             this.updateConfirmationList();
         },

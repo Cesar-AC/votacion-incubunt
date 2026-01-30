@@ -230,6 +230,30 @@ class VotanteController extends Controller
                 }
             ])->get();
 
+            // Filtrar áreas que tengan cargos con candidatos
+            $areas = $areas->filter(function($area) {
+                return $area->cargos->some(function($cargo) {
+                    return $cargo->candidatos->count() > 0;
+                });
+            })->map(function($area) {
+                // Filtrar cargos que tengan candidatos
+                $area->cargos = $area->cargos->filter(function($cargo) {
+                    return $cargo->candidatos->count() > 0;
+                });
+                return $area;
+            });
+
+            // Contar cargos habilitados (con candidatos)
+            $cargosHabilitados = 0;
+            foreach ($areas as $area) {
+                $cargosHabilitados += $area->cargos->count();
+            }
+            // Agregar el partido como cargo habilitado (si hay partidos con candidatos)
+            $partidosHabilitados = $partidos->filter(function($partido) {
+                return $partido->candidatos->count() > 0;
+            })->count() > 0 ? 1 : 0;
+            $votosRequeridos = $cargosHabilitados + $partidosHabilitados;
+
         } catch (\Exception $e) {
             \Log::error('Error en listarCandidatos: ' . $e->getMessage());
             // Si hay error en la query, devolver arrays vacíos para modo demo
@@ -239,7 +263,7 @@ class VotanteController extends Controller
             $areas = collect([]);
         }
 
-        return view('votante.votar.lista', compact('eleccion', 'cargos', 'candidatosPorCargo', 'partidos', 'areas'));
+        return view('votante.votar.lista', compact('eleccion', 'cargos', 'candidatosPorCargo', 'partidos', 'areas', 'votosRequeridos', 'cargosHabilitados', 'partidosHabilitados'));
     }
 
     /**
