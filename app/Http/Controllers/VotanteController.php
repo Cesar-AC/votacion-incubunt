@@ -231,7 +231,12 @@ class VotanteController extends Controller
             ])->get();
 
             // Filtrar áreas que tengan cargos con candidatos
+            // Excluir el área "Administración" (candidatos de partido no cuentan para cargos específicos)
             $areas = $areas->filter(function($area) {
+                // Excluir área de Administración
+                if (strtolower($area->area) === 'administración' || strtolower($area->area) === 'administracion') {
+                    return false;
+                }
                 return $area->cargos->some(function($cargo) {
                     return $cargo->candidatos->count() > 0;
                 });
