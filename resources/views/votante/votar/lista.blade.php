@@ -31,7 +31,7 @@
                 <div class="h-0.5 w-12 sm:w-20 bg-gray-300"></div>
                 <div class="flex items-center">
                     <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300"
-                         :class="Object.keys(selectedCandidates).length === 6 ? 'bg-green-600 text-white' : 'bg-gray-400 text-gray-700'">
+                         :class="Object.keys(selectedCandidates).length === votosRequeridos ? 'bg-green-600 text-white' : 'bg-gray-400 text-gray-700'">
                         <span class="text-sm sm:text-base font-semibold">2</span>
                     </div>
                     <span class="ml-2 text-xs sm:text-sm font-medium text-gray-700">Confirmación</span>
@@ -209,13 +209,13 @@
                         <div class="text-center sm:text-left">
                             <p class="text-sm text-gray-600">Votos seleccionados</p>
                             <p class="text-2xl font-bold text-blue-900">
-                                <span x-text="Object.keys(selectedCandidates).length"></span> / 6
+                                <span x-text="Object.keys(selectedCandidates).length"></span> / <span x-text="votosRequeridos"></span>
                             </p>
                         </div>
                         <button type="button"
                                 @click="confirmVote()"
-                                :disabled="Object.keys(selectedCandidates).length !== 6"
-                                :class="Object.keys(selectedCandidates).length === 6 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'"
+                                :disabled="Object.keys(selectedCandidates).length !== votosRequeridos"
+                                :class="Object.keys(selectedCandidates).length === votosRequeridos ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'"
                                 class="w-full sm:w-auto px-8 py-4 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl text-lg">
                             <i class="fas fa-check-circle mr-2"></i>
                             Confirmar y Votar

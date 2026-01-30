@@ -254,10 +254,11 @@ class VotanteController extends Controller
                 $cargosHabilitados += $area->cargos->count();
             }
             // Agregar el partido como cargo habilitado (si hay partidos con candidatos)
+            // El partido vale por 3 (Presidente + Vicepresidente + Coordinador)
             $partidosHabilitados = $partidos->filter(function($partido) {
                 return $partido->candidatos->count() > 0;
             })->count() > 0 ? 1 : 0;
-            $votosRequeridos = $cargosHabilitados + $partidosHabilitados;
+            $votosRequeridos = $cargosHabilitados + ($partidosHabilitados * 3);
 
         } catch (\Exception $e) {
             \Log::error('Error en listarCandidatos: ' . $e->getMessage());
