@@ -32,6 +32,11 @@ class Elecciones extends Model
         return $this->belongsTo(EstadoElecciones::class, 'idEstado');
     }
 
+    public function padronElectoral()
+    {
+        return $this->hasMany(PadronElectoral::class, 'idElecciones');
+    }
+
     public function partidos()
     {
         return $this->belongsToMany(Partido::class, 'PartidoEleccion', 'idElecciones', 'idPartido');
@@ -60,7 +65,6 @@ class Elecciones extends Model
     {
         return $this->estado->esActivo();
     }
-   
 
     public function estaFinalizado()
     {

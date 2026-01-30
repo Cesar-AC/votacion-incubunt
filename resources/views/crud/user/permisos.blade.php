@@ -6,7 +6,7 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <h5 class="font-weight-bold mb-0">Permisos de Usuario</h5>
-      <small class="text-muted">{{ $user->correo }} — {{ $user->perfil->nombre ?? 'Sin perfil' }}</small>
+      <small class="text-muted">{{ $usuario->correo }} — {{ $usuario->perfil->nombre ?? 'Sin perfil' }}</small>
     </div>
     <a href="{{ route('crud.user.ver') }}" class="btn btn-secondary btn-sm">
       <i class="fas fa-arrow-left"></i> Volver
@@ -44,7 +44,7 @@
           <h6 class="m-0 font-weight-bold">Asignar permiso</h6>
         </div>
         <div class="card-body">
-          <form method="POST" action="{{ route('crud.user.permisos.asignar', $user->getKey()) }}">
+          <form method="POST" action="{{ route('crud.user.permisos.asignar', $usuario->getKey()) }}">
             @csrf
             <div class="form-group">
               <label class="small font-weight-bold">Permiso</label>
@@ -73,14 +73,14 @@
           <h6 class="m-0 font-weight-bold">Permisos asignados</h6>
         </div>
         <div class="card-body p-0">
-          @if($user->permisos->isEmpty())
+          @if($usuario->permisos->isEmpty())
             <div class="p-3 text-muted">Sin permisos asignados.</div>
           @else
             <div class="list-group list-group-flush">
-              @foreach($user->permisos as $permiso)
+              @foreach($usuario->permisos as $permiso)
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                   <span>{{ $permiso->permiso }}</span>
-                  <form method="POST" action="{{ route('crud.user.permisos.quitar', [$user->getKey(), $permiso->idPermiso]) }}" class="m-0">
+                  <form method="POST" action="{{ route('crud.user.permisos.quitar', [$usuario->getKey(), $permiso->idPermiso]) }}" class="m-0">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Quitar este permiso?')">

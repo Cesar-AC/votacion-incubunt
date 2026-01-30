@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Interfaces\Services\PadronElectoral\IImportadorFactory;
 use App\Interfaces\Services\PadronElectoral\IImportadorService;
+use App\Interfaces\Services\IEleccionesService;
+use App\Interfaces\Services\IPadronElectoralService;
+use App\Interfaces\Services\IUserService;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\User;
@@ -18,173 +21,134 @@ use Aspera\Spreadsheet\XLSX\Reader as XLSXReader;
 
 class PadronElectoralController extends Controller
 {
-    public function index()
-    {
-        $elecciones = Elecciones::withCount([
-            'usuarios as participantes_count'
-        ])
-            ->having('participantes_count', '>', 0)
-            ->orderBy('fechaInicio', 'desc')
-            ->get();
+	public function __construct(protected IEleccionesService $eleccionesService, protected IPadronElectoralService $padronElectoralService) {}
 
-        return view('crud.padron_electoral.ver', compact('elecciones'));
-    }
+	public function index()
+	{
+		$elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
 
-    public function create()
-    {
-        $elecciones = Elecciones::where('idEstado', EstadoElecciones::PROGRAMADO)
-            ->orderBy('fechaInicio', 'desc')
-            ->get();
+		return view('crud.padron_electoral.ver', compact('elecciones'));
+	}
 
-        $usuarios = User::with('perfil')->orderBy('idUser')->get();
+	public function create()
+	{
+		$elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
 
-        return view('crud.padron_electoral.crear', compact('elecciones', 'usuarios'));
-    }
+		$usuarios = User::with('perfil')->orderBy('idUser')->get();
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'idElecciones' => 'required|exists:Elecciones,idElecciones',
-            'usuarios' => 'required|array',
-            'usuarios.*' => 'exists:User,idUser',
-        ]);
+		return view('crud.padron_electoral.crear', compact('elecciones', 'usuarios'));
+	}
 
-        foreach ($data['usuarios'] as $idUsuario) {
-            PadronElectoral::firstOrCreate([
-                'idElecciones' => $data['idElecciones'],
-                'idUsuario' => $idUsuario,
-            ]);
-        }
+	public function store(Request $request)
+	{
+		$data = $request->validate(
+			[
+				'idElecciones' => 'required|exists:Elecciones,idElecciones',
+				'usuarios' => 'required|array',
+				'usuarios.*' => 'exists:User,idUser',
+			],
+			[
+				'idElecciones.required' => 'Debe seleccionar una elección.',
+				'idElecciones.exists' => 'La elección seleccionada no existe.',
+				'usuarios.required' => 'Debe seleccionar al menos un usuario.',
+				'usuarios.array' => 'Los usuarios deben ser un array.',
+				'usuarios.*.exists' => 'El usuario seleccionado no existe.',
+			]
+		);
 
-        return redirect()
-            ->route('crud.padron_electoral.ver')
-            ->with('success', 'Padrón creado correctamente');
-    }
+		foreach ($data['usuarios'] as $idUsuario) {
+			PadronElectoral::firstOrCreate([
+				'idElecciones' => $data['idElecciones'],
+				'idUsuario' => $idUsuario,
+			]);
+		}
 
-    public function show($id)
-    {
-        $p = PadronElectoral::findOrFail($id);
-        return response()->json([
-            'success' => true,
-            'message' => 'Padrón obtenido',
-            'data' => [
-                'idElecciones' => $p->idElecciones,
-                'idParticipante' => $p->idParticipante,
-            ],
-        ]);
-    }
+		return redirect()
+			->route('crud.padron_electoral.ver')
+			->with('success', 'Padrón creado correctamente');
+	}
 
-    public function edit($idElecciones)
-    {
-        $eleccion = Elecciones::findOrFail($idElecciones);
-        $usuarios = User::with('perfil')->orderBy('idUser')->get();
-        $padronUsuarios = PadronElectoral::where('idElecciones', $idElecciones)->pluck('idUsuario')->toArray();
-        return view('crud.padron_electoral.editar', compact('eleccion', 'usuarios', 'padronUsuarios'));
-    }
+	public function show($id)
+	{
+		$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-    public function update(Request $request, $idElecciones)
-    {
-        $data = $request->validate([
-            'usuarios' => 'required|array',
-            'usuarios.*' => 'exists:User,idUser',
-        ]);
+		return response()->json([
+			'success' => true,
+			'message' => 'Padrón obtenido',
+			'data' => [
+				'idElecciones' => $eleccion->idElecciones,
+			],
+		]);
+	}
 
-        // Remove existing
-        PadronElectoral::where('idElecciones', $idElecciones)->delete();
+	public function edit(int $id)
+	{
+		$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-        // Add selected users
-        foreach ($data['usuarios'] as $idUsuario) {
-            PadronElectoral::create([
-                'idElecciones' => $idElecciones,
-                'idUsuario' => $idUsuario,
-            ]);
-        }
+		$usuarios = User::with('perfil')->orderBy('idUser')->get();
+		$padronUsuarios = PadronElectoral::where('idElecciones', '=', $id)->pluck('idUsuario')->toArray();
+		return view('crud.padron_electoral.editar', compact('eleccion', 'usuarios', 'padronUsuarios'));
+	}
 
-        return redirect()
-            ->route('crud.padron_electoral.ver')
-            ->with('success', 'Padrón actualizado correctamente');
-    }
+	public function update(Request $request, int $id)
+	{
+		$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-    public function importForm()
-    {
-        $elecciones = Elecciones::where('idEstado', EstadoElecciones::PROGRAMADO)
-            ->orderBy('fechaInicio', 'desc')
-            ->get();
+		$data = $request->validate([
+			'usuarios' => 'required|array',
+			'usuarios.*' => 'exists:User,idUser',
+		]);
 
-        return view('crud.padron_electoral.importar', compact('elecciones'));
-    }
+		PadronElectoral::where('idElecciones', '=', $id)->delete();
 
-    public function import(Request $request)
-    {
-        $data = $request->validate([
-            'idElecciones' => 'required|integer',
-            'participantes' => 'required|array',
-            'participantes.*' => 'integer',
-        ]);
+		foreach ($data['usuarios'] as $idUsuario) {
+			$this->padronElectoralService->agregarUsuarioAEleccion(User::find($idUsuario), $eleccion);
+		}
 
-        $created = [];
-        $skipped = [];
-        foreach ($data['participantes'] as $idUser) {
-            $exists = PadronElectoral::query()
-                ->where('idElecciones', $data['idElecciones'])
-                ->where('idParticipante', $idUser)
-                ->exists();
-            if ($exists) {
-                $skipped[] = $idUser;
-                continue;
-            }
-            $p = new PadronElectoral([
-                'idElecciones' => $data['idElecciones'],
-                'idParticipante' => $idUser
-            ]);
-            $p->save();
-            $created[] = [
-                'id' => $p->getKey(),
-                'idParticipante' => $idUser,
-            ];
-        }
+		return redirect()
+			->route('crud.padron_electoral.ver')
+			->with('success', 'Padrón actualizado correctamente');
+	}
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Importación de padrón completada',
-            'data' => [
-                'idElecciones' => $data['idElecciones'],
-                'creados' => $created,
-                'omitidos' => $skipped,
-            ],
-        ], Response::HTTP_CREATED);
-    }
+	public function destroy(int $id)
+	{
+		$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+		$this->padronElectoralService->restablecerPadronElectoral($eleccion);
 
-    public function destroy($id)
-    {
-        $p = PadronElectoral::findOrFail($id);
-        $p->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Padrón eliminado',
-            'data' => [
-                'id' => (int) $id,
-                'idElecciones' => $p->idElecciones,
-                'idParticipante' => $p->idUser
-            ],
-        ]);
-    }
+		return response()->json([
+			'success' => true,
+			'message' => 'Padrón eliminado',
+			'data' => [
+				'id' => (int) $id,
+				'idElecciones' => $eleccion->idElecciones,
+			],
+		]);
+	}
 
-    public function importar(Request $request, IImportadorService $importadorService)
-    {
-        $data = $request->validate([
-            'idElecciones' => 'required|integer',
-            'archivo' => 'required|file|mimes:csv,xlsx',
-        ]);
+	public function importForm()
+	{
+		$elecciones = Elecciones::where('idEstado', EstadoElecciones::PROGRAMADO)
+			->orderBy('fechaInicio', 'desc')
+			->get();
 
-        $eleccion = Elecciones::findOrFail($data['idElecciones']);
-        $path = $request->file('archivo')->store('padron_electoral');
+		return view('crud.padron_electoral.importar', compact('elecciones'));
+	}
 
-        $importadorService->importar(storage_path('app/private/' . $path), $eleccion);
+	public function importar(Request $request, IImportadorService $importadorService)
+	{
+		$data = $request->validate([
+			'idElecciones' => 'required|integer',
+			'archivo' => 'required|file|mimes:csv,xlsx',
+		]);
 
-        unlink(storage_path('app/private/' . $path));
+		$eleccion = Elecciones::findOrFail($data['idElecciones']);
+		$path = $request->file('archivo')->store('padron_electoral');
 
-        return redirect()->route('crud.padron_electoral.ver')
-            ->with('success', 'Padrón importado correctamente');
-    }
+		$importadorService->importar(storage_path('app/private/' . $path), $eleccion);
+
+		unlink(storage_path('app/private/' . $path));
+
+		return redirect()->route('crud.padron_electoral.ver')
+			->with('success', 'Padrón importado correctamente');
+	}
 }

@@ -54,7 +54,7 @@ class DashboardController extends Controller
                 'elecciones_total' => $eleccionesTotal,
                 'elecciones_activas' => $eleccionesActivas,
                 'padrones' => $padrones,
-                'votos' => $votos,
+                // 'votos' => $votos,
                 'admins' => $admins,
             ];
 
