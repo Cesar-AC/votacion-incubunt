@@ -102,7 +102,7 @@
                                 </div>
                                 @endif
                                 <div class="flex-1">
-                                    <p class="text-xs font-bold uppercase text-blue-600">{{ $candidato->cargo->nombreCargo ?? 'Cargo' }}</p>
+                                    <p class="text-xs font-bold uppercase text-blue-600">{{ $candidato->cargo->cargo ?? 'Cargo' }}</p>
                                     <p class="font-semibold text-sm text-gray-900">
                                         {{ $candidato->usuario->perfil->nombre ?? 'Sin nombre' }} 
                                         {{ $candidato->usuario->perfil->apellidoPaterno ?? '' }}
