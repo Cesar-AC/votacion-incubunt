@@ -50,14 +50,21 @@
                     Tus Votos Registrados
                 </h3>
 
+
                 <div class="space-y-4">
-                    @foreach($votos as $voto)
+                    @forelse($votos as $voto)
                     <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-5 border border-gray-200">
                         <div class="flex items-start justify-between mb-3">
                             <div>
+                                @if($voto->candidato && $voto->candidato->cargo)
                                 <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
-                                    {{ $voto->candidato->cargo->nombreCargo }}
+                                    {{ $voto->candidato->cargo->nombreCargo ?? 'Sin cargo' }}
                                 </p>
+                                @else
+                                <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                                    Cargo desconocido
+                                </p>
+                                @endif
                             </div>
                             <span class="bg-green-100 text-green-900 text-xs font-bold px-3 py-1 rounded-full border border-green-600">
                                 Registrado
@@ -65,15 +72,15 @@
                         </div>
 
                         <div class="flex items-center space-x-4">
-                            @if($voto->candidato->usuario && $voto->candidato->usuario->perfil)
+                            @if($voto->candidato && $voto->candidato->usuario && $voto->candidato->usuario->perfil)
                             <img src="{{ $voto->candidato->usuario->perfil->fotoPerfil ? asset('storage/' . $voto->candidato->usuario->perfil->fotoPerfil) : asset('images/default-avatar.png') }}" 
                                  alt="{{ $voto->candidato->usuario->perfil->nombres }}"
                                  class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg">
                             
                             <div class="flex-1">
                                 <h4 class="text-lg sm:text-xl font-bold text-gray-900 mb-1">
-                                    {{ $voto->candidato->usuario->perfil->nombres }} 
-                                    {{ $voto->candidato->usuario->perfil->apellidoPaterno }}
+                                    {{ $voto->candidato->usuario->perfil->nombres ?? 'Sin nombre' }} 
+                                    {{ $voto->candidato->usuario->perfil->apellidoPaterno ?? '' }}
                                 </h4>
                                 
                                 @if($voto->candidato->partido)
@@ -97,10 +104,25 @@
                                 </p>
                                 @endif
                             </div>
+                            @else
+                            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shadow-lg">
+                                <i class="fas fa-user text-gray-400 text-2xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-lg sm:text-xl font-bold text-gray-900 mb-1">
+                                    Candidato ID: {{ $voto->idCandidato }}
+                                </h4>
+                                <p class="text-sm font-medium text-gray-600">Información no disponible</p>
+                            </div>
                             @endif
                         </div>
                     </div>
-                    @endforeach
+                    @empty
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 text-center">
+                        <i class="fas fa-info-circle text-yellow-600 mr-2"></i>
+                        <p class="text-yellow-800 font-medium">No se registraron votos. Intenta nuevamente.</p>
+                    </div>
+                    @endforelse
                 </div>
             </div>
 
@@ -112,7 +134,7 @@
                             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
                         </svg>
                         <span class="font-medium">Fecha:</span>
-                        <span>{{ $votos->first()->fechaVoto->format('d/m/Y H:i:s') }}</span>
+                        <span>{{ $votos->isNotEmpty() ? $votos->first()->fechaVoto->format('d/m/Y H:i:s') : now()->format('d/m/Y H:i:s') }}</span>
                     </div>
                     <div class="flex items-center space-x-2">
                         <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
@@ -144,6 +166,18 @@
                         <li>Puedes imprimir este comprobante para tus registros</li>
                     </ul>
                 </div>
+            </div>
+        </div>
+
+        {{-- Redirection Info --}}
+        <div class="bg-green-50 border-l-4 border-green-600 rounded-lg p-4 sm:p-6 mb-6 shadow-md text-center">
+            <p class="text-base text-green-800 font-semibold mb-3">
+                Serás redirigido al inicio automáticamente
+            </p>
+            <div class="flex items-center justify-center space-x-2">
+                <span class="text-gray-700 text-sm">Redirigiendo en</span>
+                <span id="countdown" class="font-bold text-green-600 text-2xl">5</span>
+                <span class="text-gray-700 text-sm">segundos...</span>
             </div>
         </div>
 
@@ -279,6 +313,25 @@ function createConfetti() {
 // Run confetti on page load
 window.addEventListener('load', () => {
     createConfetti();
+    
+    // Contador regresivo
+    let countdown = 5;
+    const countdownElement = document.getElementById('countdown');
+    
+    const countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdownElement) {
+            countdownElement.textContent = countdown;
+        }
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+        }
+    }, 1000);
+    
+    // Redirigir automáticamente al home después de 5 segundos
+    setTimeout(() => {
+        window.location.href = '{{ route("votante.home") }}';
+    }, 5000);
 });
 </script>
 @endpush

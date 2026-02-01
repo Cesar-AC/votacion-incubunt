@@ -229,7 +229,7 @@
                         <h2>Elecciones</h2>
                         <span class="brand-text-sm">incubunt 2026</span>
 
-                        @if(isset($eleccionActiva) && $eleccionActiva)
+                        @if(isset($eleccionActiva) && $eleccionActiva && $eleccionActiva->idElecciones)
                             <p>Ejerce tu derecho y elige a los líderes que guiarán nuestra organización.</p>
                             <a href="{{ route('votante.votar.lista', $eleccionActiva->getKey()) }}" class="btn btn-voter btn-voter-light">
                                 Votar Ahora
@@ -240,11 +240,11 @@
                             </div>
                         @else
                             <p>Por el momento no hay elecciones activas disponibles para votar.</p>
-                            <button class="btn btn-voter btn-voter-light"
-                                    style="opacity: 0.5; cursor: not-allowed;"
-                                    disabled>
-                                Sin Elecciones
-                            </button>
+                            {{-- TEMPORAL: Botón activo para ver la vista lista --}}
+                            <a href="{{ route('votante.votar.lista', 1) }}" 
+                               class="btn btn-voter btn-voter-light">
+                                Sin Elecciones (Demo)
+                            </a>
                             <div class="no-elections-message">
                                 <i class="fas fa-info-circle mr-1"></i>
                                 Serás notificado cuando haya una nueva elección

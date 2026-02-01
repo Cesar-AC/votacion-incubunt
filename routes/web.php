@@ -53,6 +53,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{eleccionId}/candidatos', [VotanteController::class, 'listarCandidatos'])->name('lista');
             Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
             Route::post('/{eleccionId}/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
+            Route::get('/{eleccionId}/exito', [VotanteController::class, 'votoExitoso'])->name('exito');
         });
 
         // Gestión de Propuestas de Partido
