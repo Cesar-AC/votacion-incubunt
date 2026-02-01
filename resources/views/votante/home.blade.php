@@ -231,13 +231,7 @@
 
                         @if(isset($eleccionActiva) && $eleccionActiva)
                             <p>Ejerce tu derecho y elige a los líderes que guiarán nuestra organización.</p>
-<<<<<<< HEAD
-                            {{-- CORREGIDO: Usar el campo correcto de ID --}}
-                            <a href="{{ route('votante.votar.lista', $eleccionActiva->idElecciones) }}"
-=======
-                            <a href="{{ route('votante.votar.lista', $eleccionActiva->id) }}" 
->>>>>>> da6e86d (style/ Partidos y Directores interface voting)
-                               class="btn btn-voter btn-voter-light">
+                            <a href="{{ route('votante.votar.lista', $eleccionActiva->getKey()) }}" class="btn btn-voter btn-voter-light">
                                 Votar Ahora
                             </a>
                             <div class="mt-3 text-sm" style="color: #c4b5fd; font-size: 0.9rem;">
