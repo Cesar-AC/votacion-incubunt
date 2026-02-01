@@ -2,12 +2,12 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-4xl mx-auto">
         
         {{-- Success Animation --}}
         <div class="text-center mb-8 animate-bounce-in">
-            <div class="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-green-500 rounded-full shadow-2xl mb-6">
+            <div class="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 bg-green-600 rounded-full shadow-2xl mb-6">
                 <svg class="w-12 h-12 sm:w-14 sm:h-14 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                 </svg>
@@ -21,10 +21,10 @@
         </div>
 
         {{-- Vote Summary Card --}}
-        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden mb-6">
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden mb-6">
             
             {{-- Election Info --}}
-            <div class="p-6 sm:p-8 bg-gradient-to-r from-blue-600 to-blue-800">
+            <div class="p-6 sm:p-8 bg-gradient-to-r from-blue-700 to-blue-900">
                 <div class="flex items-center space-x-4">
                     <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-full p-4">
                         <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -59,7 +59,7 @@
                                     {{ $voto->candidato->cargo->nombreCargo }}
                                 </p>
                             </div>
-                            <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
+                            <span class="bg-green-100 text-green-900 text-xs font-bold px-3 py-1 rounded-full border border-green-600">
                                 Registrado
                             </span>
                         </div>
@@ -126,7 +126,7 @@
         </div>
 
         {{-- Important Information --}}
-        <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 sm:p-6 mb-6">
+        <div class="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-4 sm:p-6 mb-6 shadow-md">
             <div class="flex items-start">
                 <div class="flex-shrink-0">
                     <svg class="h-6 w-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
@@ -134,10 +134,10 @@
                     </svg>
                 </div>
                 <div class="ml-3 flex-1">
-                    <h3 class="text-sm sm:text-base font-medium text-blue-800 mb-2">
+                    <h3 class="text-sm sm:text-base font-bold text-blue-900 mb-2">
                         Información importante
                     </h3>
-                    <ul class="list-disc list-inside text-sm text-blue-700 space-y-1">
+                    <ul class="list-disc list-inside text-sm text-blue-800 space-y-1">
                         <li>Tu voto ha sido registrado de forma segura y anónima</li>
                         <li>No es posible modificar o cambiar tu voto una vez registrado</li>
                         <li>Los resultados estarán disponibles una vez finalice el proceso electoral</li>
@@ -150,14 +150,14 @@
         {{-- Action Buttons --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <a href="{{ route('votante.elecciones') }}"
-               class="bg-white text-gray-700 border-2 border-gray-300 py-4 rounded-xl font-semibold text-center hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center space-x-2">
+               class="bg-white text-gray-800 border-2 border-gray-400 py-4 rounded-xl font-bold text-center hover:bg-gray-100 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center space-x-2 focus:outline-none focus:ring-4 focus:ring-gray-300">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
                 </svg>
                 <span>Ver Elecciones</span>
             </a>
                 <a href="{{ route('votante.elecciones') }}"
-                    class="bg-blue-600 text-white py-4 rounded-xl font-semibold text-center hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center space-x-2">
+                    class="bg-blue-700 text-white py-4 rounded-xl font-bold text-center hover:bg-blue-800 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center space-x-2 focus:outline-none focus:ring-4 focus:ring-blue-400">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
                 </svg>
@@ -168,7 +168,7 @@
         {{-- Download Certificate Button --}}
         <div class="text-center">
             <button onclick="window.print()"
-                    class="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 font-medium transition-colors duration-300 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    class="inline-flex items-center space-x-2 text-gray-700 hover:text-gray-900 font-semibold transition-colors duration-300 px-6 py-3 border-2 border-gray-400 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-300">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd"/>
                 </svg>
@@ -182,6 +182,7 @@
 </div>
 
 @push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 @keyframes bounce-in {
     0% {

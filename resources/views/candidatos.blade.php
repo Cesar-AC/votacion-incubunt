@@ -4,286 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidatos 2026 - Incubunt VOTE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            min-height: 100vh;
-            padding: 20px;
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out;
         }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        .animate-delay-1 {
+            animation-delay: 0.1s;
+            animation-fill-mode: both;
         }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, #1a5490 0%, #2463a8 100%);
-            border-radius: 12px;
-            padding: 25px 40px;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .logo {
-            background: #ffa500;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
-            color: #1a5490;
-        }
-
-        .header-title {
-            color: white;
-            font-size: 28px;
-            font-weight: 600;
-        }
-
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, #1c3a5e 0%, #243f60 100%);
-            border-radius: 12px;
-            padding: 50px 40px;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .hero h1 {
-            color: white;
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-
-        .hero p {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 18px;
-        }
-
-        /* Section Title */
-        .section-title {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 25px;
-            padding-left: 5px;
-        }
-
-        /* Cards Container */
-        .cards-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-
-        /* Card */
-        .card {
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
-        }
-
-        .card-header {
-            padding: 35px 30px;
-            color: white;
-        }
-
-        .card-header.blue {
-            background: linear-gradient(135deg, #4a90e2 0%, #5ba3f5 100%);
-        }
-
-        .card-header.orange {
-            background: linear-gradient(135deg, #ffa500 0%, #ffb933 100%);
-        }
-
-        .card-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .card-subtitle {
-            font-size: 16px;
-            font-style: italic;
-            opacity: 0.95;
-        }
-
-        .card-body {
-            background: white;
-            padding: 30px;
-        }
-
-        /* Avatar Group */
-        .avatar-group {
-            display: flex;
-            margin-bottom: 20px;
-        }
-
-        .avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: #d0d0d0;
-            border: 3px solid white;
-            margin-left: -12px;
-            transition: transform 0.2s ease;
-        }
-
-        .avatar:first-child {
-            margin-left: 0;
-        }
-
-        .avatar:hover {
-            transform: scale(1.1);
-            z-index: 10;
-        }
-
-        .avatar-more {
-            background: #666;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        /* Card Description */
-        .card-description {
-            color: #555;
-            font-size: 15px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        /* Card Link */
-        .card-link {
-            color: #4a90e2;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 15px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: gap 0.3s ease;
-        }
-
-        .card-link:hover {
-            gap: 10px;
-        }
-
-        .card-link.orange {
-            color: #ff8c00;
-        }
-
-        /* Responsive */
-        @media (max-width: 1100px) {
-            .cards-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 36px;
-            }
-
-            .card-title {
-                font-size: 24px;
-            }
-
-            .header {
-                padding: 20px 25px;
-            }
-
-            .header-title {
-                font-size: 22px;
-            }
+        .animate-delay-2 {
+            animation-delay: 0.2s;
+            animation-fill-mode: both;
         }
     </style>
 </head>
-<body>
-    <div class="container">
+<body class="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 min-h-screen">
+    <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-7xl">
+        
         <!-- Header -->
-        <header class="header">
-            <div class="logo">ING</div>
-            <h2 class="header-title">incubunt VOTE</h2>
+        <header class="bg-gradient-to-r from-blue-800 to-blue-700 rounded-2xl p-6 sm:p-8 mb-8 shadow-2xl animate-fade-in" role="banner">
+            <div class="flex items-center gap-4">
+                <div class="bg-amber-500 w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center font-bold text-xl sm:text-2xl text-blue-900 shadow-lg" aria-hidden="true">
+                    ING
+                </div>
+                <h1 class="text-white text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">
+                    incubunt <span class="font-normal">VOTE</span>
+                </h1>
+            </div>
         </header>
 
         <!-- Hero Section -->
-        <section class="hero">
-            <h1>Candidatos 2026</h1>
-            <p>Conoce a quienes liderarán Incubunt.</p>
+        <section class="bg-gradient-to-r from-blue-800 to-blue-700 rounded-2xl p-8 sm:p-12 lg:p-16 mb-10 shadow-2xl animate-fade-in animate-delay-1" aria-labelledby="hero-title">
+            <h2 id="hero-title" class="text-white text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+                Candidatos 2026
+            </h2>
+            <p class="text-blue-100 text-lg sm:text-xl lg:text-2xl">
+                Conoce a quienes liderarán Incubunt.
+            </p>
         </section>
 
-        <!-- Candidates Section -->
-        <div class="section-title">Postulación Presidencial</div>
+        <!-- Section Title -->
+        <div class="mb-8 animate-fade-in animate-delay-2">
+            <h3 class="text-blue-200 text-sm sm:text-base font-bold tracking-widest uppercase px-2">
+                Postulación Presidencial
+            </h3>
+        </div>
         
-        <div class="cards-container">
-            <!-- Card 1: Partido A - Sinergia -->
-            <article class="card">
-                <div class="card-header blue">
-                    <h3 class="card-title">Partido A - Sinergia</h3>
-                    <p class="card-subtitle">"Innovación y Liderazgo"</p>
+        <!-- Cards Container -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-12">
+            
+            <!-- Card 1: Partido A - Sinergia (Blue) -->
+            <article class="bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 transition-all duration-300 animate-fade-in animate-delay-2" aria-labelledby="partido-a-title">
+                <!-- Card Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-8 sm:p-10">
+                    <h3 id="partido-a-title" class="text-white text-3xl sm:text-4xl font-bold mb-2">
+                        Partido A - Sinergia
+                    </h3>
+                    <p class="text-blue-50 text-lg sm:text-xl italic font-light">
+                        "Innovación y Liderazgo"
+                    </p>
                 </div>
-                <div class="card-body">
-                    <div class="avatar-group">
-                        <div class="avatar"></div>
-                        <div class="avatar"></div>
-                        <div class="avatar"></div>
-                        <div class="avatar avatar-more">+3</div>
+                
+                <!-- Card Body -->
+                <div class="p-6 sm:p-8">
+                    <!-- Avatar Group -->
+                    <div class="flex mb-6" role="group" aria-label="Miembros del equipo">
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md" aria-label="Miembro 1"></div>
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md -ml-4" aria-label="Miembro 2"></div>
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md -ml-4" aria-label="Miembro 3"></div>
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-700 border-4 border-white shadow-md -ml-4 flex items-center justify-center text-white font-bold text-sm sm:text-base" aria-label="3 miembros más">
+                            +3
+                        </div>
                     </div>
-                    <p class="card-description">
+                    
+                    <!-- Description -->
+                    <p class="text-gray-700 text-base sm:text-lg leading-relaxed mb-6">
                         Somos un equipo multidisciplinario de la UNT comprometidos con potenciar el ecosistema emprendedor. Creemos en la fuerza de la unión entre facultades para crear líderes integrales.
                     </p>
-                    <a href="#" class="card-link">Ver equipo y propuestas →</a>
+                    
+                    <!-- Link -->
+                    <a href="#" 
+                       class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-bold text-base sm:text-lg transition-all duration-300 hover:gap-4 focus:outline-none focus:ring-4 focus:ring-blue-300 rounded-lg px-2 py-1"
+                       aria-label="Ver equipo y propuestas de Partido A - Sinergia">
+                        <span>Ver equipo y propuestas</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </a>
                 </div>
             </article>
 
-            <!-- Card 2: Partido B - Impulso -->
-            <article class="card">
-                <div class="card-header orange">
-                    <h3 class="card-title">Partido B - Impulso</h3>
-                    <p class="card-subtitle">"Acción que Transforma"</p>
+            <!-- Card 2: Partido B - Impulso (Orange) -->
+            <article class="bg-white rounded-2xl overflow-hidden shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 transition-all duration-300 animate-fade-in animate-delay-2" aria-labelledby="partido-b-title">
+                <!-- Card Header -->
+                <div class="bg-gradient-to-r from-amber-500 to-amber-400 p-8 sm:p-10">
+                    <h3 id="partido-b-title" class="text-gray-900 text-3xl sm:text-4xl font-bold mb-2">
+                        Partido B - Impulso
+                    </h3>
+                    <p class="text-gray-800 text-lg sm:text-xl italic font-light">
+                        "Acción que Transforma"
+                    </p>
                 </div>
-                <div class="card-body">
-                    <div class="avatar-group">
-                        <div class="avatar"></div>
-                        <div class="avatar"></div>
-                        <div class="avatar"></div>
-                        <div class="avatar avatar-more">+3</div>
+                
+                <!-- Card Body -->
+                <div class="p-6 sm:p-8">
+                    <!-- Avatar Group -->
+                    <div class="flex mb-6" role="group" aria-label="Miembros del equipo">
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md" aria-label="Miembro 1"></div>
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md -ml-4" aria-label="Miembro 2"></div>
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-300 border-4 border-white shadow-md -ml-4" aria-label="Miembro 3"></div>
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-700 border-4 border-white shadow-md -ml-4 flex items-center justify-center text-white font-bold text-sm sm:text-base" aria-label="3 miembros más">
+                            +3
+                        </div>
                     </div>
-                    <p class="card-description">
+                    
+                    <!-- Description -->
+                    <p class="text-gray-700 text-base sm:text-lg leading-relaxed mb-6">
                         Buscamos transformar incubunt en un referente nacional comprometido con la innovación y el emprendimiento estudiantil de impacto.
                     </p>
-                    <a href="#" class="card-link orange">Ver equipo y propuestas →</a>
+                    
+                    <!-- Link -->
+                    <a href="#" 
+                       class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-800 font-bold text-base sm:text-lg transition-all duration-300 hover:gap-4 focus:outline-none focus:ring-4 focus:ring-amber-300 rounded-lg px-2 py-1"
+                       aria-label="Ver equipo y propuestas de Partido B - Impulso">
+                        <span>Ver equipo y propuestas</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </a>
                 </div>
             </article>
         </div>
+
+        <!-- Footer -->
+        <footer class="text-center py-8">
+            <p class="text-blue-200 text-sm">
+                &copy; 2026 Incubunt VOTE - Sistema de Votación Electoral
+            </p>
+        </footer>
     </div>
 </body>
 </html>
