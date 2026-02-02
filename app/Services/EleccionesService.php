@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-use App\DTO\Services\VotosCandidatoDTO;
 use App\Enum\Config;
-use App\Interfaces\DTO\Services\IVotosCandidatoDTO;
 use App\Models\Configuracion;
 use App\Models\Elecciones;
 use App\Interfaces\Services\IEleccionesService;
@@ -14,9 +12,7 @@ use Illuminate\Support\Collection;
 use App\Models\Cargo;
 use App\Models\EstadoElecciones;
 use App\Models\Partido;
-use App\Models\VotoCandidato;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Validator;
 
 class EleccionesService implements IEleccionesService
 {
@@ -27,6 +23,15 @@ class EleccionesService implements IEleccionesService
         if (!$eleccion->estaProgramado()) {
             throw new \Exception('No se puede configurar esta elección en el servicio: La elección no está programada.');
         }
+    }
+
+    protected function obtenerEleccionOFalla(?Elecciones $eleccion = null): Elecciones
+    {
+        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        if (!$eleccion) {
+            throw new \Exception('No se ha configurado una elección activa.');
+        }
+        return $eleccion;
     }
 
     protected function guardarEleccionActiva(Elecciones $eleccion): void
@@ -62,37 +67,37 @@ class EleccionesService implements IEleccionesService
         return $this->obtenerEleccionActiva()?->getKey() == $eleccion->getKey();
     }
 
-    public function estaEnPadronElectoral(User $usuario, ?Elecciones $eleccion): bool
+    public function estaEnPadronElectoral(User $usuario, ?Elecciones $eleccion = null): bool
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
         return $eleccion->usuarios()->where('idUser', '=', $usuario->getKey())->exists();
     }
 
-    public function obtenerCandidatos(?Elecciones $eleccion): Collection
+    public function obtenerCandidatos(?Elecciones $eleccion = null): Collection
     {
         throw new \Exception('Not implemented');
     }
 
-    public function obtenerCandidatosPorCargo(Cargo $cargo, ?Elecciones $eleccion): Collection
+    public function obtenerCandidatosPorCargo(Cargo $cargo, ?Elecciones $eleccion = null): Collection
     {
         throw new \Exception('Not implemented');
     }
 
-    public function obtenerPartidos(?Elecciones $eleccion): Collection
+    public function obtenerPartidos(?Elecciones $eleccion = null): Collection
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
         return $eleccion->partidos()->get();
     }
 
-    public function perteneceCandidatoAEleccion(Candidato $candidato, ?Elecciones $eleccion): bool
+    public function perteneceCandidatoAEleccion(Candidato $candidato, ?Elecciones $eleccion = null): bool
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
         return $eleccion->candidatos()->where('Candidato.idCandidato', '=', $candidato->getKey())->exists();
     }
 
-    public function pertenecePartidoAEleccion(Partido $partido, ?Elecciones $eleccion): bool
+    public function pertenecePartidoAEleccion(Partido $partido, ?Elecciones $eleccion = null): bool
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
         return $eleccion->partidos()->where('Partido.idPartido', '=', $partido->getKey())->exists();
     }
 
@@ -138,7 +143,7 @@ class EleccionesService implements IEleccionesService
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function editarElecciones(array $datos, ?Elecciones $eleccion): Elecciones
+    public function editarElecciones(array $datos, ?Elecciones $eleccion = null): Elecciones
     {
         $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
 
@@ -160,9 +165,9 @@ class EleccionesService implements IEleccionesService
         return $eleccion;
     }
 
-    public function anularElecciones(?Elecciones $eleccion): void
+    public function anularElecciones(?Elecciones $eleccion = null): void
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
         if (!$eleccion->estaProgramado()) {
             throw new \Exception('No se puede anular una elección que no se encuentra en estado "Programado".');
         }
@@ -177,9 +182,9 @@ class EleccionesService implements IEleccionesService
         ]);
     }
 
-    public function finalizarElecciones(?Elecciones $eleccion): void
+    public function finalizarElecciones(?Elecciones $eleccion = null): void
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
         if (!$eleccion->estaProgramado()) {
             throw new \Exception('No se puede finalizar una elección que no se encuentra en estado "Programado".');
         }
@@ -194,9 +199,9 @@ class EleccionesService implements IEleccionesService
         ]);
     }
 
-    public function restaurarElecciones(?Elecciones $eleccion): void
+    public function restaurarElecciones(?Elecciones $eleccion = null): void
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
 
         if (!$eleccion->estaAnulado()) {
             throw new \Exception('Solo se puede restaurar una elección que se encuentra en estado "Anulada".');
@@ -206,9 +211,9 @@ class EleccionesService implements IEleccionesService
         $eleccion->save();
     }
 
-    public function votacionHabilitada(?Elecciones $eleccion): bool
+    public function votacionHabilitada(?Elecciones $eleccion = null): bool
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
 
         $fechaActual = Carbon::now();
         return $fechaActual->between($eleccion->fechaInicio, $eleccion->fechaCierre);

@@ -39,5 +39,5 @@ interface IVotoService
      * @return int
      *      Retorna la cantidad de votos de la entidad.
      */
-    public function contarVotos(IElegibleAVoto $entidad, ?Elecciones $eleccion): int;
+    public function contarVotos(IElegibleAVoto $entidad, ?Elecciones $eleccion = null): int;
 }

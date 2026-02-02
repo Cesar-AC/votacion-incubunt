@@ -16,7 +16,7 @@ interface IPadronElectoralService
      * @return Collection<User>
      *      Retorna una colección de usuarios.
      */
-    public function obtenerPadronElectoral(?Elecciones $eleccion): Collection;
+    public function obtenerPadronElectoral(?Elecciones $eleccion = null): Collection;
 
     /**
      * @param User $usuario
@@ -29,7 +29,7 @@ interface IPadronElectoralService
      * @return void
      * @throws \Exception Si el usuario ya pertenece al padrón electoral.
      */
-    public function agregarUsuarioAEleccion(User $usuario, ?Elecciones $eleccion): void;
+    public function agregarUsuarioAEleccion(User $usuario, ?Elecciones $eleccion = null): void;
 
     /**
      * @param User $usuario
@@ -42,7 +42,7 @@ interface IPadronElectoralService
      * @return void
      * @throws \Exception Si el usuario no pertenece al padrón electoral.
      */
-    public function eliminarUsuarioDeElecciones(User $usuario, ?Elecciones $eleccion): void;
+    public function eliminarUsuarioDeElecciones(User $usuario, ?Elecciones $eleccion = null): void;
 
     /**
      * @param Elecciones|null $eleccion
@@ -51,5 +51,5 @@ interface IPadronElectoralService
      *      Si no es enviado, se restablecerá el padrón electoral de la elección activa.
      * @return void
      */
-    public function restablecerPadronElectoral(?Elecciones $eleccion): void;
+    public function restablecerPadronElectoral(?Elecciones $eleccion = null): void;
 }

@@ -10,7 +10,7 @@ class AreaService implements IAreaService
 {
     public function obtenerAreas(): Collection
     {
-        return Area::all();
+        return Area::where('idArea', '!=', Area::SIN_AREA_ASIGNADA)->get();
     }
 
     public function obtenerAreaPorId(int $id): Area

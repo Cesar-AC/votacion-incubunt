@@ -88,7 +88,6 @@
         font-size: 1.3rem;
         display: block;
         margin-bottom: 20px;
-        text-transform: lowercase;
     }
 
     .voter-card p {
@@ -212,7 +211,7 @@
             <!-- Card 1: Votar -->
             <div class="col-xl-5 col-lg-6 col-md-10 mb-4">
                 <div class="voter-card card-vote">
-                    @if(isset($eleccionActiva) && $eleccionActiva)
+                    @if(isset($eleccionActiva))
                         <span class="status-badge badge-active">
                             <i class="fas fa-circle mr-1"></i> Activa
                         </span>
@@ -227,9 +226,9 @@
                             <i class="fas fa-vote-yea"></i>
                         </div>
                         <h2>Elecciones</h2>
-                        <span class="brand-text-sm">incubunt 2026</span>
+                        <span class="brand-text-sm">{{$eleccionActiva->titulo ?? 'Cerrado actualmente'}}</span>
 
-                        @if(isset($eleccionActiva) && $eleccionActiva && $eleccionActiva->idElecciones)
+                        @if(isset($eleccionActiva) && $esPeriodoDeVotar)
                             <p>Ejerce tu derecho y elige a los líderes que guiarán nuestra organización.</p>
                             <a href="{{ route('votante.votar.lista', $eleccionActiva->getKey()) }}" class="btn btn-voter btn-voter-light">
                                 Votar Ahora
@@ -238,17 +237,19 @@
                                 <i class="fas fa-calendar-alt mr-1"></i>
                                 Cierra: {{ \Carbon\Carbon::parse($eleccionActiva->fechaCierre)->format('d/m/Y') }}
                             </div>
-                        @else
-                            <p>Por el momento no hay elecciones activas disponibles para votar.</p>
-                            {{-- TEMPORAL: Botón activo para ver la vista lista --}}
-                            <a href="{{ route('votante.votar.lista', 1) }}" 
+                        @elseif (isset($eleccionActiva))
+                            <p>Estás dentro del padrón electoral, pero la votación está cerrada.</p>
+                            <p>Revisa las propuestas de los candidatos para estar informado al momento de votar.</p>
+                            <a href="#" 
                                class="btn btn-voter btn-voter-light">
-                                Sin Elecciones (Demo)
+                                Votación Cerrada
                             </a>
-                            <div class="no-elections-message">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Serás notificado cuando haya una nueva elección
-                            </div>
+                        @else
+                            <p>No hay una elección programada ahora mismo.</p>
+                            <a href="#" 
+                               class="btn btn-voter btn-voter-light">
+                                Sin Elecciones
+                            </a>
                         @endif
                     </div>
                 </div>

@@ -85,7 +85,7 @@ class PartidoService implements IPartidoService
         $propuesta->delete();
     }
 
-    public function inscribirPartidoEnElecciones(Partido $partido, ?Elecciones $elecciones): void
+    public function inscribirPartidoEnElecciones(Partido $partido, ?Elecciones $elecciones = null): void
     {
         $elecciones = $elecciones ?? $this->eleccionesService->obtenerEleccionActiva();
 
@@ -102,7 +102,7 @@ class PartidoService implements IPartidoService
         ]);
     }
 
-    public function removerPartidoDeElecciones(Partido $partido, ?Elecciones $elecciones): void
+    public function removerPartidoDeElecciones(Partido $partido, ?Elecciones $elecciones = null): void
     {
         $elecciones = $elecciones ?? $this->eleccionesService->obtenerEleccionActiva();
 

@@ -1,8 +1,3 @@
-{{--
-    Componente: Tarjeta de Candidato (Compact Card con Avatar Circular)
-    Diseño: Clean, Modern, Mobile-First
-    Props: candidato, area, compact (opcional)
---}}
 @props(['candidato', 'area' => '', 'compact' => false])
 
 @php
@@ -13,14 +8,14 @@
     $foto = $candidato->usuario->perfil->fotoPerfil ?? null;
 @endphp
 
-<article onclick="openModal('candidato', {{ $candidato->idCandidato }}, '{{ $area }}')"
-         class="candidato-card group bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 p-4 cursor-pointer transition-all duration-200 {{ $compact ? 'flex-shrink-0' : '' }}"
+<article onclick="openModal2('modal-container', {{ $candidato->getKey() }})"
+         class="candidato-card group bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 p-4 cursor-pointer transition-all duration-200 z-0 {{ $compact ? 'flex-shrink-0' : '' }}"
          @if($compact) style="width: 160px; min-width: 160px;" @endif>
 
     {{-- Avatar circular centrado --}}
     <div class="flex flex-col items-center text-center">
         {{-- Foto/Avatar --}}
-        <div class="relative mb-3">
+        <div class="mb-3">
             @if($foto)
                 <img src="{{ $foto }}"
                      alt="{{ $nombre }}"
@@ -52,20 +47,15 @@
         </button>
     </div>
 
-    {{-- Data oculta para el modal --}}
-    <div id="data-candidato-{{ $candidato->idCandidato }}" class="hidden">
-        <div class="nombre">{{ $nombre }} {{ $apellido }}</div>
-        <div class="carrera">{{ $carrera }}</div>
-        <div class="foto">{{ $foto ?? '' }}</div>
-        <div class="initials">{{ $initials }}</div>
-        <div class="desc">{{ $candidato->usuario->perfil->biografia ?? 'Candidato comprometido con el desarrollo de la organización.' }}</div>
-        <div class="plan-url">{{ $candidato->planTrabajo ?? '' }}</div>
-        <div class="propuestas">
-            [
-            @foreach($candidato->propuestas as $p)
-                "{{ addslashes($p->descripcion) }}"{{ !$loop->last ? ',' : '' }}
-            @endforeach
-            ]
-        </div>
+    <div id="data-candidato-{{ $candidato->getKey() }}" 
+        data-nombre="{{ join(' ', [$candidato->usuario->perfil->nombre, $candidato->usuario->perfil->otrosNombres, $candidato->usuario->perfil->apellidoPaterno, $candidato->usuario->perfil->apellidoMaterno]) }}"
+        data-carrera="{{ $carrera }}"
+        data-area="{{ $candidato->usuario->perfil->area->area }}"
+        data-foto="{{ $foto ?? '' }}"
+        data-descripcion="Descripción no disponible"
+        data-planURL="{{ $candidato->planTrabajo ?? '' }}"
+        data-propuestas-generales = '{{json_encode($propuestas)}}'
+        data-propuestas-area = '{{json_encode($propuestas)}}'
+        class="hidden">
     </div>
 </article>

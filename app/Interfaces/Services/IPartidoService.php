@@ -137,7 +137,7 @@ interface IPartidoService
      * @return void
      * @throws \Exception Si no se envían los datos necesarios.
      */
-    public function inscribirPartidoEnElecciones(Partido $partido, ?Elecciones $elecciones): void;
+    public function inscribirPartidoEnElecciones(Partido $partido, ?Elecciones $elecciones = null): void;
 
     /**
      * @param Partido $partido
@@ -150,5 +150,5 @@ interface IPartidoService
      * @return void
      * @throws \Exception Si no se envían los datos necesarios.
      */
-    public function removerPartidoDeElecciones(Partido $partido, ?Elecciones $elecciones): void;
+    public function removerPartidoDeElecciones(Partido $partido, ?Elecciones $elecciones = null): void;
 }

@@ -105,6 +105,9 @@
 @endpush
 
 @section('content')
+
+@include('votante.propuestas.components.info-candidato-modal')
+
 <div class="min-h-screen bg-gray-50 py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-6xl mx-auto">
 
@@ -119,7 +122,7 @@
             </a>
 
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Propuestas {{ date('Y') }}
+                Propuestas | {{ $eleccionActiva->titulo }}
             </h1>
             <p class="text-sm sm:text-base text-gray-500">
                 Conoce las propuestas antes de votar
@@ -187,7 +190,7 @@
         @if($areas->count() > 0)
             @foreach($areas as $area)
                 @php
-                    $totalCandidatos = $area->cargos->sum(fn($cargo) => $cargo->candidatos->count());
+                    $totalCandidatos = 2 || $eleccionActiva->candidatos->count()
                 @endphp
 
                 @if($totalCandidatos > 0)
@@ -209,24 +212,22 @@
                     @if($totalCandidatos >= 4)
                         {{-- Scroll horizontal para 4+ candidatos en móvil --}}
                         <div class="scroll-indicator">
-                            <div id="area-{{ $area->idArea }}-scroll" class="overflow-x-auto hide-scroll -mx-4 px-4 sm:mx-0 sm:px-0 scroll-snap-x sm:overflow-visible">
+                            <div id="area-{{ $area->getKey() }}-scroll" class="overflow-x-auto hide-scroll -mx-4 px-4 sm:mx-0 sm:px-0 scroll-snap-x sm:overflow-visible">
                                 <div class="flex gap-3 sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 pb-2 sm:pb-0" style="min-width: min-content;">
-                                    @foreach($area->cargos as $cargo)
-                                        @foreach($cargo->candidatos as $candidato)
-                                            @include('votante.propuestas.components.candidato-card', ['candidato' => $candidato, 'area' => $area->area, 'compact' => true])
+                                        @foreach($candidatosPorArea as $candidatoEleccion)
+                                            @if($candidatoEleccion->cargo->area->getKey() == $area->getKey())
+                                                @include('votante.propuestas.components.candidato-card', ['candidato' => $candidatoEleccion->candidato, 'area' => $candidatoEleccion->cargo->area, 'propuestas' => $candidatoEleccion->candidato->propuestas, 'compact' => true])
+                                            @endif
                                         @endforeach
-                                    @endforeach
                                 </div>
                             </div>
-                            <div id="area-{{ $area->idArea }}-dots" class="scroll-dots sm:hidden"></div>
+                            <div id="area-{{ $area->getKey() }}-dots" class="scroll-dots sm:hidden"></div>
                         </div>
                     @else
                         {{-- Grid para pocos candidatos --}}
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                            @foreach($area->cargos as $cargo)
-                                @foreach($cargo->candidatos as $candidato)
-                                    @include('votante.propuestas.components.candidato-card', ['candidato' => $candidato, 'area' => $area->area, 'compact' => true])
-                                @endforeach
+                            @foreach($candidatosPorArea as $candidatoEleccion)
+                                @include('votante.propuestas.components.candidato-card', ['candidato' => $candidatoEleccion->candidato, 'area' => $candidatoEleccion->cargo->area, 'propuestas' => $candidatoEleccion->candidato->propuestas, 'compact' => true])
                             @endforeach
                         </div>
                     @endif
@@ -246,55 +247,6 @@
 
     </div>
 </div>
-
-{{-- =============================================
-     MODAL DE DETALLES - Bottom Sheet en móvil
-     ============================================= --}}
-<div id="detail-modal"
-     class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center"
-     style="z-index: 9999;"
-     onclick="if(event.target === this) closeModal()">
-
-    <div class="bg-white w-full sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col transform transition-all duration-300 translate-y-full sm:translate-y-0 sm:scale-95 opacity-0 rounded-t-3xl sm:rounded-2xl shadow-2xl"
-         id="modal-inner"
-         onclick="event.stopPropagation()">
-
-        {{-- Handle bar para móvil --}}
-        <div class="sm:hidden flex justify-center pt-3 pb-2">
-            <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
-        </div>
-
-        {{-- Header del Modal --}}
-        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-            <h3 class="text-base font-bold text-gray-900">Detalles</h3>
-            <button onclick="closeModal()"
-                    class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-500 hover:text-gray-700">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                </svg>
-            </button>
-        </div>
-
-        {{-- Contenido del Modal --}}
-        <div class="overflow-y-auto flex-1 px-5 py-4" id="modal-content">
-            {{-- Contenido dinámico --}}
-        </div>
-
-        {{-- Footer sticky con botón descarga --}}
-        <div id="modal-footer" class="px-5 py-4 border-t border-gray-100 bg-white" style="display: none;">
-            <a id="download-plan-btn" href="#" target="_blank" download class="flex items-center justify-center gap-2 w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl transition-colors">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"/>
-                </svg>
-                <span>Descargar Plan de Trabajo</span>
-            </a>
-        </div>
-    </div>
-</div>
-
-@push('scripts')
-<script src="{{ asset('js/votante/propuestas.js') }}"></script>
-@endpush
 
 @endsection
 

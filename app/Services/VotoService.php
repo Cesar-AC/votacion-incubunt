@@ -87,7 +87,7 @@ class VotoService implements IVotoService
         }
     }
 
-    public function contarVotos(IElegibleAVoto $entidad, ?Elecciones $eleccion): int
+    public function contarVotos(IElegibleAVoto $entidad, ?Elecciones $eleccion = null): int
     {
         $eleccion = $eleccion ?? $this->eleccionesService->obtenerEleccionActiva();
 

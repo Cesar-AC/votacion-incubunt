@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Area extends Model
 {
+    const SIN_AREA_ASIGNADA = 1;
+
     protected $table = 'Area';
 
     protected $primaryKey = 'idArea';
@@ -20,5 +22,10 @@ class Area extends Model
     public function cargos()
     {
         return $this->hasMany(Cargo::class, 'idArea');
+    }
+
+    public function tieneAreaAsignada(): bool
+    {
+        return $this->idArea != self::SIN_AREA_ASIGNADA;
     }
 }
