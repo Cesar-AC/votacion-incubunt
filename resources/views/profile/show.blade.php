@@ -126,15 +126,7 @@
         <div class="card-body text-center">
           <div class="text-center">
             <div class="flex justify-center items-center mb-3">
-              <!-- Función soportada próximamente
-              <label for="foto" class="hidden lg:block hover:opacity-100 opacity-0 transition-all duration-200 absolute w-100% z-20 bg-primary rounded-lg p-4 cursor-pointer">
-                <i class="fas fa-camera text-white"></i>
-                <p class="text-white">Cambiar foto</p>
-                <input type="file" accept="image/*" class="hidden" id="foto">
-              </label>
-              -->
-
-              <img src="{{ Auth::user()->perfil->obtenerFotoURL() ?? asset('img/undraw_profile.svg') }}" 
+              <img src="{{ Auth::user()->perfil?->obtenerFotoURL() ?? asset('img/undraw_profile.svg') }}" 
                   class="block img-fluid z-10 max-w-48 sm:max-w-96 lg:max-w-72 xl:max-w-100" 
                   alt="Foto de perfil">
             </div>
