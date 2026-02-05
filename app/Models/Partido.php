@@ -40,7 +40,7 @@ class Partido extends Model implements IElegibleAVoto
 
     public function candidatos()
     {
-        return $this->hasMany(Candidato::class, 'idPartido');
+        return $this->hasManyThrough(Candidato::class, CandidatoEleccion::class, 'idPartido', 'idCandidato', 'idPartido', 'idCandidato');
     }
 
     public function propuestas()

@@ -255,6 +255,7 @@
                 </div>
             </div>
 
+            @if(isset($eleccionActiva))
             <!-- Card 2: Propuestas -->
             <div class="col-xl-5 col-lg-6 col-md-10 mb-4">
                 <div class="voter-card card-proposals">
@@ -279,6 +280,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 </div>

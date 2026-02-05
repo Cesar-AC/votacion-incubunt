@@ -50,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/elecciones/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
 
         Route::prefix('votar')->name('votar.')->group(function () {
-            Route::get('/{eleccionId}/candidatos', [VotanteController::class, 'listarCandidatos'])->name('lista');
+            Route::get('/', [VotanteController::class, 'vistaVotar'])->name('lista');
             Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
             Route::post('/{eleccionId}/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
             Route::get('/{eleccionId}/exito', [VotanteController::class, 'votoExitoso'])->name('exito');
@@ -260,17 +260,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('kpi/porcentaje-participacion/{eleccion}/area/{area}', [KPIController::class, 'obtenerPorcentajeParticipacionPorArea'])->name('kpi.porcentaje_participacion_por_area');
 });
 
-
-// ========================================
-// RUTA NECESARIA PARA EVITAR ERROR DE votante.home
-// ========================================
 Route::middleware(['auth'])->group(function () {
     Route::get('/votante', [VotanteController::class, 'home'])->name('votante.home');
 });
 
-// ========================================
-// RUTAS PLACEHOLDER PARA EVITAR ERRORES EN EL MENÚ
-// ========================================
 Route::middleware(['auth'])->group(function () {
     Route::get('/votante', [VotanteController::class, 'home'])->name('votante.home');
     Route::get('/votante/elecciones', function () {

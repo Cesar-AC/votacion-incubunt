@@ -3,7 +3,9 @@
 namespace App\Interfaces\Services;
 
 use App\Models\Candidato;
+use App\Models\Cargo;
 use App\Models\Elecciones;
+use App\Models\Partido;
 use App\Models\PropuestaCandidato;
 use Illuminate\Support\Collection;
 
@@ -71,6 +73,30 @@ interface ICandidatoService
      * @throws \Exception Si no se envían los datos necesarios.
      */
     public function actualizarPartidoDeCandidatoEnElecciones(array $datos, Candidato $candidato, Elecciones $elecciones): void;
+
+    /**
+     * @param Candidato $candidato
+     *      Obligatorio.
+     *      El candidato del que se desea obtener información.
+     * @param Elecciones $elecciones
+     *      Obligatorio.
+     *      La elección en la que se desea evaluar al candidato.
+     * @return Cargo
+     *      Retorna el cargo del candidato en la elección.
+     */
+    public function obtenerCargoDeCandidatoEnElecciones(Candidato $candidato, Elecciones $elecciones): Cargo;
+
+    /**
+     * @param Candidato $candidato
+     *      Obligatorio.
+     *      El candidato del que se desea obtener información.
+     * @param Elecciones $elecciones
+     *      Obligatorio.
+     *      La elección en la que se desea evaluar al candidato.
+     * @return Partido
+     *      Retorna el partido del candidato en la elección.
+     */
+    public function obtenerPartidoDeCandidatoEnElecciones(Candidato $candidato, Elecciones $elecciones): Partido;
 
     /**
      * @param array $datos

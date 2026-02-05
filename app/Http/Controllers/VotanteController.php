@@ -18,9 +18,11 @@ use App\Models\PropuestaCandidato;
 use App\Interfaces\Services\IPermisoService;
 use App\Enum\Permiso as PermisoEnum;
 use App\Interfaces\Services\IAreaService;
+use App\Interfaces\Services\ICandidatoService;
 use App\Interfaces\Services\IEleccionesService;
 use App\Interfaces\Services\IPadronElectoralService;
 use App\Models\CandidatoEleccion;
+use App\Models\PartidoEleccion;
 
 class VotanteController extends Controller
 {
@@ -49,7 +51,7 @@ class VotanteController extends Controller
     /**
      * Ver propuestas (Candidatos y Partidos)
      */
-    public function propuestas(IAreaService $areaService)
+    public function propuestas(IAreaService $areaService, ICandidatoService $candidatoService)
     {
         $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
         $partidos = $eleccionActiva->partidos;
@@ -67,7 +69,7 @@ class VotanteController extends Controller
             ])
             ->get();
 
-        return view('votante.propuestas.index', compact('eleccionActiva', 'partidos', 'areas', 'candidatosPorArea'));
+        return view('votante.propuestas.index', compact('eleccionActiva', 'partidos', 'areas', 'candidatosPorArea', 'candidatoService'));
     }
 
     /**
@@ -143,98 +145,36 @@ class VotanteController extends Controller
     /**
      * Listar candidatos para votar
      */
-    public function listarCandidatos($eleccionId)
+    public function vistaVotar(IAreaService $areaService)
     {
-        $eleccion = Elecciones::findOrFail($eleccionId);
+        $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+        $areas = $areaService->obtenerAreas();
 
-        // Verificar estado
-        if (!$eleccion->estaActivo()) {
-            return redirect()->route('votante.elecciones')
-                ->with('error', 'Esta elección no está activa.');
-        }
-
-        // TEMPORAL: Desactivar validación de padrón para modo demo
-        // $padron = PadronElectoral::where('idUsuario', Auth::id())
-        //     ->where('idElecciones', $eleccionId)
-        //     ->first();
-
-        // if (!$padron) {
-        //     return redirect()->route('votante.elecciones')
-        //         ->with('error', 'No estás registrado en el padrón electoral.');
-        // }
-
-        // Obtener cargos con candidatos reales desde la BD
-        try {
-            // Obtener todos los cargos con sus candidatos
-            $cargos = \App\Models\Cargo::with([
-                'candidatos' => function ($q) {
-                    $q->with(['usuario.perfil.carrera', 'partido', 'cargo']);
+        $candidatosPorArea = CandidatoEleccion::query()
+            ->where('idElecciones', '=', $eleccionActiva->getKey())
+            ->whereNull('idPartido')
+            ->with([
+                'candidato.usuario.perfil',
+                'candidato.propuestas' => function ($q) use ($eleccionActiva) {
+                    $q->where('idElecciones', '=', $eleccionActiva->getKey());
                 },
-                'area'
-            ])->get();
+                'cargo.area',
+            ])
+            ->get();
 
-            // Crear array de candidatos por cargo para fallback
-            $candidatosPorCargo = [];
-            foreach ($cargos as $cargo) {
-                $candidatosPorCargo[$cargo->idCargo] = $cargo->candidatos;
-            }
+        $partidos = PartidoEleccion::query()
+            ->where('idElecciones', $eleccionActiva->getKey())
+            ->with([
+                'partido.propuestas' => function ($q) use ($eleccionActiva) {
+                    $q->where('idElecciones', $eleccionActiva->getKey());
+                },
+                'partido.candidatos.propuestas' => function ($q) use ($eleccionActiva) {
+                    $q->where('idElecciones', $eleccionActiva->getKey());
+                },
+            ])
+            ->get();
 
-            // Obtener partidos con sus candidatos (máximo 3 primeros)
-            $partidos = \App\Models\Partido::with([
-                'candidatos' => function ($q) {
-                    $q->with(['usuario.perfil.carrera', 'cargo.area', 'partido'])
-                        ->limit(3);
-                }
-            ])->get();
-
-            // Obtener áreas con sus cargos y candidatos
-            $areas = \App\Models\Area::with([
-                'cargos' => function ($q) {
-                    $q->with(['candidatos' => function ($qCand) {
-                        $qCand->with(['usuario.perfil.carrera', 'partido', 'cargo']);
-                    }]);
-                }
-            ])->get();
-
-            // Filtrar áreas que tengan cargos con candidatos
-            // Excluir el área "Administración" (candidatos de partido no cuentan para cargos específicos)
-            $areas = $areas->filter(function ($area) {
-                // Excluir área de Administración
-                if (strtolower($area->area) === 'administración' || strtolower($area->area) === 'administracion') {
-                    return false;
-                }
-                return $area->cargos->some(function ($cargo) {
-                    return $cargo->candidatos->count() > 0;
-                });
-            })->map(function ($area) {
-                // Filtrar cargos que tengan candidatos
-                $area->cargos = $area->cargos->filter(function ($cargo) {
-                    return $cargo->candidatos->count() > 0;
-                });
-                return $area;
-            });
-
-            // Contar cargos habilitados (con candidatos)
-            $cargosHabilitados = 0;
-            foreach ($areas as $area) {
-                $cargosHabilitados += $area->cargos->count();
-            }
-            // Agregar el partido como cargo habilitado (si hay partidos con candidatos)
-            // El partido vale por 3 (Presidente + Vicepresidente + Coordinador)
-            $partidosHabilitados = $partidos->filter(function ($partido) {
-                return $partido->candidatos->count() > 0;
-            })->count() > 0 ? 1 : 0;
-            $votosRequeridos = $cargosHabilitados + ($partidosHabilitados);
-        } catch (\Exception $e) {
-            \Log::error('Error en listarCandidatos: ' . $e->getMessage());
-            // Si hay error en la query, devolver arrays vacíos para modo demo
-            $cargos = collect([]);
-            $candidatosPorCargo = [];
-            $partidos = collect([]);
-            $areas = collect([]);
-        }
-
-        return view('votante.votar.lista', compact('eleccion', 'cargos', 'candidatosPorCargo', 'partidos', 'areas', 'votosRequeridos', 'cargosHabilitados', 'partidosHabilitados'));
+        return view('votante.votar.lista', compact('eleccionActiva', 'candidatosPorArea', 'partidos', 'areas'));
     }
 
     /**

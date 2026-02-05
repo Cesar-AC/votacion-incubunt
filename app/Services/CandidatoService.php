@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Interfaces\Services\ICandidatoService;
 use App\Models\Candidato;
 use App\Models\CandidatoEleccion;
+use App\Models\Cargo;
 use App\Models\Elecciones;
+use App\Models\Partido;
 use App\Models\PropuestaCandidato;
 use Illuminate\Support\Collection;
 
@@ -42,6 +44,22 @@ class CandidatoService implements ICandidatoService
     public function eliminarCandidato(Candidato $candidato): void
     {
         $candidato->delete();
+    }
+
+    public function obtenerCargoDeCandidatoEnElecciones(Candidato $candidato, Elecciones $elecciones): Cargo
+    {
+        return CandidatoEleccion::where('idCandidato', $candidato->getKey())
+            ->where('idElecciones', $elecciones->getKey())
+            ->first()
+            ->cargo;
+    }
+
+    public function obtenerPartidoDeCandidatoEnElecciones(Candidato $candidato, Elecciones $elecciones): Partido
+    {
+        return CandidatoEleccion::where('idCandidato', $candidato->getKey())
+            ->where('idElecciones', $elecciones->getKey())
+            ->first()
+            ->partido;
     }
 
     public function actualizarPartidoDeCandidatoEnElecciones(array $datos, Candidato $candidato, Elecciones $elecciones): void
