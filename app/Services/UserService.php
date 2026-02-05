@@ -2,18 +2,20 @@
 
 namespace App\Services;
 
+use App\Interfaces\Services\IArchivoService;
 use App\Interfaces\Services\IUserService;
+use App\Models\Archivo;
 use App\Models\EstadoUsuario;
 use App\Models\PerfilUsuario;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 
 class UserService implements IUserService
 {
+    public function __construct(protected IArchivoService $archivoService) {}
+
     public function obtenerUsuarios(): Collection
     {
         return User::all();
@@ -67,5 +69,29 @@ class UserService implements IUserService
             $usuario->perfil()->delete();
         }
         $usuario->delete();
+    }
+
+    public function subirFotoUsuario(User $usuario, UploadedFile $archivo): void
+    {
+        $archivo = $this->archivoService->subirArchivo('usuarios/fotos', $archivo->hashName(), $archivo);
+
+        $usuario->foto()->associate($archivo);
+        $usuario->save();
+    }
+
+    public function removerFotoUsuario(User $usuario): void
+    {
+        $this->archivoService->eliminarArchivo($usuario->perfil->foto->getKey());
+    }
+
+    public function cambiarFotoUsuario(User $usuario, UploadedFile $archivo): void
+    {
+        $this->archivoService->eliminarArchivo($usuario->perfil->foto->getKey());
+        $this->subirFotoUsuario($usuario, $archivo);
+    }
+
+    public function obtenerFotoUsuarioURL(User $usuario): string
+    {
+        return $usuario->perfil->obtenerFotoURL();
     }
 }

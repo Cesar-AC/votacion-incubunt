@@ -5,6 +5,7 @@ namespace App\Interfaces\Services;
 use App\Models\Elecciones;
 use App\Models\Partido;
 use App\Models\PropuestaPartido;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 
 interface IPartidoService
@@ -135,7 +136,7 @@ interface IPartidoService
      *      La elección en la que se desea inscribir el partido.
      *      Si no se envía, se utilizará la elección activa.
      * @return void
-     * @throws \Exception Si no se envían los datos necesarios.
+     * @throws \Exception Si la elección no está programada.
      */
     public function inscribirPartidoEnElecciones(Partido $partido, ?Elecciones $elecciones = null): void;
 
@@ -148,7 +149,67 @@ interface IPartidoService
      *      La elección en la que se desea remover el partido.
      *      Si no se envía, se utilizará la elección activa.
      * @return void
+     * @throws \Exception Si la elección no está programada.
+     */
+    public function removerPartidoDeElecciones(Partido $partido, ?Elecciones $elecciones): void;
+
+    /**
+     * Agrega al partido a las elecciones especificadas. Elimina al partido de las elecciones no especificadas que sean programables.
+     * Solo puede actualizar elecciones programadas.
+     * 
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido que participará de las elecciones establecidas.
+     * @param Collection<Elecciones> $elecciones
+     *      Obligatorio.
+     *      Las elecciones a las que se desea que pertenezca el partido.
+     * @return void
+     * @throws \Exception Si la elección no está programada.
+     */
+    public function establecerEleccionesDePartido(Partido $partido, Collection $elecciones): void;
+
+    /**
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido al que se desea subir la foto.
+     * @param UploadedFile $archivo
+     *      Obligatorio.
+     *      El archivo que se desea subir.
+     * @return void
      * @throws \Exception Si no se envían los datos necesarios.
      */
-    public function removerPartidoDeElecciones(Partido $partido, ?Elecciones $elecciones = null): void;
+    public function subirFotoPartido(Partido $partido, UploadedFile $archivo): void;
+
+    /**
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido al que se desea remover la foto.
+     * @return void
+     * @throws \Exception Si no se envía el partido.
+     */
+    public function removerFotoPartido(Partido $partido): void;
+
+    /**
+     * Cambia la foto del partido, exista o no exista.
+     * 
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido al que se desea cambiar la foto.
+     * @param UploadedFile $archivo
+     *      Obligatorio.
+     *      El archivo que se desea asignar como foto.
+     * @return void
+     * @throws \Exception Si no se envían los datos necesarios.
+     */
+    public function cambiarFotoPartido(Partido $partido, UploadedFile $archivo): void;
+
+    /**
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido al que se desea obtener la foto.
+     * @return string
+     *      Retorna la URL pública de la foto del partido.
+     * @throws \Exception Si no se envía el partido.
+     */
+    public function obtenerFotoPartidoURL(Partido $partido): string;
 }

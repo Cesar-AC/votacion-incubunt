@@ -2,18 +2,21 @@
 
 namespace App\Services;
 
+use App\Interfaces\Services\IArchivoService;
 use App\Interfaces\Services\IEleccionesService;
 use App\Interfaces\Services\IPartidoService;
 use App\Models\Elecciones;
 use App\Models\Partido;
 use App\Models\PartidoEleccion;
 use App\Models\PropuestaPartido;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 
 class PartidoService implements IPartidoService
 {
     public function __construct(
-        protected IEleccionesService $eleccionesService
+        protected IEleccionesService $eleccionesService,
+        protected IArchivoService $archivoService,
     ) {}
 
     public function obtenerPartidos(): Collection
@@ -89,6 +92,10 @@ class PartidoService implements IPartidoService
     {
         $elecciones = $elecciones ?? $this->eleccionesService->obtenerEleccionActiva();
 
+        if (!$elecciones->estaProgramado()) {
+            throw new \Exception('La elección no se encuentra programada.');
+        }
+
         if (PartidoEleccion::where('idPartido', '=', $partido->getKey())
             ->where('idElecciones', '=', $elecciones->getKey())
             ->exists()
@@ -106,6 +113,10 @@ class PartidoService implements IPartidoService
     {
         $elecciones = $elecciones ?? $this->eleccionesService->obtenerEleccionActiva();
 
+        if (!$elecciones->estaProgramado()) {
+            throw new \Exception('La elección no se encuentra programada.');
+        }
+
         if (!PartidoEleccion::where('idPartido', '=', $partido->getKey())
             ->where('idElecciones', '=', $elecciones->getKey())
             ->exists()) {
@@ -115,5 +126,57 @@ class PartidoService implements IPartidoService
         PartidoEleccion::where('idPartido', '=', $partido->getKey())
             ->where('idElecciones', '=', $elecciones->getKey())
             ->delete();
+    }
+
+    public function establecerEleccionesDePartido(Partido $partido, Collection $elecciones): void
+    {
+        $programadasNuevas = $elecciones->filter(function ($eleccion) {
+            /** @var Elecciones $eleccion */
+            return $eleccion->estaProgramado();
+        });
+
+        PartidoEleccion::insertOrIgnore($programadasNuevas->map(function ($eleccion) use ($partido) {
+            return [
+                'idPartido' => $partido->getKey(),
+                'idElecciones' => $eleccion->getKey(),
+            ];
+        })->toArray());
+
+        $programadasAntiguas = PartidoEleccion::where('idPartido', '=', $partido->getKey())
+            ->whereNotIn('idElecciones', $programadasNuevas->pluck('idElecciones'))
+            ->get();
+
+        $programadasAntiguas->each(function ($programadaAntigua) {
+            $programadaAntigua->delete();
+        });
+    }
+
+    public function subirFotoPartido(Partido $partido, UploadedFile $archivo): void
+    {
+        $archivo = $this->archivoService->subirArchivo('partidos/fotos', $archivo->hashName(), $archivo, 'public');
+
+        $partido->foto()->associate($archivo);
+        $partido->save();
+    }
+
+    public function removerFotoPartido(Partido $partido): void
+    {
+        $this->archivoService->eliminarArchivo($partido->foto->getKey());
+    }
+
+    public function cambiarFotoPartido(Partido $partido, UploadedFile $archivo): void
+    {
+        try {
+            $this->removerFotoPartido($partido);
+        } catch (\Exception $e) {
+            // No se hace nada, porque puede que la foto no exista.
+        }
+
+        $this->subirFotoPartido($partido, $archivo);
+    }
+
+    public function obtenerFotoPartidoURL(Partido $partido): string
+    {
+        return $partido->obtenerFotoURL();
     }
 }

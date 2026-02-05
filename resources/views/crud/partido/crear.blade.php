@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-fluid px-3">
 
-  <form method="POST" action="{{ route('crud.partido.crear') }}">
+  <form method="POST" action="{{ route('crud.partido.crear') }}" enctype="multipart/form-data">
     @csrf
 
     <!-- Header -->
@@ -54,6 +54,17 @@
                  class="form-control @error('planTrabajo') is-invalid @enderror"
                  value="{{ old('planTrabajo') }}">
           @error('planTrabajo')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+
+        <!-- Foto -->
+        <div class="form-group mt-3">
+          <label class="small font-weight-bold">Foto del Partido (opcional)</label>
+          <input type="file"
+                 name="foto"
+                 accept="image/*"
+                 class="form-control @error('foto') is-invalid @enderror"
+                 value="{{ old('foto') }}">
+          @error('foto')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 
       </div>

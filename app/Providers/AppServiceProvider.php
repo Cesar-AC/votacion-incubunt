@@ -7,6 +7,7 @@ use App\Enum\Config;
 use App\Interfaces\DTO\Services\IVotosCandidatoDTO;
 use App\Services\EstadisticasElectoralesService;
 use App\Interfaces\IEstadisticasElectoralesService;
+use App\Interfaces\Services\IArchivoService;
 use App\Interfaces\Services\IAreaService;
 use App\Interfaces\Services\ICandidatoService;
 use App\Interfaces\Services\ICarreraService;
@@ -21,6 +22,7 @@ use App\Interfaces\Services\PadronElectoral\IImportadorFactory;
 use App\Interfaces\Services\PadronElectoral\IImportadorService;
 use App\Models\Configuracion;
 use App\Models\Elecciones;
+use App\Services\ArchivoService;
 use App\Services\PadronElectoral\ImportadorFactory;
 use App\Services\PadronElectoral\ImportadorService;
 use App\Services\AreaService;
@@ -59,6 +61,7 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(IArchivoService::class, ArchivoService::class);
         $this->app->singleton(IImportadorFactory::class, ImportadorFactory::class);
         $this->app->singleton(IImportadorService::class, ImportadorService::class);
         $this->app->singleton(IAreaService::class, AreaService::class);
@@ -72,11 +75,16 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(IPartidoService::class, function () {
             return new PartidoService(
-                $this->app->make(IEleccionesService::class)
+                $this->app->make(IEleccionesService::class),
+                $this->app->make(IArchivoService::class),
             );
         });
 
-        $this->app->singleton(IUserService::class, UserService::class);
+        $this->app->singleton(IUserService::class, function () {
+            return new UserService(
+                $this->app->make(IArchivoService::class),
+            );
+        });
     }
 
     /**

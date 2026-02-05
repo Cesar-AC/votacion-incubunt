@@ -2,7 +2,9 @@
 
 namespace App\Interfaces\Services;
 
+use App\Models\Archivo;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 
 interface IUserService
@@ -70,4 +72,47 @@ interface IUserService
      * @throws \Exception Si no se envía el usuario.
      */
     public function eliminarUsuario(User $usuario): void;
+
+    /**
+     * @param User $usuario
+     *      Obligatorio.
+     *      El usuario al que se desea subir la foto.
+     * @param UploadedFile $archivo
+     *      Obligatorio.
+     *      El archivo que se desea subir.
+     * @return void
+     * @throws \Exception Si no se envían los datos necesarios.
+     */
+    public function subirFotoUsuario(User $usuario, UploadedFile $archivo): void;
+
+    /**
+     * @param User $usuario
+     *      Obligatorio.
+     *      El usuario al que se desea remover la foto.
+     * @return void
+     * @throws \Exception Si no se envía el usuario.
+     */
+    public function removerFotoUsuario(User $usuario): void;
+
+    /**
+     * @param User $usuario
+     *      Obligatorio.
+     *      El usuario al que se desea cambiar la foto.
+     * @param UploadedFile $archivo
+     *      Obligatorio.
+     *      El archivo que se desea asignar como foto.
+     * @return void
+     * @throws \Exception Si no se envían los datos necesarios.
+     */
+    public function cambiarFotoUsuario(User $usuario, UploadedFile $archivo): void;
+
+    /**
+     * @param User $usuario
+     *      Obligatorio.
+     *      El usuario al que se desea obtener la foto.
+     * @return string
+     *      Retorna la URL pública de la foto del usuario.
+     * @throws \Exception Si no se envía el usuario.
+     */
+    public function obtenerFotoUsuarioURL(User $usuario): string;
 }

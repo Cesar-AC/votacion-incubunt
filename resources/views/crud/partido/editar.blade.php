@@ -10,7 +10,7 @@
   @else
 
   <!-- Header -->
-  <form method="POST" action="{{ route('crud.partido.editar', $partido->idPartido) }}">
+  <form method="POST" action="{{ route('crud.partido.editar', $partido->idPartido) }}" enctype="multipart/form-data">
     @csrf
     @method('PUT')
 
@@ -72,11 +72,22 @@
           @enderror
         </div>
 
+        <!-- Foto -->
+        <div class="form-group">
+          <label class="small font-weight-bold">Foto del Partido (adjuntar solo si se desea actualizar)</label>
+          <input type="file"
+                 name="foto"
+                 class="form-control @error('foto') is-invalid @enderror">
+          @error('foto')
+            <div class="invalid-feedback">{{ $message }}</div>
+          @enderror
+        </div>
+
         <!-- Elecciones -->
         <div class="form-group">
-          <label class="small font-weight-bold">Elecciones asociadas</label>
+          <label class="small font-weight-bold">Elecciones asociadas (opcional)</label>
           <select name="elecciones[]" multiple
-                  class="form-control @error('elecciones') is-invalid @enderror" required>
+                  class="form-control @error('elecciones') is-invalid @enderror">
             @php $seleccionadas = $partido->elecciones->pluck('idElecciones')->toArray(); @endphp
             @foreach($elecciones as $eleccion)
               <option value="{{ $eleccion->idElecciones }}"

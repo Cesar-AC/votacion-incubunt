@@ -16,6 +16,12 @@ return new class extends Migration
             $table->string('partido', 255);
             $table->text('urlPartido');
             $table->text('descripcion');
+            $table->unsignedInteger('foto_idArchivo')->nullable();
+
+            $table->foreign('foto_idArchivo')
+                ->references('idArchivo')
+                ->on('Archivo')
+                ->onDelete('set null');
         });
     }
 
