@@ -33,8 +33,10 @@ class VotoService implements IVotoService
         return $this->eleccionesService->estaEnPadronElectoral($usuario, $eleccion);
     }
 
-    protected function yaVoto(User $usuario, Elecciones $eleccion): bool
+    public function haVotado(User $usuario, ?Elecciones $eleccion = null): bool
     {
+        $eleccion = $eleccion ?? $this->eleccionesService->obtenerEleccionActiva();
+
         return PadronElectoral::where('idUsuario', '=', $usuario->getKey())
             ->where('idElecciones', '=', $eleccion->getKey())
             ->whereNotNull('fechaVoto')
@@ -105,7 +107,7 @@ class VotoService implements IVotoService
             throw new \Exception('No estás registrado en el padrón electoral.');
         }
 
-        if ($this->yaVoto($votante, $eleccion)) {
+        if ($this->haVotado($votante)) {
             throw new \Exception('Ya has votado en esta elección.');
         }
 

@@ -41,4 +41,17 @@ interface IVotoService
      *      Retorna la cantidad de votos de la entidad.
      */
     public function contarVotos(IElegibleAVoto $entidad, ?Elecciones $eleccion = null): int;
+
+    /**
+     * @param User $usuario
+     *      Obligatorio.
+     *      Usuario que realiza el voto.
+     * @param Elecciones $eleccion
+     *      Opcional.
+     *      Elección en la que se desea verificar si el usuario ha votado.
+     *      Si no se especifica, se utilizará la elección activa.
+     * @return bool
+     *      Retorna true si el usuario ha votado en la elección, false en caso contrario.
+     */
+    public function haVotado(User $usuario, ?Elecciones $eleccion = null): bool;
 }
