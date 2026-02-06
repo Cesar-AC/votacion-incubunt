@@ -104,17 +104,18 @@ class PadronElectoralController extends Controller
 
 	public function destroy(int $id)
 	{
-		$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
-		$this->padronElectoralService->restablecerPadronElectoral($eleccion);
+		try {
+			$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+			$this->padronElectoralService->restablecerPadronElectoral($eleccion);
 
-		return response()->json([
-			'success' => true,
-			'message' => 'Padrón eliminado',
-			'data' => [
-				'id' => (int) $id,
-				'idElecciones' => $eleccion->idElecciones,
-			],
-		]);
+			return redirect()
+				->route('crud.padron_electoral.ver')
+				->with('success', 'Padrón electoral eliminado correctamente');
+		} catch (\Exception $e) {
+			return redirect()
+				->route('crud.padron_electoral.ver')
+				->with('error', 'Error al eliminar el padrón electoral: ' . $e->getMessage());
+		}
 	}
 
 	public function importForm()

@@ -139,20 +139,18 @@ class PartidoController extends Controller
 
     public function destroy($id)
     {
-        $partido = $this->partidoService->obtenerPartidoPorId($id);
+        try {
+            $partido = $this->partidoService->obtenerPartidoPorId($id);
 
-        $this->partidoService->eliminarPartido($partido);
+            $this->partidoService->eliminarPartido($partido);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Partido eliminado',
-            'data' => [
-                'id' => (int) $id,
-                'partido' => $partido->partido,
-                'urlPartido' => $partido->urlPartido,
-                'descripcion' => $partido->descripcion,
-                'tipo' => $partido->tipo,
-            ],
-        ]);
+            return redirect()
+                ->route('crud.partido.ver')
+                ->with('success', 'Partido eliminado correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.partido.ver')
+                ->with('error', 'Error al eliminar el partido: ' . $e->getMessage());
+        }
     }
 }
