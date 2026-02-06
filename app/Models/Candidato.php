@@ -21,7 +21,8 @@ class Candidato extends Model implements IElegibleAVoto
 
     protected $fillable = [
         'idCandidato',
-        'idUsuario'
+        'idUsuario',
+        'planTrabajo'
     ];
 
     public function votos()

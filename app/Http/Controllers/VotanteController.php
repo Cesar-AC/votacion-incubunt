@@ -14,9 +14,11 @@ use App\Models\PropuestaCandidato;
 use App\Interfaces\Services\IPermisoService;
 use App\Enum\Permiso as PermisoEnum;
 use App\Interfaces\Services\IAreaService;
+use App\Interfaces\Services\ICarreraService;
 use App\Interfaces\Services\ICandidatoService;
 use App\Interfaces\Services\IEleccionesService;
 use App\Interfaces\Services\IPartidoService;
+use App\Interfaces\Services\IUserService;
 use App\Interfaces\Services\IVotoService;
 use App\Models\CandidatoEleccion;
 use App\Models\PartidoEleccion;
@@ -44,6 +46,151 @@ class VotanteController extends Controller
         }
 
         return view('votante.home', compact('eleccionActiva', 'esPeriodoDeVotar'));
+    }
+
+    /**
+     * Editar perfil del votante
+     */
+    public function editarPerfil(IAreaService $areaService, ICarreraService $carreraService)
+    {
+        $permiso = $this->permisoService->permisoDesdeEnum(PermisoEnum::PERFIL_EDITAR);
+
+        if (!$permiso || !$this->permisoService->comprobarUsuario(Auth::user(), $permiso)) {
+            abort(403, 'No tienes permiso para editar tu perfil.');
+        }
+
+        $user = Auth::user()->load(['perfil.carrera', 'perfil.area']);
+        $areas = $areaService->obtenerAreas();
+        $carreras = $carreraService->obtenerCarreras();
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        $partido = $this->obtenerPartidoDeCandidato($candidato);
+        $puedeEditarPartido = $partido ? Auth::user()->can('update', $partido) : false;
+
+        return view('votante.perfil.editar', compact('user', 'candidato', 'partido', 'puedeEditarPartido', 'areas', 'carreras'));
+    }
+
+    /**
+     * Actualizar perfil del votante
+     */
+    public function actualizarPerfil(Request $request, IUserService $userService, IPartidoService $partidoService)
+    {
+        $permiso = $this->permisoService->permisoDesdeEnum(PermisoEnum::PERFIL_EDITAR);
+
+        if (!$permiso || !$this->permisoService->comprobarUsuario(Auth::user(), $permiso)) {
+            abort(403, 'No tienes permiso para editar tu perfil.');
+        }
+
+        $user = Auth::user();
+
+        $perfilData = $request->validate([
+            'apellidoPaterno' => 'required|string|max:20',
+            'apellidoMaterno' => 'required|string|max:20',
+            'nombre' => 'required|string|max:20',
+            'otrosNombres' => 'nullable|string|max:40',
+            'dni' => 'required|string|max:8',
+            'telefono' => 'nullable|string|max:20',
+            'idCarrera' => 'required|integer|exists:Carrera,idCarrera',
+            'idArea' => 'required|integer|exists:Area,idArea',
+        ], [
+            'apellidoPaterno.required' => 'El apellido paterno es obligatorio.',
+            'apellidoMaterno.required' => 'El apellido materno es obligatorio.',
+            'nombre.required' => 'El nombre es obligatorio.',
+            'dni.required' => 'El DNI es obligatorio.',
+            'idCarrera.required' => 'La carrera es obligatoria.',
+            'idCarrera.exists' => 'La carrera no es valida.',
+            'idArea.required' => 'El area es obligatoria.',
+            'idArea.exists' => 'El area no es valida.',
+        ]);
+
+        try {
+            if ($user->perfil) {
+                $userService->editarPerfilUsuario($perfilData, $user);
+            } else {
+                $perfilData['idUser'] = $user->getKey();
+                \App\Models\PerfilUsuario::create($perfilData);
+            }
+
+            $candidato = Candidato::where('idUsuario', Auth::id())->first();
+            $request->validate([
+                'planTrabajoCandidato' => 'nullable|url|max:1000',
+            ], [
+                'planTrabajoCandidato.url' => 'El plan de trabajo del candidato debe ser una URL valida.',
+            ]);
+
+            if ($candidato) {
+                $candidato->update([
+                    'planTrabajo' => $request->input('planTrabajoCandidato'),
+                ]);
+            }
+
+            $partido = $this->obtenerPartidoDeCandidato($candidato);
+            $intentaEditarPartido = $partido && (
+                $request->filled('partido_urlPartido') ||
+                $request->filled('partido_descripcion') ||
+                $request->filled('partido_planTrabajo') ||
+                $request->filled('partido_tipo') ||
+                $request->hasFile('partido_foto')
+            );
+
+            if ($intentaEditarPartido) {
+                $this->authorize('update', $partido);
+
+                $request->validate([
+                    'partido_urlPartido' => 'nullable|url|max:255',
+                    'partido_descripcion' => 'nullable|string',
+                    'partido_planTrabajo' => 'nullable|url|max:1000',
+                    'partido_tipo' => 'nullable|string|max:255',
+                    'partido_foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+                ], [
+                    'partido_urlPartido.url' => 'La URL del partido debe ser valida.',
+                    'partido_planTrabajo.url' => 'El plan de trabajo del partido debe ser una URL valida.',
+                ]);
+
+                $partidoData = array_filter([
+                    'urlPartido' => $request->input('partido_urlPartido'),
+                    'descripcion' => $request->input('partido_descripcion'),
+                    'planTrabajo' => $request->input('partido_planTrabajo'),
+                    'tipo' => $request->input('partido_tipo'),
+                ], function ($value) {
+                    return $value !== null;
+                });
+
+                if (!empty($partidoData)) {
+                    $partidoService->editarPartido($partidoData, $partido);
+                }
+
+                if ($request->hasFile('partido_foto')) {
+                    $partidoService->cambiarFotoPartido($partido, $request->file('partido_foto'));
+                }
+            }
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['error_general' => 'Error al guardar los cambios: ' . $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('profile.show')
+            ->with('success', 'Perfil actualizado correctamente.');
+    }
+
+    private function obtenerPartidoDeCandidato(?Candidato $candidato): ?Partido
+    {
+        if (!$candidato) {
+            return null;
+        }
+
+        $candidatoEleccion = CandidatoEleccion::where('idCandidato', $candidato->getKey())
+            ->whereNotNull('idPartido')
+            ->orderByDesc('idElecciones')
+            ->first();
+
+        if (!$candidatoEleccion) {
+            return null;
+        }
+
+        return Partido::find($candidatoEleccion->idPartido);
     }
 
     /**

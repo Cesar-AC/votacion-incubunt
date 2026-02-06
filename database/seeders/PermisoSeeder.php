@@ -112,6 +112,13 @@ class PermisoSeeder extends Seeder
         ]);
     }
 
+    private function crearPermisoEditarPerfil()
+    {
+        Permiso::create([
+            'permiso' => 'perfil:editar',
+        ]);
+    }
+
     private function crearPermisos()
     {
         $entidades = $this->obtenerEntidades();
@@ -121,6 +128,7 @@ class PermisoSeeder extends Seeder
         $this->crearPermisosVotante();
         $this->crearPermisosDashboard();
         $this->crearPermisoVotar();
+        $this->crearPermisoEditarPerfil();
     }
 
     private function crearRoles()
