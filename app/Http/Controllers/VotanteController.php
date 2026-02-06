@@ -4,14 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\Voto;
-use App\Models\VotoPartido;
-use App\Models\VotoCandidato;
 use App\Models\Partido;
-use App\Models\Area;
 use App\Models\Candidato;
 use App\Models\PropuestaPartido;
 use App\Models\PropuestaCandidato;
@@ -20,7 +16,8 @@ use App\Enum\Permiso as PermisoEnum;
 use App\Interfaces\Services\IAreaService;
 use App\Interfaces\Services\ICandidatoService;
 use App\Interfaces\Services\IEleccionesService;
-use App\Interfaces\Services\IPadronElectoralService;
+use App\Interfaces\Services\IPartidoService;
+use App\Interfaces\Services\IVotoService;
 use App\Models\CandidatoEleccion;
 use App\Models\PartidoEleccion;
 
@@ -28,7 +25,8 @@ class VotanteController extends Controller
 {
     public function __construct(
         protected IEleccionesService $eleccionesService,
-        protected IPermisoService $permisoService
+        protected IPermisoService $permisoService,
+        protected IVotoService $votoService
     ) {}
     /**
      * Página principal del votante
@@ -87,33 +85,21 @@ class VotanteController extends Controller
     /**
      * Ver detalle de una elección
      */
-    public function verDetalleEleccion($id)
+    public function verDetalleEleccion(int $id)
     {
-        $eleccion = Elecciones::with(['estadoEleccion', 'candidatos.usuario.perfil'])
-            ->findOrFail($id);
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-        // Verificar si el usuario ya votó en esta elección
-        // Primero obtener el registro del padrón electoral del usuario para esta elección
-        $padron = PadronElectoral::where('idUsuario', Auth::id())
-            ->where('idElecciones', $id)
-            ->first();
+        $yaVoto = $this->votoService->haVotado(Auth::user(), $eleccion);
 
-        $yaVoto = false;
-        if ($padron) {
-            $yaVoto = Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists();
-        }
-
-        $candidatos = $eleccion->candidatos;
-
-        return view('votante.elecciones.detalle', compact('eleccion', 'candidatos', 'yaVoto'));
+        return view('votante.elecciones.detalle', compact('eleccion', 'yaVoto'));
     }
 
     /**
      * Iniciar proceso de votación
      */
-    public function iniciarVotacion($eleccionId)
+    public function iniciarVotacion(int $eleccionId)
     {
-        $eleccion = Elecciones::findOrFail($eleccionId);
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccionId);
 
         // Verificar que la elección esté activa
         if (!$eleccion->estaActivo()) {
@@ -132,7 +118,7 @@ class VotanteController extends Controller
         }
 
         // Verificar si ya votó
-        $yaVoto = Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists();
+        $yaVoto = $this->votoService->haVotado(Auth::user(), $eleccion);
 
         if ($yaVoto) {
             return redirect()->route('votante.elecciones.detalle', $eleccionId)
@@ -201,152 +187,44 @@ class VotanteController extends Controller
     /**
      * Procesa y emite el voto
      */
-    public function emitirVoto(Request $request, $eleccionId)
+    public function emitirVoto(Request $request, IPartidoService $partidoService, ICandidatoService $candidatoService)
     {
-        $eleccion = Elecciones::findOrFail($eleccionId);
+        $eleccion = $this->eleccionesService->obtenerEleccionActiva();
 
-        // Verificar estado
-        if (!$eleccion->estaActivo()) {
-            return response()->json(['error' => 'Esta elección no está activa.'], 400);
-        }
+        $request->validate(
+            [
+                'idPartido' => 'required|integer|exists:Partido,idPartido',
+                'candidatos' => 'required|array',
+                'candidatos.*' => 'required|integer|exists:Candidato,idCandidato',
+            ],
+            [
+                'idPartido.required' => 'Se debe ingresar exactamente un partido.',
+                'idPartido.integer' => 'El id del partido debe ser un número.',
+                'idPartido.exists' => 'El partido no existe.',
+                'candidatos.required' => 'Se debe ingresar al menos un candidato.',
+                'candidatos.array' => 'Los candidatos deben ser una lista.',
+                'candidatos.*.required' => 'Se debe ingresar al menos un candidato.',
+                'candidatos.*.integer' => 'El id del candidato debe ser un número.',
+                'candidatos.*.exists' => 'El candidato no existe.',
+            ]
+        );
 
-        // Obtener o crear registro en padrón electoral
-        $padron = PadronElectoral::where('idUsuario', Auth::id())
-            ->where('idElecciones', $eleccionId)
-            ->first();
+        $entidades = [];
 
-        // Si no existe padrón, crear uno temporal para demo
-        if (!$padron) {
-            $padron = new PadronElectoral();
-            $padron->idUsuario = Auth::id();
-            $padron->idElecciones = $eleccionId;
-            $padron->save();
-        }
+        $entidades[] = $partidoService->obtenerPartidoPorId($request->idPartido);
 
-        // Obtener los candidatos del request
-        $candidatos = $request->input('candidatos', []);
-        $partidoSeleccionado = $request->input('partidoSeleccionado', null);
-
-        // Log de los datos recibidos
-        \Log::info('=== VOTACIÓN INICIADA ===');
-        \Log::info('Usuario: ' . Auth::id());
-        \Log::info('Elección: ' . $eleccionId);
-        \Log::info('Partido seleccionado: ' . ($partidoSeleccionado ?? 'Ninguno'));
-        \Log::info('Candidatos recibidos:', $candidatos);
-
-        // Validar que haya candidatos
-        if (empty($candidatos)) {
-            \Log::error('No se recibieron candidatos');
-            return response()->json(['error' => 'No se han seleccionado candidatos.'], 400);
+        foreach ($request->candidatos as $candidatoId) {
+            $entidades[] = $candidatoService->obtenerCandidatoPorId($candidatoId);
         }
 
         try {
-            DB::beginTransaction();
-
-            // Obtener candidatos de partido (presidencia = cargo 1, vicepresidencia = cargo 2, coordinador = cargo 3)
-            // Cuando se vota por un partido, se registra en VotoPartido, no en VotoCandidato
-            $cargosPartido = [1, 2, 3]; // IDs de cargos de partido
-            $votosRegistrados = 0;
-            $registroPartido = false;
-
-            // Primero: Registrar voto del partido si fue seleccionado
-            if ($partidoSeleccionado) {
-                $partido = Partido::find($partidoSeleccionado);
-                if ($partido) {
-                    // Determinar tipo de voto (tipo 2 para votos normales)
-                    $idTipoVoto = 2;
-
-                    // Registrar en VotoPartido con el padrón electoral
-                    $votoPartido = VotoPartido::create([
-                        'idPadronElectoral' => $padron->idPadronElectoral,
-                        'idPartido' => $partidoSeleccionado,
-                        'idElecciones' => $eleccionId,
-                        'idTipoVoto' => $idTipoVoto
-                    ]);
-
-                    $registroPartido = true;
-                    \Log::info("Voto de partido registrado en VotoPartido - Partido ID: {$partidoSeleccionado}, Padrón ID: {$padron->idPadronElectoral}");
-                }
-            }
-
-            // Segundo: Registrar votos de candidatos individuales (excluir cargos de partido)
-            foreach ($candidatos as $cargoId => $candidatoData) {
-                $cargoId = (int)$cargoId;
-
-                // Asegurar que candidatoData es un array con información del candidato
-                if (is_array($candidatoData)) {
-                    $candidatoId = $candidatoData['candidatoId'] ?? null;
-                    $nombreCandidato = $candidatoData['nombre'] ?? 'Sin nombre';
-                } else {
-                    // Si es solo el ID del candidato
-                    $candidatoId = $candidatoData;
-                    $candidato = Candidato::find($candidatoId);
-                    $nombreCandidato = $candidato ? ($candidato->usuario->perfil->nombre ?? 'Sin nombre') : 'Sin nombre';
-                }
-
-                // Validar que el candidato exista
-                $candidato = Candidato::find($candidatoId);
-                if (!$candidato) {
-                    throw new \Exception("El candidato con ID {$candidatoId} no existe.");
-                }
-
-                // Determinar tipo de voto (tipo 2 para votos normales)
-                $idTipoVoto = 2;
-
-                \Log::info("Procesando voto - Cargo: {$cargoId}, Candidato: {$candidatoId} ({$nombreCandidato})");
-
-                // Si es un cargo de partido, solo registrar si no se registró el partido completo
-                if (in_array($cargoId, $cargosPartido)) {
-                    // Si ya se registró un voto de partido, saltar los candidatos de partido individuales
-                    // para evitar duplicados
-                    if ($registroPartido) {
-                        \Log::info("Saltando candidato de partido (ya registrado via VotoPartido)");
-                        continue;
-                    }
-
-                    // Si no se registró partido, registrar el candidato individual
-                    VotoCandidato::create([
-                        'idPadronElectoral' => $padron->idPadronElectoral,
-                        'idCandidato' => $candidatoId,
-                        'idElecciones' => $eleccionId,
-                        'idTipoVoto' => $idTipoVoto
-                    ]);
-
-                    \Log::info("Voto de candidato de partido registrado en VotoCandidato");
-                } else {
-                    // Registrar en VotoCandidato para candidatos individuales de áreas
-                    VotoCandidato::create([
-                        'idPadronElectoral' => $padron->idPadronElectoral,
-                        'idCandidato' => $candidatoId,
-                        'idElecciones' => $eleccionId,
-                        'idTipoVoto' => $idTipoVoto
-                    ]);
-
-                    \Log::info("Voto registrado en VotoCandidato - Candidato: {$candidatoId}");
-                }
-
-                $votosRegistrados++;
-            }
-
-            \Log::info("Total de votos registrados: {$votosRegistrados}");
-            \Log::info('=== VOTACIÓN COMPLETADA EXITOSAMENTE ===');
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => '¡Tu voto ha sido registrado exitosamente!',
-                'votos_registrados' => $votosRegistrados
-            ], 200);
+            $this->votoService->votar(Auth::user(), collect($entidades));
         } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Error al registrar voto: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-
-            return response()->json([
-                'error' => 'Hubo un error al registrar tu voto: ' . $e->getMessage()
-            ], 500);
+            return redirect()->route('votante.votar.lista', $eleccion->idElecciones)
+                ->with('error', 'Error al emitir el voto: ' . $e->getMessage());
         }
+
+        return redirect()->route('votante.votar.exito', $eleccion->idElecciones);
     }
 
     /**
@@ -354,23 +232,7 @@ class VotanteController extends Controller
      */
     public function votoExitoso($eleccionId)
     {
-        // TEMPORAL: Crear elección demo si no existe
-        $eleccion = Elecciones::find($eleccionId);
-
-        // Obtener el padrón y votos del usuario
-        $padron = PadronElectoral::where('idUsuario', Auth::id())
-            ->where('idElecciones', $eleccionId)
-            ->first();
-
-        // Si no hay padrón (modo demo), usar colección vacía
-        $votos = collect([]);
-        if ($padron) {
-            $votos = Voto::with(['candidato.usuario.perfil', 'candidato.partido', 'candidato.cargo'])
-                ->where('idPadronElectoral', $padron->idPadronElectoral)
-                ->get();
-        }
-
-        return view('votante.votar.exito', compact('eleccion', 'votos'));
+        return view('votante.votar.exito', compact('eleccion'));
     }
 
     // =============================================
