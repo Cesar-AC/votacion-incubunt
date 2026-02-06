@@ -163,13 +163,13 @@ Route::middleware(['auth'])->group(function () {
 
 // Voto
 Route::middleware(['auth'])->group(function () {
-    Route::get('/votos', [VotoController::class, 'index'])->name('crud.voto.ver')->middleware('can:viewAny,App\Models\Voto');
-    Route::get('/votos/crear', [VotoController::class, 'create'])->name('crud.voto.crear')->middleware('can:create,App\Models\Voto');
-    Route::post('/votos/crear', [VotoController::class, 'store'])->name('crud.voto.crear')->middleware('can:create,App\Models\Voto');
-    Route::get('/votos/{id}/editar', [VotoController::class, 'edit'])->name('crud.voto.editar')->middleware('can:update,App\Models\Voto');
-    Route::put('/votos/{id}/editar', [VotoController::class, 'update'])->name('crud.voto.editar')->middleware('can:update,App\Models\Voto');
-    Route::delete('/votos/{id}', [VotoController::class, 'destroy'])->name('crud.voto.eliminar')->middleware('can:delete,App\Models\Voto');
-    Route::get('/votos/{id}', [VotoController::class, 'show'])->name('crud.voto.ver_datos')->middleware('can:view,App\Models\Voto');
+    Route::get('/votos', [VotoController::class, 'index'])->name('crud.voto.ver')->middleware('can:viewAny,App\Models\VotoCandidato');
+    Route::get('/votos/crear', [VotoController::class, 'create'])->name('crud.voto.crear')->middleware('can:create,App\Models\VotoCandidato');
+    Route::post('/votos', [VotoController::class, 'store'])->name('crud.voto.guardar')->middleware('can:create,App\Models\VotoCandidato');
+    Route::get('/votos/{id}/editar', [VotoController::class, 'edit'])->name('crud.voto.editar');
+    Route::put('/votos/{id}', [VotoController::class, 'update'])->name('crud.voto.actualizar');
+    Route::delete('/votos/{id}', [VotoController::class, 'destroy'])->name('crud.voto.eliminar');
+    Route::get('/votos/{id}', [VotoController::class, 'show'])->name('crud.voto.ver_datos');
 });
 
 // Cargo

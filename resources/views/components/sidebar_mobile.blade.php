@@ -126,6 +126,12 @@
                             <i class="fas fa-clipboard-list mr-3" style="color: #161349; font-size: 1.1rem;"></i>
                             <span>Padrones</span>
                         </a>
+                        <a href="{{ route('crud.voto.ver') }}" 
+                       class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
+                       data-dismiss="modal">
+                        <i class="fas fa-box mr-3" style="color: #161349; font-size: 1.1rem;"></i>
+                        <span>Mis Votos</span>
+                    </a>
                         <a href="{{ route('crud.lista_votante.ver') }}" 
                            class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
                            data-dismiss="modal">

@@ -24,7 +24,8 @@ use App\Models\RolUser;
 use App\Models\TipoVoto;
 use App\Models\User;
 use App\Models\UserPermiso;
-use App\Models\Voto;
+use App\Models\VotoCandidato;
+use App\Models\VotoPartido;
 use App\Policies\AreaPolicy;
 use App\Policies\CandidatoPolicy;
 use App\Policies\CargoPolicy;
@@ -75,7 +76,8 @@ class AuthServiceProvider extends ServiceProvider
         TipoVoto::class => TipoVotoPolicy::class,
         User::class => UserPolicy::class,
         UserPermiso::class => UserPermisoPolicy::class,
-        Voto::class => VotoPolicy::class,
+        VotoCandidato::class => VotoPolicy::class,
+        VotoPartido::class => VotoPolicy::class,
     ];
 
     /**
