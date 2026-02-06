@@ -5,17 +5,18 @@ namespace App\Interfaces\Services;
 use App\Models\Elecciones;
 use App\Models\Interfaces\IElegibleAVoto;
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 interface IVotoService
 {
     /**
-     * Registra un voto para un candidato.
+     * Registra votos para un conjunto de candidatos y hasta un partido.
      * @param User $votante
      *      Obligatorio.
      *      Usuario que realiza el voto.
-     * @param IElegibleAVoto $entidad
+     * @param Collection<IElegibleAVoto> $entidades
      *      Obligatorio.
-     *      Entidad al que se le vota.
+     *      Entidades al que se le vota.
      * @return void
      * 
      * @throws Exception
@@ -26,12 +27,12 @@ interface IVotoService
      *      - Si la entidad no pertenece a la elección.
      *      - Si el usuario ya ha votado.
      */
-    public function votar(User $votante, IElegibleAVoto $entidad): void;
+    public function votar(User $votante, Collection $entidades): void;
 
     /**
      * @param IElegibleAVoto $entidad
      *      Obligatorio.
-     *      La entidad que se desea obtener votos.
+     *      La entidad de la que se desea contar votos.
      * @param Elecciones $eleccion
      *      Opcional.
      *      Si es enviado, el método utilizará la elección especificada.
