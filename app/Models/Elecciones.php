@@ -49,7 +49,8 @@ class Elecciones extends Model
 
     public function candidatos()
     {
-        return $this->belongsToMany(Candidato::class, 'CandidatoEleccion', 'idElecciones', 'idCandidato');
+        return $this->belongsToMany(Candidato::class, 'CandidatoEleccion', 'idElecciones', 'idCandidato')
+            ->withPivot('idCargo', 'idPartido');
     }
 
     public function estado()

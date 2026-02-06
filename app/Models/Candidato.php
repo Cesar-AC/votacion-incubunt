@@ -41,7 +41,13 @@ class Candidato extends Model implements IElegibleAVoto
 
     public function elecciones()
     {
-        return $this->belongsToMany(Elecciones::class, 'CandidatoEleccion', 'idCandidato', 'idElecciones');
+        return $this->belongsToMany(Elecciones::class, 'CandidatoEleccion', 'idCandidato', 'idElecciones')
+            ->withPivot('idCargo', 'idPartido');
+    }
+
+    public function candidatoElecciones()
+    {
+        return $this->hasMany(CandidatoEleccion::class, 'idCandidato');
     }
 
     public function obtenerTipoVoto(User $votante): TipoVoto

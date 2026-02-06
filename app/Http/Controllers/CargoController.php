@@ -73,16 +73,16 @@ class CargoController extends Controller
 
     public function destroy($id)
     {
-        $c = Cargo::findOrFail($id);
-        $c->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Cargo eliminado',
-            'data' => [
-                'id' => (int) $id,
-                'cargo' => $c->cargo,
-                'idArea' => $c->idArea,
-            ],
-        ]);
+        try {
+            $c = Cargo::findOrFail($id);
+            $c->delete();
+            return redirect()
+                ->route('crud.cargo.ver')
+                ->with('success', 'Cargo eliminado correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.cargo.ver')
+                ->with('error', 'Error al eliminar el cargo: ' . $e->getMessage());
+        }
     }
 }

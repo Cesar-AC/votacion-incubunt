@@ -10,23 +10,14 @@
         </a>
     </div>
 
+    {{-- Mensajes de error, advertencia y éxito --}}
+    @include('components.error-message')
+
     @forelse($elecciones as $eleccion)
 
         @php
-            // Candidatos individuales (via CandidatoEleccion - sin partido)
-            $candidatosIndividuales = collect([]);
-            if ($eleccion->candidatos) {
-                $candidatosIndividuales = $eleccion->candidatos->filter(fn($c) => $c->idPartido === null);
-            }
-
-            // Candidatos grupales (via PartidoEleccion - con partido)
-            $candidatosGrupales = collect([]);
-            if ($eleccion->partidos) {
-                $candidatosGrupales = $eleccion->partidos->flatMap(fn($partido) => $partido->candidatos);
-            }
-
-            // Unir todos los candidatos
-            $candidatos = $candidatosIndividuales->merge($candidatosGrupales);
+            // Los candidatos ya tienen cargo y partido asignados desde el controlador
+            $candidatos = $eleccion->candidatos ?? collect([]);
 
             // Separación por PARTIDO (null = individual, con valor = grupal)
             $individuales = $candidatos->filter(fn($c) => $c->idPartido === null);
