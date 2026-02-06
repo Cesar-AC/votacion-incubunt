@@ -11,6 +11,8 @@
     </a>
   </div>
 
+  @include('components.error-message')
+
   <!-- Información del Usuario -->
   <div class="row grid grid-cols-3 lg:gap-3">
     
@@ -124,12 +126,27 @@
     <div class="col-span-3 lg:col-span-1">
       <div class="card shadow-sm mb-4">
         <div class="card-body text-center">
-          <div class="text-center">
-            <div class="flex justify-center items-center mb-3">
-              <img src="{{ Auth::user()->perfil?->obtenerFotoURL() ?? asset('img/undraw_profile.svg') }}" 
-                  class="block img-fluid z-10 max-w-48 sm:max-w-96 lg:max-w-72 xl:max-w-100" 
-                  alt="Foto de perfil">
+          <div class="text-center" x-data="{ nuevaFoto: null }">
+            <div class="relative flex justify-center items-center mb-3">
+              <div class="opacity-0 hover:opacity-50 transition-all absolute top-0 right-0 bottom-0 left-0 bg-black z-20">
+                <button type="button" @click="$refs.inputFoto.click()" class="absolute top-0 right-0 bottom-0 left-0 z-30 flex items-center justify-center cursor-pointer flex flex-col gap-2">
+                  <i class="fas fa-camera text-white text-2xl"></i>
+                  <p class="text-white">Cambiar foto</p>
+                </button>
+              </div>
+
+              <img id="visualizacionFoto" src="{{ Auth::user()->perfil?->obtenerFotoURL() ?? asset('img/undraw_profile.svg') }}"
+                class="block img-fluid z-10 max-w-48 sm:max-w-96 lg:max-w-72 xl:max-w-100" 
+                alt="Foto de perfil">
+
+              <form class="hidden" action="{{ route('profile.subirFoto') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <input accept=".png, .jpg, .jpeg, .gif" x-ref="inputFoto" type="file" name="foto" id="inputFoto" class="" x-model="nuevaFoto">
+                <input type="submit" x-ref="inputSubir">
+              </form>
             </div>
+
+            <button type="button" x-ref="botonGuardar" class="btn btn-primary mt-2 mb-4" x-cloak x-show="nuevaFoto != null" @click="$refs.inputSubir.click()">Guardar foto</button>
           </div>
           <h5 class="font-weight-bold mb-1">
             {{ $user->perfil->nombre ?? 'Usuario' }} 
@@ -200,17 +217,20 @@
 @push('scripts')
 
 <script>
-    document.getElementById('foto').addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.querySelector('img');
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+  const inputFoto = document.getElementById('inputFoto');
+  const visualizacionFoto = document.getElementById('visualizacionFoto');
+
+  inputFoto.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = document.getElementById('visualizacionFoto');
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
 </script>
 
 @endpush

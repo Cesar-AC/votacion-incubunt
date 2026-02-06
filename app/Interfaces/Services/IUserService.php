@@ -83,7 +83,7 @@ interface IUserService
      * @return void
      * @throws \Exception Si no se envían los datos necesarios.
      */
-    public function subirFotoUsuario(User $usuario, UploadedFile $archivo): void;
+    public function subirFoto(User $usuario, UploadedFile $archivo): void;
 
     /**
      * @param User $usuario
@@ -92,7 +92,7 @@ interface IUserService
      * @return void
      * @throws \Exception Si no se envía el usuario.
      */
-    public function removerFotoUsuario(User $usuario): void;
+    public function removerFoto(User $usuario): void;
 
     /**
      * @param User $usuario
@@ -104,7 +104,7 @@ interface IUserService
      * @return void
      * @throws \Exception Si no se envían los datos necesarios.
      */
-    public function cambiarFotoUsuario(User $usuario, UploadedFile $archivo): void;
+    public function cambiarFoto(User $usuario, UploadedFile $archivo): void;
 
     /**
      * @param User $usuario
@@ -114,5 +114,5 @@ interface IUserService
      *      Retorna la URL pública de la foto del usuario.
      * @throws \Exception Si no se envía el usuario.
      */
-    public function obtenerFotoUsuarioURL(User $usuario): string;
+    public function obtenerFotoURL(User $usuario): string;
 }

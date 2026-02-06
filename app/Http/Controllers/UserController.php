@@ -9,6 +9,7 @@ use App\Interfaces\Services\IUserService;
 use App\Models\User;
 use App\Models\Permiso;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -216,5 +217,23 @@ class UserController extends Controller
         return redirect()
             ->route('crud.user.ver')
             ->with('success', 'Usuario eliminado correctamente');
+    }
+
+    public function subirFoto(Request $request)
+    {
+        $request->validate([
+            'foto' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ], [
+            'foto.required' => 'La foto es requerida.',
+            'foto.image' => 'La foto debe ser una imagen.',
+            'foto.mimes' => 'La foto debe ser un archivo de tipo: jpeg, png, jpg, gif.',
+            'foto.max' => 'La foto no puede exceder los 5MB.'
+        ]);
+
+        $this->userService->cambiarFoto(Auth::user(), $request->file('foto'));
+
+        return redirect()
+            ->route('profile.show')
+            ->with('success', 'Se ha actualizado la foto correctamente.');
     }
 }
