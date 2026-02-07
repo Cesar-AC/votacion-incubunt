@@ -71,26 +71,34 @@ class UserService implements IUserService
         $usuario->delete();
     }
 
-    public function subirFotoUsuario(User $usuario, UploadedFile $archivo): void
+    public function subirFoto(User $usuario, UploadedFile $archivo): void
     {
-        $archivo = $this->archivoService->subirArchivo('usuarios/fotos', $archivo->hashName(), $archivo);
+        $archivo = $this->archivoService->subirArchivo('usuarios/fotos', $archivo->hashName(), $archivo, 'public');
 
-        $usuario->foto()->associate($archivo);
-        $usuario->save();
+        $usuario->perfil->foto()->associate($archivo);
+        $usuario->perfil->save();
     }
 
-    public function removerFotoUsuario(User $usuario): void
+    public function removerFoto(User $usuario): void
     {
-        $this->archivoService->eliminarArchivo($usuario->perfil->foto->getKey());
+        $foto = $usuario->perfil?->foto;
+        if ($foto != null) {
+            $this->archivoService->eliminarArchivo($foto->getKey());
+        }
     }
 
-    public function cambiarFotoUsuario(User $usuario, UploadedFile $archivo): void
+    public function cambiarFoto(User $usuario, UploadedFile $archivo): void
     {
-        $this->archivoService->eliminarArchivo($usuario->perfil->foto->getKey());
-        $this->subirFotoUsuario($usuario, $archivo);
+        try {
+            $this->removerFoto($usuario);
+        } catch (\Exception $e) {
+            // Ignorar, puede que no tenga foto.
+        }
+
+        $this->subirFoto($usuario, $archivo);
     }
 
-    public function obtenerFotoUsuarioURL(User $usuario): string
+    public function obtenerFotoURL(User $usuario): string
     {
         return $usuario->perfil->obtenerFotoURL();
     }

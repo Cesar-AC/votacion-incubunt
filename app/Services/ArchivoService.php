@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Interfaces\Services\IArchivoService;
 use App\Models\Archivo;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class ArchivoService implements IArchivoService
 {
@@ -28,6 +29,11 @@ class ArchivoService implements IArchivoService
     public function eliminarArchivo(int $id): void
     {
         $archivo = $this->obtenerArchivoPorId($id);
+
+        if (Storage::disk($archivo->disco)->exists($archivo->ruta)) {
+            Storage::disk($archivo->disco)->delete($archivo->ruta);
+        }
+
         $archivo->delete();
     }
 }

@@ -146,4 +146,14 @@ interface IPermisoService
      *      Retorna el permiso.
      */
     public function obtenerPermisoPorId(int $idPermiso): Permiso;
+
+    /**
+     * Obtiene un rol desde su ID.
+     * @param int $idRol
+     *      Obligatorio.
+     *      ID del rol que se desea obtener.
+     * @return Rol
+     *      Retorna el rol.
+     */
+    public function obtenerRolPorId(int $idRol): Rol;
 }

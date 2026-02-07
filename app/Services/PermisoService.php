@@ -84,4 +84,9 @@ class PermisoService implements IPermisoService
     {
         return Permiso::findOrFail($idPermiso);
     }
+
+    public function obtenerRolPorId(int $idRol): Rol
+    {
+        return Rol::findOrFail($idRol);
+    }
 }

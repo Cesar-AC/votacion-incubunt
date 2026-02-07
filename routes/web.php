@@ -34,10 +34,18 @@ Route::middleware(['auth', 'throttle:login'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show'])->name('profile.show');
-    Route::get('/profile/edit', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ProfileController::class, 'show'])->name('show');
+
+        /** Rutas deshabilitadas ya que no se permite la edición de datos, solo foto
+         * Route::get('/edit', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('edit');
+         * Route::patch('/', [\App\Http\Controllers\ProfileController::class, 'update'])->name('update');
+         * Route::delete('/', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('destroy');
+         */
+
+        Route::post('/subirFoto', [UserController::class, 'subirFoto'])->name('subirFoto');
+    });
 });
 
 // Rutas del Votante

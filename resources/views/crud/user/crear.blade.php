@@ -7,22 +7,9 @@
     <h5 class="font-weight-bold mb-0">Nuevo Usuario</h5>
   </div>
 
-  <!-- Errores -->
-  @if ($errors->any())
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <strong>Error:</strong>
-    <ul class="mb-0">
-      @foreach ($errors->all() as $error)
-      <li>{{ $error }}</li>
-      @endforeach
-    </ul>
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </div>
-  @endif
+  @include('components.error-message')
 
-  <form method="POST" action="{{ route('crud.user.crear') }}">
+  <form method="POST" action="{{ route('crud.user.crear') }}" enctype="multipart/form-data">
     @csrf
 
     <!-- PERFIL -->
@@ -177,6 +164,33 @@
       </div>
     </div>
 
+    <!-- FOTO -->
+    <div class="card shadow-sm mb-4" x-data="{inputFoto: null}">
+      <div class="card-body">
+        <h6 class="font-weight-bold mb-3">Foto</h6>
+
+        <div class="form-group">
+          <input
+            type="file"
+            x-ref="inputFoto"
+            name="foto"
+            id="inputFoto"
+            class="form-control-file @error('foto') is-invalid @enderror"
+            accept=".png, .jpg, .jpeg, .gif"
+            x-model="inputFoto"
+            value="{{ old('foto') }}">
+          @error('foto')
+          <div class="invalid-feedback d-block">{{ $message }}</div>
+          @enderror
+        </div>
+
+        <div id="fotoPreview" class="mt-3" x-cloak x-show="inputFoto != null">
+          <p class="text-muted mb-2">Previsualización:</p>
+          <img id="visualizacionFoto" src="" alt="Previsualización de foto" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+        </div>
+      </div>
+    </div>
+
     <div class="text-right mb-4">
       <a href="{{ route('crud.user.ver') }}" class="btn btn-secondary px-4 mr-2">
         Volver
@@ -189,3 +203,8 @@
   </form>
 
 </div>
+@endsection
+
+@push('scripts')
+@include('components.preview-upload-photo-script')
+@endpush
