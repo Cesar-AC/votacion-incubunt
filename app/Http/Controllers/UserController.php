@@ -196,7 +196,7 @@ class UserController extends Controller
             $this->userService->editarPerfilUsuario($datosPerfil, $usuario);
 
             if ($request->hasFile('foto')) {
-                $this->userService->subirFoto($usuario, $request->file('foto'));
+                $this->userService->cambiarFoto($usuario, $request->file('foto'));
             }
         });
 

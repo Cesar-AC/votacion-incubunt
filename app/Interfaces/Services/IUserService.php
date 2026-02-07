@@ -81,7 +81,8 @@ interface IUserService
      *      Obligatorio.
      *      El archivo que se desea subir.
      * @return void
-     * @throws \Exception Si no se envían los datos necesarios.
+     * @throws \Exception Si el usuario ya tiene una foto.
+     * @see self::cambiarFoto() En caso de no saber si el usuario tiene foto, es mejor utilizarlo.
      */
     public function subirFoto(User $usuario, UploadedFile $archivo): void;
 
@@ -90,7 +91,8 @@ interface IUserService
      *      Obligatorio.
      *      El usuario al que se desea remover la foto.
      * @return void
-     * @throws \Exception Si no se envía el usuario.
+     * @throws \Exception Si el usuario no tiene una foto.
+     * @see self::cambiarFoto() En caso de no saber si el usuario tiene foto, es mejor utilizarlo.
      */
     public function removerFoto(User $usuario): void;
 
@@ -102,7 +104,6 @@ interface IUserService
      *      Obligatorio.
      *      El archivo que se desea asignar como foto.
      * @return void
-     * @throws \Exception Si no se envían los datos necesarios.
      */
     public function cambiarFoto(User $usuario, UploadedFile $archivo): void;
 
@@ -110,9 +111,9 @@ interface IUserService
      * @param User $usuario
      *      Obligatorio.
      *      El usuario al que se desea obtener la foto.
-     * @return string
+     * @return string|null
      *      Retorna la URL pública de la foto del usuario.
-     * @throws \Exception Si no se envía el usuario.
+     *      Retorna null si el usuario no tiene una foto.
      */
-    public function obtenerFotoURL(User $usuario): string;
+    public function obtenerFotoURL(User $usuario): ?string;
 }

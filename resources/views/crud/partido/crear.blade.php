@@ -56,16 +56,7 @@
           @error('planTrabajo')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 
-        <!-- Foto -->
-        <div class="form-group mt-3">
-          <label class="small font-weight-bold">Foto del Partido (opcional)</label>
-          <input type="file"
-                 name="foto"
-                 accept="image/*"
-                 class="form-control @error('foto') is-invalid @enderror"
-                 value="{{ old('foto') }}">
-          @error('foto')<div class="invalid-feedback">{{ $message }}</div>@enderror
-        </div>
+        @include('components.previewable-upload-photo-for-crud')
 
       </div>
     </div>

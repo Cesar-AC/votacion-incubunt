@@ -73,6 +73,10 @@ class UserService implements IUserService
 
     public function subirFoto(User $usuario, UploadedFile $archivo): void
     {
+        if ($usuario->perfil?->foto) {
+            throw new \Exception('El usuario ya tiene una foto.');
+        }
+
         $archivo = $this->archivoService->subirArchivo('usuarios/fotos', $archivo->hashName(), $archivo, 'public');
 
         $usuario->perfil->foto()->associate($archivo);
@@ -82,9 +86,15 @@ class UserService implements IUserService
     public function removerFoto(User $usuario): void
     {
         $foto = $usuario->perfil?->foto;
-        if ($foto != null) {
-            $this->archivoService->eliminarArchivo($foto->getKey());
+
+        $usuario->perfil?->foto()->disassociate();
+        $usuario->perfil?->save();
+
+        if ($foto == null) {
+            throw new \Exception('El usuario no tiene una foto.');
         }
+
+        $this->archivoService->eliminarArchivo($foto->getKey());
     }
 
     public function cambiarFoto(User $usuario, UploadedFile $archivo): void
