@@ -151,31 +151,44 @@ class PartidoService implements IPartidoService
         });
     }
 
-    public function subirFotoPartido(Partido $partido, UploadedFile $archivo): void
+    public function subirFoto(Partido $partido, UploadedFile $archivo): void
     {
+        if ($partido->foto) {
+            throw new \Exception('El partido ya tiene una foto.');
+        }
+
         $archivo = $this->archivoService->subirArchivo('partidos/fotos', $archivo->hashName(), $archivo, 'public');
 
         $partido->foto()->associate($archivo);
         $partido->save();
     }
 
-    public function removerFotoPartido(Partido $partido): void
+    public function removerFoto(Partido $partido): void
     {
-        $this->archivoService->eliminarArchivo($partido->foto->getKey());
+        $foto = $partido->foto;
+
+        $partido->foto()->disassociate();
+        $partido->save();
+
+        if ($foto == null) {
+            throw new \Exception('El partido no tiene una foto.');
+        }
+
+        $this->archivoService->eliminarArchivo($foto->getKey());
     }
 
-    public function cambiarFotoPartido(Partido $partido, UploadedFile $archivo): void
+    public function cambiarFoto(Partido $partido, UploadedFile $archivo): void
     {
         try {
-            $this->removerFotoPartido($partido);
+            $this->removerFoto($partido);
         } catch (\Exception $e) {
             // No se hace nada, porque puede que la foto no exista.
         }
 
-        $this->subirFotoPartido($partido, $archivo);
+        $this->subirFoto($partido, $archivo);
     }
 
-    public function obtenerFotoPartidoURL(Partido $partido): string
+    public function obtenerFotoURL(Partido $partido): ?string
     {
         return $partido->obtenerFotoURL();
     }

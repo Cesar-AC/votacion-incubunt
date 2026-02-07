@@ -6,6 +6,7 @@ use App\Interfaces\Services\IEleccionesService;
 use App\Interfaces\Services\IPartidoService;
 use App\Interfaces\Services\IArchivoService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PartidoController extends Controller
 {
@@ -49,11 +50,13 @@ class PartidoController extends Controller
             'foto.max' => 'La foto no puede exceder los 5MB.',
         ]);
 
-        $partido = $this->partidoService->crearPartido($request->all());
+        DB::transaction(function () use ($request) {
+            $partido = $this->partidoService->crearPartido($request->all());
 
-        if ($request->hasFile('foto')) {
-            $this->partidoService->cambiarFotoPartido($partido, $request->file('foto'));
-        }
+            if ($request->hasFile('foto')) {
+                $this->partidoService->subirFoto($partido, $request->file('foto'));
+            }
+        });
 
         return redirect()
             ->route('crud.partido.ver')
@@ -109,28 +112,33 @@ class PartidoController extends Controller
             'urlPartido.url' => 'La URL del partido debe ser válida.',
             'urlPartido.max' => 'La URL del partido no puede exceder los 255 caracteres.',
             'descripcion.string' => 'La descripción debe ser texto.',
+            'foto.image' => 'La foto debe ser una imagen.',
+            'foto.mimes' => 'La foto debe ser un archivo de tipo jpeg, png, jpg o gif.',
+            'foto.max' => 'La foto no puede exceder los 5MB.',
             'elecciones.array' => 'Las elecciones deben ser un array.',
             'elecciones.*.exists' => 'Las elecciones deben existir.'
         ]);
 
-        $this->partidoService->editarPartido([
-            'partido' => $request->partido,
-            'urlPartido' => $request->urlPartido,
-            'descripcion' => $request->descripcion,
-            'planTrabajo' => $request->planTrabajo,
-        ], $partido);
+        DB::transaction(function () use ($request, $partido, $eleccionesService) {
+            $this->partidoService->editarPartido([
+                'partido' => $request->partido,
+                'urlPartido' => $request->urlPartido,
+                'descripcion' => $request->descripcion,
+                'planTrabajo' => $request->planTrabajo,
+            ], $partido);
 
-        if ($request->has('elecciones')) {
-            $elecciones = collect($request->elecciones)->map(function ($eleccion) use ($eleccionesService) {
-                return $eleccionesService->obtenerEleccionPorId($eleccion);
-            });
+            if ($request->has('elecciones')) {
+                $elecciones = collect($request->elecciones)->map(function ($eleccion) use ($eleccionesService) {
+                    return $eleccionesService->obtenerEleccionPorId($eleccion);
+                });
 
-            $this->partidoService->establecerEleccionesDePartido($partido, $elecciones);
-        }
+                $this->partidoService->establecerEleccionesDePartido($partido, $elecciones);
+            }
 
-        if ($request->hasFile('foto')) {
-            $this->partidoService->cambiarFotoPartido($partido, $request->file('foto'));
-        }
+            if ($request->hasFile('foto')) {
+                $this->partidoService->cambiarFoto($partido, $request->file('foto'));
+            }
+        });
 
         return redirect()
             ->route('crud.partido.ver')

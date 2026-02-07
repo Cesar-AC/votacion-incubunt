@@ -176,18 +176,20 @@ interface IPartidoService
      *      Obligatorio.
      *      El archivo que se desea subir.
      * @return void
-     * @throws \Exception Si no se envían los datos necesarios.
+     * @throws \Exception Si el partido ya tiene una foto.
+     * @see self::cambiarFoto() En caso de no saber si el partido tiene foto, es mejor utilizarlo.
      */
-    public function subirFotoPartido(Partido $partido, UploadedFile $archivo): void;
+    public function subirFoto(Partido $partido, UploadedFile $archivo): void;
 
     /**
      * @param Partido $partido
      *      Obligatorio.
      *      El partido al que se desea remover la foto.
      * @return void
-     * @throws \Exception Si no se envía el partido.
+     * @throws \Exception Si el partido no tiene foto.
+     * @see self::cambiarFoto() En caso de no saber si el partido tiene foto, es mejor utilizarlo.
      */
-    public function removerFotoPartido(Partido $partido): void;
+    public function removerFoto(Partido $partido): void;
 
     /**
      * Cambia la foto del partido, exista o no exista.
@@ -199,17 +201,16 @@ interface IPartidoService
      *      Obligatorio.
      *      El archivo que se desea asignar como foto.
      * @return void
-     * @throws \Exception Si no se envían los datos necesarios.
      */
-    public function cambiarFotoPartido(Partido $partido, UploadedFile $archivo): void;
+    public function cambiarFoto(Partido $partido, UploadedFile $archivo): void;
 
     /**
      * @param Partido $partido
      *      Obligatorio.
      *      El partido al que se desea obtener la foto.
-     * @return string
+     * @return string|null
      *      Retorna la URL pública de la foto del partido.
-     * @throws \Exception Si no se envía el partido.
+     *      Retorna null si el partido no tiene foto.
      */
-    public function obtenerFotoPartidoURL(Partido $partido): string;
+    public function obtenerFotoURL(Partido $partido): ?string;
 }
