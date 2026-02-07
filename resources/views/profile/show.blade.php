@@ -221,22 +221,6 @@
 @endsection
 
 @push('scripts')
-
-<script>
-  const inputFoto = document.getElementById('inputFoto');
-  const visualizacionFoto = document.getElementById('visualizacionFoto');
-
-  inputFoto.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = document.getElementById('visualizacionFoto');
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-</script>
-
+@include('components.preview-upload-photo-script')
 @endpush
+
