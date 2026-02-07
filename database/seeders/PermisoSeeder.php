@@ -66,6 +66,7 @@ class PermisoSeeder extends Seeder
             'propuesta_candidato:crud:ver:*',       // Ver propuestas de candidatos
             'propuesta_partido:crud:ver:*',         // Ver propuestas de partidos
             'partido:crud:ver:*',                   // Ver partidos
+            'usuario:cambiar_foto',
         ];
     }
 

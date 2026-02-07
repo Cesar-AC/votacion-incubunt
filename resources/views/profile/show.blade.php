@@ -128,6 +128,7 @@
         <div class="card-body text-center">
           <div class="text-center" x-data="{ nuevaFoto: null }">
             <div class="relative flex justify-center items-center mb-3">
+              @if ($puedeCambiarFoto)
               <div class="opacity-0 hover:opacity-50 transition-all absolute top-0 right-0 bottom-0 left-0 bg-black z-20">
                 <button type="button" @click="$refs.inputFoto.click()" class="absolute top-0 right-0 bottom-0 left-0 z-30 flex items-center justify-center cursor-pointer flex flex-col gap-2">
                   <i class="fas fa-camera text-white text-2xl"></i>
@@ -144,6 +145,11 @@
                 <input accept=".png, .jpg, .jpeg, .gif" x-ref="inputFoto" type="file" name="foto" id="inputFoto" class="" x-model="nuevaFoto">
                 <input type="submit" x-ref="inputSubir">
               </form>
+              @else
+              <img id="visualizacionFoto" src="{{ Auth::user()->perfil?->obtenerFotoURL() ?? asset('img/undraw_profile.svg') }}"
+                class="block img-fluid z-10 max-w-48 sm:max-w-96 lg:max-w-72 xl:max-w-100" 
+                alt="Foto de perfil">
+              @endif
             </div>
 
             <button type="button" x-ref="botonGuardar" class="btn btn-primary mt-2 mb-4" x-cloak x-show="nuevaFoto != null" @click="$refs.inputSubir.click()">Guardar foto</button>
