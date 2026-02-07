@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\Voto;
+use App\Models\VotoPartido;
+use App\Models\VotoCandidato;
 use App\Models\Partido;
 use App\Models\Area;
 use App\Models\Candidato;
@@ -15,93 +17,59 @@ use App\Models\PropuestaPartido;
 use App\Models\PropuestaCandidato;
 use App\Interfaces\Services\IPermisoService;
 use App\Enum\Permiso as PermisoEnum;
+use App\Interfaces\Services\IAreaService;
+use App\Interfaces\Services\ICandidatoService;
+use App\Interfaces\Services\IEleccionesService;
+use App\Interfaces\Services\IPadronElectoralService;
+use App\Models\CandidatoEleccion;
+use App\Models\PartidoEleccion;
 
 class VotanteController extends Controller
 {
-    protected $permisoService;
-
-    public function __construct(IPermisoService $permisoService)
-    {
-        $this->permisoService = $permisoService;
-    }
+    public function __construct(
+        protected IEleccionesService $eleccionesService,
+        protected IPermisoService $permisoService
+    ) {}
     /**
      * Página principal del votante
      */
     public function home()
     {
-        // Obtener elección activa (estado 1 o donde la fecha sea vigente)
-        // Asumiendo estado 1 = Activa. Campo correcto: idEstado
-        $eleccionActiva = Elecciones::where('idEstado', 1) 
-            ->orWhere(function($q) {
-                $q->where('fechaInicio', '<=', now())
-                  ->where('fechaCierre', '>=', now());
-            })
-            ->first();
-        
-        $totalElecciones = Elecciones::count();
-        
-        return view('votante.home', compact('eleccionActiva', 'totalElecciones'));
+        $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+
+        try {
+            $eleccionActiva = $this->eleccionesService->estaEnPadronElectoral(Auth::user()) ? $eleccionActiva : null;
+            $esPeriodoDeVotar = $this->eleccionesService->votacionHabilitada($eleccionActiva);
+        } catch (\Exception $e) {
+            $eleccionActiva = null;
+            $esPeriodoDeVotar = false;
+        }
+
+        return view('votante.home', compact('eleccionActiva', 'esPeriodoDeVotar'));
     }
 
     /**
      * Ver propuestas (Candidatos y Partidos)
      */
-    public function propuestas()
+    public function propuestas(IAreaService $areaService, ICandidatoService $candidatoService)
     {
-        // Solo permitir si el usuario tiene permisos de propuestas (partido o candidato)
-        if (!Auth::user()->can('viewAny', \App\Models\PropuestaPartido::class)
-            && !Auth::user()->can('viewAny', \App\Models\PropuestaCandidato::class)) {
-            abort(403, 'No tienes permiso para ver propuestas.');
-        }
+        $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+        $partidos = $eleccionActiva->partidos;
+        $areas = $areaService->obtenerAreas();
 
-        // Obtener la elección activa
-        $eleccionActiva = Elecciones::where('idEstado', 1) 
-            ->orWhere(function($q) {
-                $q->where('fechaInicio', '<=', now())
-                  ->where('fechaCierre', '>=', now());
-            })
-            ->first();
-
-        if (!$eleccionActiva) {
-            return view('votante.propuestas.index', [
-                'partidos' => collect([]), 
-                'areas' => collect([]),
-                'eleccion' => null
-            ]);
-        }
-        
-        // Obtener Partidos que tienen candidatos en esta elección
-        // Relación implícita por candidatos que están en la elección via tablas pivote o relaciones directas
-        // Partido belongsToMany Elecciones en modelo Partido
-        $partidos = Partido::whereHas('elecciones', function($q) use ($eleccionActiva) {
-                $q->where('Elecciones.idElecciones', $eleccionActiva->idElecciones);
-            })
-            ->with(['candidatos' => function($q) use ($eleccionActiva) {
-                 // Filtrar candidatos de este partido que están en esta elección
-                 // Candidato belongsTo Partido, Candidato belongsToMany Elecciones
-                 $q->whereHas('elecciones', function($sq) use ($eleccionActiva) {
-                     $sq->where('Elecciones.idElecciones', $eleccionActiva->idElecciones);
-                 })->with(['usuario.perfil.carrera', 'cargo', 'propuestas']);
-            }, 'propuestas'])
+        $candidatosPorArea = CandidatoEleccion::query()
+            ->where('idElecciones', '=', $eleccionActiva->getKey())
+            ->whereNull('idPartido')
+            ->with([
+                'candidato.usuario.perfil',
+                'candidato.propuestas' => function ($q) use ($eleccionActiva) {
+                    $q->where('idElecciones', '=', $eleccionActiva->getKey());
+                },
+                'cargo.area',
+            ])
             ->get();
 
-        // Obtener Áreas
-         $areas = Area::with(['cargos' => function($qCargo) use ($eleccionActiva) {
-             // Cargas cargos
-             $qCargo->whereHas('candidatos', function($qCand) use ($eleccionActiva) {
-                 // Filtrar cargos que tienen candidatos en esta elección
-                 $qCand->whereHas('elecciones', function($sq) use ($eleccionActiva) {
-                     $sq->where('Elecciones.idElecciones', $eleccionActiva->idElecciones);
-                 });
-             })->with(['candidatos' => function($qCand) use ($eleccionActiva) {
-                 // Traer los candidatos de ese cargo en esa elección
-                 $qCand->whereHas('elecciones', function($sq) use ($eleccionActiva) {
-                     $sq->where('Elecciones.idElecciones', $eleccionActiva->idElecciones);
-                 })->with(['usuario.perfil.carrera', 'propuestas']);
-             }]);
-        }])->get();
-
-        return view('votante.propuestas.index', compact('eleccionActiva', 'partidos', 'areas'));
+        return view('votante.propuestas.index', compact('eleccionActiva', 'partidos', 'areas', 'candidatosPorArea', 'candidatoService'));
     }
 
     /**
@@ -112,7 +80,7 @@ class VotanteController extends Controller
         $elecciones = Elecciones::with('estadoEleccion')
             ->orderBy('fechaInicio', 'desc')
             ->paginate(9);
-            
+
         return view('votante.elecciones.index', compact('elecciones'));
     }
 
@@ -123,18 +91,18 @@ class VotanteController extends Controller
     {
         $eleccion = Elecciones::with(['estadoEleccion', 'candidatos.usuario.perfil'])
             ->findOrFail($id);
-        
+
         // Verificar si el usuario ya votó en esta elección
         // Primero obtener el registro del padrón electoral del usuario para esta elección
         $padron = PadronElectoral::where('idUsuario', Auth::id())
             ->where('idElecciones', $id)
             ->first();
-            
+
         $yaVoto = false;
         if ($padron) {
             $yaVoto = Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists();
         }
-        
+
         $candidatos = $eleccion->candidatos;
 
         return view('votante.elecciones.detalle', compact('eleccion', 'candidatos', 'yaVoto'));
@@ -177,69 +145,36 @@ class VotanteController extends Controller
     /**
      * Listar candidatos para votar
      */
-    public function listarCandidatos($eleccionId)
+    public function vistaVotar(IAreaService $areaService)
     {
-        $eleccion = Elecciones::findOrFail($eleccionId);
+        $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+        $areas = $areaService->obtenerAreas();
 
-        // Verificar estado
-        if (!$eleccion->estaActivo()) {
-            return redirect()->route('votante.elecciones')
-                ->with('error', 'Esta elección no está activa.');
-        }
-
-        // TEMPORAL: Desactivar validación de padrón para modo demo
-        // $padron = PadronElectoral::where('idUsuario', Auth::id())
-        //     ->where('idElecciones', $eleccionId)
-        //     ->first();
-
-        // if (!$padron) {
-        //     return redirect()->route('votante.elecciones')
-        //         ->with('error', 'No estás registrado en el padrón electoral.');
-        // }
-
-        // Obtener cargos con candidatos reales desde la BD
-        try {
-            // Obtener todos los cargos con sus candidatos
-            $cargos = \App\Models\Cargo::with([
-                'candidatos' => function($q) {
-                    $q->with(['usuario.perfil.carrera', 'partido', 'cargo']);
+        $candidatosPorArea = CandidatoEleccion::query()
+            ->where('idElecciones', '=', $eleccionActiva->getKey())
+            ->whereNull('idPartido')
+            ->with([
+                'candidato.usuario.perfil',
+                'candidato.propuestas' => function ($q) use ($eleccionActiva) {
+                    $q->where('idElecciones', '=', $eleccionActiva->getKey());
                 },
-                'area'
-            ])->get();
+                'cargo.area',
+            ])
+            ->get();
 
-            // Crear array de candidatos por cargo para fallback
-            $candidatosPorCargo = [];
-            foreach ($cargos as $cargo) {
-                $candidatosPorCargo[$cargo->idCargo] = $cargo->candidatos;
-            }
+        $partidos = PartidoEleccion::query()
+            ->where('idElecciones', $eleccionActiva->getKey())
+            ->with([
+                'partido.propuestas' => function ($q) use ($eleccionActiva) {
+                    $q->where('idElecciones', $eleccionActiva->getKey());
+                },
+                'partido.candidatos.propuestas' => function ($q) use ($eleccionActiva) {
+                    $q->where('idElecciones', $eleccionActiva->getKey());
+                },
+            ])
+            ->get();
 
-            // Obtener partidos con sus candidatos (máximo 3 primeros)
-            $partidos = \App\Models\Partido::with([
-                'candidatos' => function($q) {
-                    $q->with(['usuario.perfil.carrera', 'cargo.area', 'partido'])
-                      ->limit(3);
-                }
-            ])->get();
-
-            // Obtener áreas con sus cargos y candidatos
-            $areas = \App\Models\Area::with([
-                'cargos' => function($q) {
-                    $q->with(['candidatos' => function($qCand) {
-                        $qCand->with(['usuario.perfil.carrera', 'partido', 'cargo']);
-                    }]);
-                }
-            ])->get();
-
-        } catch (\Exception $e) {
-            \Log::error('Error en listarCandidatos: ' . $e->getMessage());
-            // Si hay error en la query, devolver arrays vacíos para modo demo
-            $cargos = collect([]);
-            $candidatosPorCargo = [];
-            $partidos = collect([]);
-            $areas = collect([]);
-        }
-
-        return view('votante.votar.lista', compact('eleccion', 'cargos', 'candidatosPorCargo', 'partidos', 'areas'));
+        return view('votante.votar.lista', compact('eleccion', 'cargos', 'candidatosPorCargo'));
     }
 
     /**
@@ -248,18 +183,18 @@ class VotanteController extends Controller
     public function verDetalleCandidato($eleccionId, $candidatoId)
     {
         $eleccion = Elecciones::findOrFail($eleccionId);
-        
+
         $candidato = \App\Models\Candidato::with([
             'usuario.perfil.carrera',
             'partido.propuestas',
             'cargo',
             'propuestas'
         ])
-        ->whereHas('elecciones', function($q) use ($eleccionId) {
-                 $q->where('Elecciones.idElecciones', $eleccionId);
-        })
-        ->findOrFail($candidatoId);
-        
+            ->whereHas('elecciones', function ($q) use ($eleccionId) {
+                $q->where('Elecciones.idElecciones', $eleccionId);
+            })
+            ->findOrFail($candidatoId);
+
         return view('votante.votar.detalle_candidato', compact('eleccion', 'candidato'));
     }
 
@@ -272,55 +207,58 @@ class VotanteController extends Controller
 
         // Verificar estado
         if (!$eleccion->estaActivo()) {
-            return back()->with('error', 'Esta elección no está activa.');
+            return response()->json(['error' => 'Esta elección no está activa.'], 400);
         }
 
-        // TEMPORAL: Desactivar validación de padrón electoral
+        // Obtener padrón
         $padron = PadronElectoral::where('idUsuario', Auth::id())
             ->where('idElecciones', $eleccionId)
             ->first();
 
-        // Si no existe padrón, crear uno temporal para demo
-        if (!$padron) {
-            $padron = new PadronElectoral();
-            $padron->idUsuario = Auth::id();
-            $padron->idElecciones = $eleccionId;
-            $padron->save();
+        // Verificar si ya votó
+        if (Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists()) {
+            return redirect()->route('votante.elecciones.detalle', $eleccionId)
+                ->with('error', 'Ya has votado en esta elección.');
         }
-
-        // TEMPORAL: Desactivar validación de voto duplicado para demo
-        // if (Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists()) {
-        //     return redirect()->route('votante.elecciones.detalle', $eleccionId)
-        //         ->with('error', 'Ya has votado en esta elección.');
-        // }
 
         // Validar datos
         $request->validate([
             'candidatos' => 'required|array',
-            'candidatos.*' => 'required|integer'
+            'candidatos.*' => 'required|exists:Candidato,idCandidato'
         ]);
 
         try {
             DB::beginTransaction();
 
             // Registrar votos
+            $votosRegistrados = 0;
             foreach ($request->candidatos as $cargoId => $candidatoId) {
-                // TEMPORAL: No validar que el candidato exista en la BD
                 Voto::create([
                     'idCandidato' => $candidatoId,
                     'idPadronElectoral' => $padron->idPadronElectoral,
                     'fechaVoto' => now(),
                 ]);
+                $votosRegistrados++;
             }
+
+            \Log::info("Total de votos registrados: {$votosRegistrados}");
+            \Log::info('=== VOTACIÓN COMPLETADA EXITOSAMENTE ===');
 
             DB::commit();
 
-            return redirect()->route('votante.votar.exito', $eleccionId)
-                ->with('success', '¡Tu voto ha sido registrado exitosamente!');
-
+            return response()->json([
+                'success' => true,
+                'message' => '¡Tu voto ha sido registrado exitosamente!',
+                'votos_registrados' => $votosRegistrados
+            ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Hubo un error al registrar tu voto: ' . $e->getMessage());
+            \Log::error('Error al registrar voto: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+
+            return response()->json([
+                'error' => 'Hubo un error al registrar tu voto: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -329,8 +267,7 @@ class VotanteController extends Controller
      */
     public function votoExitoso($eleccionId)
     {
-        // TEMPORAL: Crear elección demo si no existe
-        $eleccion = Elecciones::find($eleccionId);
+        $eleccion = Elecciones::findOrFail($eleccionId);
         
         // Obtener el padrón y votos del usuario
         $padron = PadronElectoral::where('idUsuario', Auth::id())
@@ -360,17 +297,17 @@ class VotanteController extends Controller
         // Verificar que el usuario tenga permiso usando el servicio
         $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
         $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
-        
-        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
-                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
-        
+
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato)
+            || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+
         if (!$tienePermiso) {
             abort(403, 'No tienes permiso para acceder a esta sección.');
         }
 
         // Verificar si el usuario es candidato y obtener su partido
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
-        
+
         if (!$candidato || !$candidato->idPartido) {
             return view('votante.propuestas_partido.index', [
                 'propuestas' => collect([]),
@@ -394,17 +331,17 @@ class VotanteController extends Controller
         // Verificar que el usuario tenga permiso usando el servicio
         $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
         $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
-        
-        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
-                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
-        
+
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato)
+            || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+
         if (!$tienePermiso) {
             abort(403, 'No tienes permiso para crear propuestas de partido.');
         }
 
         // Verificar que pertenezca a un partido
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
-        
+
         if (!$candidato || !$candidato->idPartido) {
             return redirect()->route('votante.propuestas_partido.index')
                 ->with('error', 'No perteneces a ningún partido político.');
@@ -423,17 +360,17 @@ class VotanteController extends Controller
         // Verificar que el usuario tenga permiso usando el servicio
         $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
         $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
-        
-        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
-                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
-        
+
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato)
+            || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+
         if (!$tienePermiso) {
             abort(403, 'No tiene permisos para guardar propuestas de partido.');
         }
 
         // Verificar que pertenezca a un partido
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
-        
+
         if (!$candidato || !$candidato->idPartido) {
             return redirect()->route('votante.propuestas_partido.index')
                 ->with('error', 'No perteneces a ningún partido político.');
@@ -469,17 +406,17 @@ class VotanteController extends Controller
         // Verificar que el usuario tenga permiso usando el servicio
         $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
         $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
-        
-        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
-                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
-        
+
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato)
+            || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+
         if (!$tienePermiso) {
             abort(403, 'No tiene permisos para editar propuestas de partido.');
         }
 
         // Verificar que la propuesta pertenezca al partido del usuario
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
-        
+
         if (!$candidato || $propuesta->idPartido != $candidato->idPartido) {
             abort(403, 'Solo puedes editar propuestas de tu partido.');
         }
@@ -499,10 +436,10 @@ class VotanteController extends Controller
         // Verificar que el usuario tenga permiso usando el servicio
         $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
         $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
-        
-        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
-                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
-        
+
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato)
+            || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+
         if (!$tienePermiso) {
             abort(403, 'No tiene permisos para actualizar propuestas de partido.');
         }
@@ -511,7 +448,7 @@ class VotanteController extends Controller
         $candidato = Candidato::where('idUsuario', Auth::id())
             ->with('usuario.perfil', 'cargo', 'partido')
             ->first();
-        
+
         if (!$candidato || $propuesta->idPartido != $candidato->idPartido) {
             abort(403, 'Solo puedes editar propuestas de tu partido.');
         }
@@ -545,17 +482,17 @@ class VotanteController extends Controller
         // Verificar que el usuario tenga permiso usando el servicio
         $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
         $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
-        
-        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
-                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
-        
+
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato)
+            || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+
         if (!$tienePermiso) {
             abort(403, 'No tiene permisos para eliminar propuestas de partido.');
         }
 
         // Verificar que la propuesta pertenezca al partido del usuario
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
-        
+
         if (!$candidato || $propuesta->idPartido != $candidato->idPartido) {
             abort(403, 'Solo puedes eliminar propuestas de tu partido.');
         }
@@ -582,10 +519,10 @@ class VotanteController extends Controller
         // Verificar que el usuario tenga permiso usando el servicio
         $permisoCandidato = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_CANDIDATO_CRUD);
         $permisoPartido = $this->permisoService->permisoDesdeEnum(PermisoEnum::PROPUESTA_PARTIDO_CRUD);
-        
-        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato) 
-                     || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
-        
+
+        $tienePermiso = $this->permisoService->comprobarUsuario(Auth::user(), $permisoCandidato)
+            || $this->permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+
         if (!$tienePermiso) {
             abort(403, 'No tiene permisos para gestionar propuestas de candidato.');
         }
@@ -594,7 +531,7 @@ class VotanteController extends Controller
         $candidato = Candidato::where('idUsuario', Auth::id())
             ->with('usuario.perfil', 'cargo', 'partido')
             ->first();
-        
+
         if (!$candidato) {
             return view('votante.propuestas_candidato.index', [
                 'propuestas' => collect([]),
@@ -604,7 +541,7 @@ class VotanteController extends Controller
 
         // Verificar si está participando en alguna elección
         $elecciones = $candidato->elecciones;
-        
+
         if ($elecciones->isEmpty()) {
             return view('votante.propuestas_candidato.index', [
                 'propuestas' => collect([]),
@@ -632,7 +569,7 @@ class VotanteController extends Controller
 
         // Verificar que sea candidato
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
-        
+
         if (!$candidato) {
             return redirect()->route('votante.propuestas_candidato.index')
                 ->with('error', 'No estás registrado como candidato.');
@@ -640,7 +577,7 @@ class VotanteController extends Controller
 
         // Verificar si está participando en alguna elección
         $elecciones = $candidato->elecciones;
-        
+
         if ($elecciones->isEmpty()) {
             return redirect()->route('votante.propuestas_candidato.index')
                 ->with('error', 'No estás participando en ninguna elección actualmente.');
@@ -661,7 +598,7 @@ class VotanteController extends Controller
 
         // Verificar que sea candidato
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
-        
+
         if (!$candidato) {
             return redirect()->route('votante.propuestas_candidato.index')
                 ->with('error', 'No estás registrado como candidato.');
@@ -703,7 +640,7 @@ class VotanteController extends Controller
         $candidato = Candidato::where('idUsuario', Auth::id())
             ->with('usuario.perfil', 'cargo', 'partido')
             ->first();
-        
+
         if (!$candidato || $propuesta->idCandidato != $candidato->idCandidato) {
             abort(403, 'Solo puedes editar tus propias propuestas.');
         }
@@ -727,7 +664,7 @@ class VotanteController extends Controller
         $candidato = Candidato::where('idUsuario', Auth::id())
             ->with('usuario.perfil', 'cargo', 'partido')
             ->first();
-        
+
         if (!$candidato || $propuesta->idCandidato != $candidato->idCandidato) {
             abort(403, 'Solo puedes editar tus propias propuestas.');
         }
@@ -765,7 +702,7 @@ class VotanteController extends Controller
 
         // Verificar que la propuesta pertenezca al usuario
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
-        
+
         if (!$candidato || $propuesta->idCandidato != $candidato->idCandidato) {
             abort(403, 'Solo puedes eliminar tus propias propuestas.');
         }

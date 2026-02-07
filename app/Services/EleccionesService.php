@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-use App\DTO\Services\VotosCandidatoDTO;
 use App\Enum\Config;
-use App\Interfaces\DTO\Services\IVotosCandidatoDTO;
 use App\Models\Configuracion;
 use App\Models\Elecciones;
 use App\Interfaces\Services\IEleccionesService;
@@ -12,8 +10,9 @@ use App\Models\User;
 use App\Models\Candidato;
 use Illuminate\Support\Collection;
 use App\Models\Cargo;
+use App\Models\EstadoElecciones;
 use App\Models\Partido;
-use App\Models\VotoCandidato;
+use Carbon\Carbon;
 
 class EleccionesService implements IEleccionesService
 {
@@ -24,6 +23,15 @@ class EleccionesService implements IEleccionesService
         if (!$eleccion->estaProgramado()) {
             throw new \Exception('No se puede configurar esta elección en el servicio: La elección no está programada.');
         }
+    }
+
+    protected function obtenerEleccionOFalla(?Elecciones $eleccion = null): Elecciones
+    {
+        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        if (!$eleccion) {
+            throw new \Exception('No se ha configurado una elección activa.');
+        }
+        return $eleccion;
     }
 
     protected function guardarEleccionActiva(Elecciones $eleccion): void
@@ -44,12 +52,8 @@ class EleccionesService implements IEleccionesService
         }
     }
 
-    public function obtenerEleccionActiva(): Elecciones
+    public function obtenerEleccionActiva(): ?Elecciones
     {
-        if ($this->eleccionActiva === null) {
-            throw new \Exception('No se ha configurado una elección activa.');
-        }
-
         return $this->eleccionActiva;
     }
 
@@ -60,72 +64,158 @@ class EleccionesService implements IEleccionesService
 
     public function esEleccionActiva(Elecciones $eleccion): bool
     {
-        return $this->obtenerEleccionActiva()->getKey() == $eleccion->getKey();
+        return $this->obtenerEleccionActiva()?->getKey() == $eleccion->getKey();
     }
 
-    public function estaEnPadronElectoral(User $usuario, ?Elecciones $eleccion): bool
+    public function estaEnPadronElectoral(User $usuario, ?Elecciones $eleccion = null): bool
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
         return $eleccion->usuarios()->where('idUser', '=', $usuario->getKey())->exists();
     }
 
-    public function obtenerCandidatos(Cargo $cargo, ?Elecciones $eleccion): Collection
+    public function obtenerCandidatos(?Elecciones $eleccion = null): Collection
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
-        return $eleccion->candidatos()
-            ->where('idCargo', '=', $cargo->getKey())
-            ->get();
+        throw new \Exception('Not implemented');
     }
 
-    public function obtenerPartidos(?Elecciones $eleccion): Collection
+    public function obtenerCandidatosPorCargo(Cargo $cargo, ?Elecciones $eleccion = null): Collection
     {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        throw new \Exception('Not implemented');
+    }
+
+    public function obtenerPartidos(?Elecciones $eleccion = null): Collection
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
         return $eleccion->partidos()->get();
     }
 
-    protected function contarVotos(Candidato $candidato, Elecciones $eleccion): int
+    public function perteneceCandidatoAEleccion(Candidato $candidato, ?Elecciones $eleccion = null): bool
     {
-        /** @var Collection<VotoCandidato> $votos */
-        $votos = $candidato->votos()
-            ->where('idElecciones', '=', $eleccion->getKey())
-            ->get();
-
-        $votosPonderados = $votos->reduce(function ($total, VotoCandidato $voto) {
-            return $total + $voto->tipoVoto->peso;
-        }, 0);
-
-        return $votosPonderados;
-    }
-
-    public function obtenerVotos(?Candidato $candidato, ?Elecciones $eleccion): Collection|IVotosCandidatoDTO
-    {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
-        $candidato = $candidato ?? $eleccion->candidatos;
-
-        if ($candidato instanceof Collection) {
-            return $candidato->map(function (Candidato $candidato) use ($eleccion) {
-                return new VotosCandidatoDTO(
-                    $candidato,
-                    $this->contarVotos($candidato, $eleccion)
-                );
-            });
-        }
-
-        return new VotosCandidatoDTO(
-            $candidato,
-            $this->contarVotos($candidato, $eleccion)
-        );
-    }
-
-    public function perteneceCandidatoAEleccion(Candidato $candidato, ?Elecciones $eleccion): bool
-    {
-        $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
         return $eleccion->candidatos()->where('Candidato.idCandidato', '=', $candidato->getKey())->exists();
     }
 
-    public function pertenecePartidoAEleccion(Partido $partido, ?Elecciones $eleccion): bool
+    public function pertenecePartidoAEleccion(Partido $partido, ?Elecciones $eleccion = null): bool
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
+        return $eleccion->partidos()->where('Partido.idPartido', '=', $partido->getKey())->exists();
+    }
+
+    public function obtenerTodasLasElecciones(): Collection
+    {
+        return Elecciones::where('idEstado', '!=', EstadoElecciones::ANULADO)->get();
+    }
+
+    public function obtenerTodasLasEleccionesAnuladas(): Collection
+    {
+        return Elecciones::where('idEstado', '=', EstadoElecciones::ANULADO)->get();
+    }
+
+    public function obtenerTodasLasEleccionesProgramables(): Collection
+    {
+        return Elecciones::where('idEstado', '=', EstadoElecciones::PROGRAMADO)->get();
+    }
+
+    public function obtenerEleccionPorId(int $id): Elecciones
+    {
+        return Elecciones::findOrFail($id);
+    }
+
+    /**
+     * @param array{'titulo': string, 'descripcion': string, 'fechaInicio': Carbon|string, 'fechaCierre': Carbon|string} $datos
+     *      Obligatorio.
+     *      Los datos de la elección que se desea crear.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function crearElecciones(array $datos): Elecciones
+    {
+        $datos['idEstado'] = EstadoElecciones::PROGRAMADO;
+
+        $eleccion = Elecciones::create($datos);
+        return $eleccion;
+    }
+
+    /**
+     * @param array{'titulo': string, 'descripcion': string, 'fechaInicio': Carbon|string, 'fechaCierre': Carbon|string} $datos
+     *      Obligatorio.
+     *      Los datos de la elección que se desea editar.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function editarElecciones(array $datos, ?Elecciones $eleccion = null): Elecciones
     {
         $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
-        return $eleccion->partidos()->where('Partido.idPartido', '=', $partido->getKey())->exists();
+
+        $eleccion->update([
+            'titulo' => $datos['titulo'],
+            'descripcion' => $datos['descripcion'],
+            'fechaInicio' => $datos['fechaInicio'],
+            'fechaCierre' => $datos['fechaCierre'],
+        ]);
+
+        if (isset($datos['idEstado']) && $datos['idEstado'] == EstadoElecciones::ANULADO) {
+            $this->anularElecciones($eleccion);
+        }
+
+        if (isset($datos['idEstado']) && $datos['idEstado'] == EstadoElecciones::FINALIZADO) {
+            $this->finalizarElecciones($eleccion);
+        }
+
+        return $eleccion;
+    }
+
+    public function anularElecciones(?Elecciones $eleccion = null): void
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
+        if (!$eleccion->estaProgramado()) {
+            throw new \Exception('No se puede anular una elección que no se encuentra en estado "Programado".');
+        }
+
+        if ($this->esEleccionActiva($eleccion)) {
+            $this->eleccionActiva = null;
+            Configuracion::definirClave(Config::ELECCION_ACTIVA, '-1');
+        }
+
+        $eleccion->update([
+            'idEstado' => EstadoElecciones::ANULADO
+        ]);
+    }
+
+    public function finalizarElecciones(?Elecciones $eleccion = null): void
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
+        if (!$eleccion->estaProgramado()) {
+            throw new \Exception('No se puede finalizar una elección que no se encuentra en estado "Programado".');
+        }
+
+        if ($this->esEleccionActiva($eleccion)) {
+            $this->eleccionActiva = null;
+            Configuracion::definirClave(Config::ELECCION_ACTIVA, '-1');
+        }
+
+        $eleccion->update([
+            'idEstado' => EstadoElecciones::FINALIZADO
+        ]);
+    }
+
+    public function restaurarElecciones(?Elecciones $eleccion = null): void
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
+
+        if (!$eleccion->estaAnulado()) {
+            throw new \Exception('Solo se puede restaurar una elección que se encuentra en estado "Anulada".');
+        }
+
+        $eleccion->idEstado = EstadoElecciones::PROGRAMADO;
+        $eleccion->save();
+    }
+
+    public function votacionHabilitada(?Elecciones $eleccion = null): bool
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
+
+        $fechaActual = Carbon::now();
+        return $fechaActual->between($eleccion->fechaInicio, $eleccion->fechaCierre);
     }
 }

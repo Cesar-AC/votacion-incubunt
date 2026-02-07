@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-fluid px-3">
 
-  <form method="POST" action="{{ route('crud.partido.crear') }}">
+  <form method="POST" action="{{ route('crud.partido.crear') }}" enctype="multipart/form-data">
     @csrf
 
     <!-- Header -->
@@ -27,23 +27,6 @@
           @error('partido')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 
-        <!-- Tipo -->
-        <div class="form-group">
-          <label class="small font-weight-bold">Tipo de Partido</label>
-          <select name="tipo"
-                  class="form-control @error('tipo') is-invalid @enderror"
-                  required>
-            <option value="">Seleccione tipo</option>
-            <option value="LISTA" {{ old('tipo')=='LISTA'?'selected':'' }}>
-              Lista (Junta Directiva)
-            </option>
-            <option value="INDIVIDUAL" {{ old('tipo')=='INDIVIDUAL'?'selected':'' }}>
-              Individual (uso interno)
-            </option>
-          </select>
-          @error('tipo')<div class="invalid-feedback">{{ $message }}</div>@enderror
-        </div>
-
         <!-- URL -->
         <div class="form-group">
           <label class="small font-weight-bold">URL del Partido</label>
@@ -65,11 +48,23 @@
 
         <!-- Plan de Trabajo -->
         <div class="form-group mt-3">
-          <label class="small font-weight-bold">Plan de Trabajo (opcional)</label>
-          <textarea name="planTrabajo"
-                    class="form-control @error('planTrabajo') is-invalid @enderror"
-                    rows="4">{{ old('planTrabajo') }}</textarea>
+          <label class="small font-weight-bold">Enlace al plan de trabajo (opcional)</label>
+          <input type="url"
+                 name="planTrabajo"
+                 class="form-control @error('planTrabajo') is-invalid @enderror"
+                 value="{{ old('planTrabajo') }}">
           @error('planTrabajo')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+
+        <!-- Foto -->
+        <div class="form-group mt-3">
+          <label class="small font-weight-bold">Foto del Partido (opcional)</label>
+          <input type="file"
+                 name="foto"
+                 accept="image/*"
+                 class="form-control @error('foto') is-invalid @enderror"
+                 value="{{ old('foto') }}">
+          @error('foto')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 
       </div>

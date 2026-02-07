@@ -4,9 +4,36 @@
 --}}
 @props(['partido'])
 
-<article onclick="openModal('partido', {{ $partido->idPartido }})"
-         class="partido-card group bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300 flex-shrink-0"
-         style="width: 280px; min-width: 280px;">
+<article @click="verPartidoModal = true; $store.modalPartido.partido = partido"
+        class="partido-card group bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300 flex-shrink-0"
+        style="width: 280px;"
+        x-data="{
+            partido: {
+                'id': '{{ $partido->getKey() }}',
+                'foto': '',
+                'nombre': '{{ $partido->partido }}',
+                'url': '{{ $partido->urlPartido }}',
+                'descripcion': '{{ $partido->descripcion }}',
+                'planTrabajo': '{{ $partido->planTrabajo }}',
+                'candidatos': [
+                    @foreach($partido->candidatos as $candidato)
+                        {
+                            'id': '{{ $candidato->getKey() }}',
+                            'foto': '',
+                            'nombre': '{{ $candidato->usuario->perfil->nombre }} {{ $candidato->usuario->perfil->otrosNombres }} {{ $candidato->usuario->perfil->apellidoPaterno }} {{ $candidato->usuario->perfil->apellidoMaterno }}',
+                            'cargo': '{{ $candidatoService->obtenerCargoDeCandidatoEnElecciones($candidato, $eleccionActiva)->cargo }}',
+                        },
+                    @endforeach
+                ],
+                'propuestas': [
+                    @foreach($partido->propuestas as $propuesta)
+                        {
+                            'descripcion': '{{ $propuesta->descripcion }}'
+                        },
+                    @endforeach
+                ],
+            }
+        }">
 
     {{-- Header con indicador de color --}}
     <div class="relative">
@@ -14,39 +41,25 @@
         <div class="h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600"></div>
 
         {{-- Contenido del header --}}
-        <div class="p-5">
+        <div class="p-5 flex flex-col items-center gap-4">
             {{-- Logo/Icono del partido --}}
-            <div class="flex items-start justify-between mb-4">
-                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-                    <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"/>
-                    </svg>
-                </div>
+            <div class="max-w-24 rounded-2xl bg-gray-200 flex items-center justify-center shadow-lg shadow-indigo-200">
+                <img src="{{ $partido->foto }}" alt="Foto de partido {{ $partido->partido }}" class="w-full h-full object-cover rounded-2xl">
             </div>
 
             {{-- Nombre del partido --}}
-            <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2 leading-snug">
+            <h3 class="text-lg font-bold text-gray-900 line-clamp-2 text-center leading-snug">
                 {{ $partido->partido }}
             </h3>
 
             {{-- Avatares de miembros --}}
-            <div class="flex items-center mb-4">
+            <div class="flex items-center">
                 <div class="flex -space-x-2">
                     @foreach($partido->candidatos->take(4) as $index => $candidato)
-                        @php
-                            $initials = strtoupper(substr($candidato->usuario->perfil->nombre ?? 'U', 0, 1) . substr($candidato->usuario->perfil->apellidoPaterno ?? '', 0, 1));
-                            $colors = ['bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-blue-500'];
-                            $bgColor = $colors[$index % count($colors)];
-                        @endphp
-                        <div class="w-8 h-8 rounded-full {{ $bgColor }} border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                            {{ $initials }}
+                        <div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                            <img src="{{ $candidato->foto }}" alt="Foto de candidato {{ $candidato->nombre }}" class="w-full h-full object-cover rounded-full">
                         </div>
                     @endforeach
-                    @if($partido->candidatos->count() > 4)
-                        <div class="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-gray-600 text-xs font-bold">
-                            +{{ $partido->candidatos->count() - 4 }}
-                        </div>
-                    @endif
                 </div>
             </div>
 
@@ -66,26 +79,22 @@
             </svg>
         </button>
     </div>
-
-    {{-- Data oculta para el modal --}}
-    <div id="data-partido-{{ $partido->idPartido }}" class="hidden">
-        <div class="nombre">{{ $partido->partido }}</div>
-        <div class="lema">Juntos construyendo el futuro</div>
-        <div class="desc">{{ $partido->descripcion ?? 'Sin descripción disponible.' }}</div>
-        <div class="plan-url">{{ $partido->planTrabajo ?? '' }}</div>
-        <div class="miembros">
-            [
-            @foreach($partido->candidatos as $c)
-                {"id": "{{ $c->idCandidato }}", "rol": "{{ $c->cargo->cargo ?? 'Miembro' }}", "nombre": "{{ $c->usuario->perfil->nombre }} {{ $c->usuario->perfil->apellidoPaterno }}", "carrera": "{{ $c->usuario->perfil->carrera->carrera ?? 'Sin carrera asignada' }}", "foto": "{{ $c->usuario->perfil->fotoPerfil ?? '' }}"}{{ !$loop->last ? ',' : '' }}
-            @endforeach
-            ]
-        </div>
-        <div class="propuestas">
-            [
-            @foreach($partido->propuestas as $p)
-                "{{ addslashes($p->descripcion) }}"{{ !$loop->last ? ',' : '' }}
-            @endforeach
-            ]
-        </div>
-    </div>
 </article>
+
+@push('scripts')
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.store('modalPartido', {
+        partido: {
+            nombre: '',
+            url: '',
+            descripcion: '',
+            planTrabajo: '',
+            candidatos: [],
+            propuestas: [],
+        }
+    })
+})
+</script>
+@endpush
+

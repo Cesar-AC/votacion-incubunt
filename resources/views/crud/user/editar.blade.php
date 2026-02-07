@@ -22,7 +22,7 @@
     </div>
   @endif
 
-  <form method="POST" action="{{ route('crud.user.editar', $user->getKey()) }}">
+  <form method="POST" action="{{ route('crud.user.editar', $usuario->getKey()) }}">
     @csrf
     @method('PUT')
 
@@ -35,7 +35,7 @@
           name="apellidoPaterno" 
           class="form-control mb-2 @error('apellidoPaterno') is-invalid @enderror" 
           placeholder="Apellido Paterno" 
-          value="{{ old('apellidoPaterno', $user->perfil->apellidoPaterno ?? '') }}"
+          value="{{ old('apellidoPaterno', $usuario->perfil->apellidoPaterno ?? '') }}"
           required>
         @error('apellidoPaterno')
           <div class="invalid-feedback">{{ $message }}</div>
@@ -45,7 +45,7 @@
           name="apellidoMaterno" 
           class="form-control mb-2 @error('apellidoMaterno') is-invalid @enderror" 
           placeholder="Apellido Materno" 
-          value="{{ old('apellidoMaterno', $user->perfil->apellidoMaterno ?? '') }}"
+          value="{{ old('apellidoMaterno', $usuario->perfil->apellidoMaterno ?? '') }}"
           required>
         @error('apellidoMaterno')
           <div class="invalid-feedback">{{ $message }}</div>
@@ -55,7 +55,7 @@
           name="nombre" 
           class="form-control mb-2 @error('nombre') is-invalid @enderror" 
           placeholder="Nombre" 
-          value="{{ old('nombre', $user->perfil->nombre ?? '') }}"
+          value="{{ old('nombre', $usuario->perfil->nombre ?? '') }}"
           required>
         @error('nombre')
           <div class="invalid-feedback">{{ $message }}</div>
@@ -65,7 +65,7 @@
           name="otrosNombres" 
           class="form-control mb-2 @error('otrosNombres') is-invalid @enderror" 
           placeholder="Otros Nombres"
-          value="{{ old('otrosNombres', $user->perfil->otrosNombres ?? '') }}">
+          value="{{ old('otrosNombres', $usuario->perfil->otrosNombres ?? '') }}">
         @error('otrosNombres')
           <div class="invalid-feedback">{{ $message }}</div>
         @enderror
@@ -75,7 +75,7 @@
           class="form-control mb-2 @error('dni') is-invalid @enderror" 
           maxlength="8" 
           placeholder="DNI" 
-          value="{{ old('dni', $user->perfil->dni ?? '') }}"
+          value="{{ old('dni', $usuario->perfil->dni ?? '') }}"
           required>
         @error('dni')
           <div class="invalid-feedback">{{ $message }}</div>
@@ -85,7 +85,7 @@
           name="telefono" 
           class="form-control mb-2 @error('telefono') is-invalid @enderror" 
           placeholder="Teléfono"
-          value="{{ old('telefono', $user->perfil->telefono ?? '') }}">
+          value="{{ old('telefono', $usuario->perfil->telefono ?? '') }}">
         @error('telefono')
           <div class="invalid-feedback">{{ $message }}</div>
         @enderror
@@ -95,7 +95,7 @@
           class="form-control mb-2 @error('idCarrera') is-invalid @enderror">
           <option value="">Seleccione carrera</option>
           @foreach($carreras as $carrera)
-            <option value="{{ $carrera->idCarrera }}" {{ old('idCarrera', $user->perfil->idCarrera ?? '') == $carrera->idCarrera ? 'selected' : '' }}>
+            <option value="{{ $carrera->idCarrera }}" {{ old('idCarrera', $usuario->perfil->idCarrera ?? '') == $carrera->idCarrera ? 'selected' : '' }}>
               {{ $carrera->carrera }}
             </option>
           @endforeach
@@ -109,7 +109,7 @@
           class="form-control @error('idArea') is-invalid @enderror">
           <option value="">Seleccione área</option>
           @foreach($areas as $area)
-            <option value="{{ $area->idArea }}" {{ old('idArea', $user->perfil->idArea ?? '') == $area->idArea ? 'selected' : '' }}>
+            <option value="{{ $area->idArea }}" {{ old('idArea', $usuario->perfil->idArea ?? '') == $area->idArea ? 'selected' : '' }}>
               {{ $area->area }}
             </option>
           @endforeach
@@ -130,7 +130,7 @@
           type="email" 
           class="form-control mb-2 @error('correo') is-invalid @enderror" 
           placeholder="Correo" 
-          value="{{ old('correo', $user->correo) }}"
+          value="{{ old('correo', $usuario->correo) }}"
           required>
         @error('correo')
           <div class="invalid-feedback">{{ $message }}</div>
@@ -149,8 +149,8 @@
           name="idEstadoUsuario" 
           class="form-control @error('idEstadoUsuario') is-invalid @enderror"
           required>
-          <option value="1" {{ old('idEstadoUsuario', $user->idEstadoUsuario) == 1 ? 'selected' : '' }}>Activo</option>
-          <option value="2" {{ old('idEstadoUsuario', $user->idEstadoUsuario) == 2 ? 'selected' : '' }}>Inactivo</option>
+          <option value="1" {{ old('idEstadoUsuario', $usuario->idEstadoUsuario) == 1 ? 'selected' : '' }}>Activo</option>
+          <option value="2" {{ old('idEstadoUsuario', $usuario->idEstadoUsuario) == 2 ? 'selected' : '' }}>Inactivo</option>
         </select>
         @error('idEstadoUsuario')
           <div class="invalid-feedback">{{ $message }}</div>

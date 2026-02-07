@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Interfaces\Services\IAreaService;
+use App\Interfaces\Services\ICarreraService;
+use App\Interfaces\Services\IPermisoService;
+use App\Interfaces\Services\IUserService;
 use App\Models\User;
-use App\Models\PerfilUsuario;
-use App\Models\RolUser;
 use App\Models\Permiso;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
+    public function __construct(protected IUserService $userService) {}
+
     public function index()
     {
         $usuarios = User::with(['perfil', 'roles'])->get();
@@ -21,149 +21,200 @@ class UserController extends Controller
         return view('crud.user.ver', compact('usuarios'));
     }
 
-    public function create()
+    public function create(ICarreraService $carreraService, IAreaService $areaService)
     {
-        $carreras = \App\Models\Carrera::all();
-        $areas = \App\Models\Area::all();
+        $carreras = $carreraService->obtenerCarreras();
+        $areas = $areaService->obtenerAreas();
+
         return view('crud.user.crear', compact('carreras', 'areas'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            // USER
-            'correo' => 'required|email|unique:User,correo',
-            'password' => 'required|min:6',
-            'idEstadoUsuario' => 'required|exists:EstadoUsuario,idEstadoUsuario',
-
-            // PERFIL
-            'apellidoPaterno' => 'required|string',
-            'apellidoMaterno' => 'required|string',
-            'nombre' => 'required|string',
-            'dni' => 'required|max:8',
-
-            // ROL
-            'idRol' => 'required|exists:Rol,idRol',
+        $datosUsuario = $request->validate([
+            'correo' => 'required|email|unique:User,correo|max:255',
+            'contraseña' => 'required|string|min:8',
+        ], [
+            'correo.required' => 'El correo es obligatorio.',
+            'correo.email' => 'El correo debe ser válido.',
+            'correo.unique' => 'El correo ya está registrado.',
+            'correo.max' => 'El correo no puede exceder los 255 caracteres.',
+            'contraseña.required' => 'La contraseña es obligatoria.',
+            'contraseña.string' => 'La contraseña debe ser texto.',
+            'contraseña.min' => 'La contraseña debe tener al menos 8 caracteres.',
         ]);
 
-        $user = null;
+        $datosPerfil = $request->validate([
+            'apellidoPaterno' => 'required|string|max:20',
+            'apellidoMaterno' => 'required|string|max:20',
+            'nombre' => 'required|string|max:20',
+            'otrosNombres' => 'nullable|string|max:40',
+            'dni' => 'required|string|max:8',
+            'telefono' => 'required|string|max:20',
+            'idCarrera' => 'required|integer|exists:Carrera,idCarrera',
+            'idArea' => 'required|integer|exists:Area,idArea',
+        ], [
+            'apellidoPaterno.required' => 'El apellido paterno es obligatorio.',
+            'apellidoPaterno.string' => 'El apellido paterno debe ser texto.',
+            'apellidoPaterno.max' => 'El apellido paterno no puede exceder los 20 caracteres.',
+            'apellidoMaterno.required' => 'El apellido materno es obligatorio.',
+            'apellidoMaterno.string' => 'El apellido materno debe ser texto.',
+            'apellidoMaterno.max' => 'El apellido materno no puede exceder los 20 caracteres.',
+            'nombre.required' => 'El nombre es obligatorio.',
+            'nombre.string' => 'El nombre debe ser texto.',
+            'nombre.max' => 'El nombre no puede exceder los 20 caracteres.',
+            'otrosNombres.string' => 'Los otros nombres deben ser texto.',
+            'otrosNombres.max' => 'Los otros nombres no pueden exceder los 40 caracteres.',
+            'dni.required' => 'El DNI es obligatorio.',
+            'dni.string' => 'El DNI debe ser texto.',
+            'dni.max' => 'El DNI no puede exceder los 8 caracteres.',
+            'telefono.required' => 'El teléfono es obligatorio.',
+            'telefono.string' => 'El teléfono debe ser texto.',
+            'telefono.max' => 'El teléfono no puede exceder los 20 caracteres.',
+            'idCarrera.required' => 'La carrera es obligatoria.',
+            'idCarrera.integer' => 'La carrera debe ser un número entero.',
+            'idCarrera.exists' => 'La carrera no es válida.',
+            'idArea.required' => 'El área es obligatoria.',
+            'idArea.integer' => 'El área debe ser un número entero.',
+            'idArea.exists' => 'El área no es válida.',
+        ]);
 
-        try {
-            DB::transaction(function () use ($request, &$user) {
+        $this->userService->crearUsuario($datosUsuario, $datosPerfil);
 
-                // 1️⃣ USER
-                $user = User::create([
-                    'correo' => $request->correo,
-                    'contraseña' => Hash::make($request->password),
-                    'idEstadoUsuario' => $request->idEstadoUsuario,
-                ]);
-
-                // 2️⃣ PERFIL
-                PerfilUsuario::create([
-                    'idUser' => $user->idUser,
-                    'apellidoPaterno' => $request->apellidoPaterno,
-                    'apellidoMaterno' => $request->apellidoMaterno,
-                    'nombre' => $request->nombre,
-                    'otrosNombres' => $request->otrosNombres,
-                    'dni' => $request->dni,
-                    'telefono' => $request->telefono,
-                    'idCarrera' => $request->idCarrera,
-                    'idArea' => $request->idArea,
-                ]);
-
-                // 3️⃣ ROL
-                RolUser::create([
-                    'idUser' => $user->idUser,
-                    'idRol' => $request->idRol,
-                ]);
-            });
-
-            return redirect()
-                ->route('crud.user.ver')
-                ->with('success', 'Usuario creado correctamente');
-        } catch (\Exception $e) {
-            return back()->withErrors([
-                'error' => 'Error al crear el usuario: ' . $e->getMessage()
-            ])->withInput();
-        }
+        return redirect()
+            ->route('crud.user.ver')
+            ->with('success', 'Usuario creado correctamente');
     }
 
 
-    public function show($id)
+    public function show(int $id)
     {
-        $u = User::findOrFail($id);
+        $usuario = $this->userService->obtenerUsuarioPorId($id);
+
         return response()->json([
             'success' => true,
             'message' => 'Usuario obtenido',
             'data' => [
-                'correo' => $u->correo,
+                'correo' => $usuario->correo,
             ],
         ]);
     }
 
-    public function edit($id)
+    public function edit(int $id, ICarreraService $carreraService, IAreaService $areaService)
     {
-        $user = User::findOrFail($id);
-        $carreras = \App\Models\Carrera::all();
-        $areas = \App\Models\Area::all();
-        return view('crud.user.editar', compact('user', 'carreras', 'areas'));
+        $usuario = $this->userService->obtenerUsuarioPorId($id);
+        $carreras = $carreraService->obtenerCarreras();
+        $areas = $areaService->obtenerAreas();
+        return view('crud.user.editar', compact('usuario', 'carreras', 'areas'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
-        $u = User::findOrFail($id);
-        $data = $request->validate([
-            'correo' => 'required|email|unique:User,correo,' . $u->getKey() . ',idUser',
+        $usuario = $this->userService->obtenerUsuarioPorId($id);
+
+        $correoExistente = User::where('correo', $request->correo)
+            ->where('idUser', '!=', $usuario->getKey())
+            ->exists();
+
+        if ($correoExistente) {
+            return redirect()
+                ->back()
+                ->withErrors([
+                    'correo' => 'El correo ya está registrado.',
+                ])
+                ->withInput();
+        }
+
+        $datosUsuario = $request->validate([
+            'correo' => 'email|max:255',
+            'contraseña' => 'string|min:8',
+        ], [
+            'correo.email' => 'El correo debe ser válido.',
+            'correo.max' => 'El correo no puede exceder los 255 caracteres.',
+            'contraseña.string' => 'La contraseña debe ser texto.',
+            'contraseña.min' => 'La contraseña debe tener al menos 8 caracteres.',
         ]);
-        $u->update($data);
+
+        $this->userService->editarUsuario($datosUsuario, $usuario);
+
+        $datosPerfil = $request->validate([
+            'apellidoPaterno' => 'string|max:20',
+            'apellidoMaterno' => 'string|max:20',
+            'nombre' => 'string|max:20',
+            'otrosNombres' => 'string|max:40',
+            'dni' => 'string|max:8',
+            'telefono' => 'string|max:20',
+            'idCarrera' => 'integer|exists:Carrera,idCarrera',
+            'idArea' => 'integer|exists:Area,idArea',
+        ], [
+            'apellidoPaterno.string' => 'El apellido paterno debe ser texto.',
+            'apellidoPaterno.max' => 'El apellido paterno no puede exceder los 20 caracteres.',
+            'apellidoMaterno.string' => 'El apellido materno debe ser texto.',
+            'apellidoMaterno.max' => 'El apellido materno no puede exceder los 20 caracteres.',
+            'nombre.string' => 'El nombre debe ser texto.',
+            'nombre.max' => 'El nombre no puede exceder los 20 caracteres.',
+            'otrosNombres.string' => 'Los otros nombres deben ser texto.',
+            'otrosNombres.max' => 'Los otros nombres no pueden exceder los 40 caracteres.',
+            'dni.string' => 'El DNI debe ser texto.',
+            'dni.max' => 'El DNI no puede exceder los 8 caracteres.',
+            'telefono.string' => 'El teléfono debe ser texto.',
+            'telefono.max' => 'El teléfono no puede exceder los 20 caracteres.',
+            'idCarrera.integer' => 'La carrera debe ser un número entero.',
+            'idCarrera.exists' => 'La carrera no es válida.',
+            'idArea.integer' => 'El área debe ser un número entero.',
+            'idArea.exists' => 'El área no es válida.',
+        ]);
+
+        $this->userService->editarPerfilUsuario($datosPerfil, $usuario);
+
         return redirect()
             ->route('crud.user.ver')
             ->with('success', 'Usuario actualizado correctamente');
     }
 
-    public function permisos($id)
+    public function permisos(int $id)
     {
-        $user = User::with(['perfil', 'roles', 'permisos'])->findOrFail($id);
+        $usuario = $this->userService->obtenerUsuarioPorId($id);
         $permisos = Permiso::orderBy('permiso')->get();
 
-        return view('crud.user.permisos', compact('user', 'permisos'));
+        return view('crud.user.permisos', compact('usuario', 'permisos'));
     }
 
-    public function asignarPermiso(Request $request, $id)
+    public function asignarPermiso(Request $request, int $id, IPermisoService $permisoService)
     {
-        $user = User::findOrFail($id);
         $data = $request->validate([
             'permiso_id' => 'required|integer|exists:Permiso,idPermiso',
         ]);
 
-        $user->permisos()->syncWithoutDetaching([$data['permiso_id']]);
+        $usuario = $this->userService->obtenerUsuarioPorId($id);
+        $permiso = $permisoService->obtenerPermisoPorId($data['permiso_id']);
+
+        $permisoService->agregarPermisoAUsuario($usuario, $permiso);
 
         return redirect()
-            ->route('crud.user.permisos', $user->getKey())
+            ->route('crud.user.permisos', $usuario->getKey())
             ->with('success', 'Permiso asignado correctamente');
     }
 
-    public function quitarPermiso($id, $permisoId)
+    public function quitarPermiso(int $id, int $permisoId, IPermisoService $permisoService)
     {
-        $user = User::findOrFail($id);
-        $user->permisos()->detach($permisoId);
+        $usuario = $this->userService->obtenerUsuarioPorId($id);
+        $permiso = $permisoService->obtenerPermisoPorId($permisoId);
+
+        $permisoService->quitarPermisoDeUsuario($usuario, $permiso);
 
         return redirect()
-            ->route('crud.user.permisos', $user->getKey())
+            ->route('crud.user.permisos', $usuario->getKey())
             ->with('success', 'Permiso eliminado correctamente');
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
-        $u = User::findOrFail($id);
-        $u->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuario eliminado',
-            'data' => [
-                'id' => (int) $id,
-                'correo' => $u->correo,
-            ],
-        ]);
+        $usuario = $this->userService->obtenerUsuarioPorId($id);
+        $this->userService->eliminarUsuario($usuario);
+
+        return redirect()
+            ->route('crud.user.ver')
+            ->with('success', 'Usuario eliminado correctamente');
     }
 }

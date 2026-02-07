@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Area;
+use App\Interfaces\Services\IAreaService;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class AreaController extends Controller
 {
+    public function __construct(
+        protected IAreaService $areaService
+    ) {}
+
     public function index()
     {
-       $areas = Area::orderBy('idArea', 'desc')->get();
-    return view('crud.area.ver', compact('areas'));
+        $areas = $this->areaService->obtenerAreas();
+
+        return view('crud.area.ver', compact('areas'));
     }
 
     public function create()
@@ -21,21 +25,25 @@ class AreaController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'area' => 'required|string|max:30',
+        $request->validate([
+            'area' => 'required|string|max:100|unique:Area,area',
+        ], [
+            'area.required' => 'El nombre del área es obligatorio.',
+            'area.string' => 'El nombre del área debe ser texto.',
+            'area.max' => 'El nombre del área no puede exceder 100 caracteres.',
+            'area.unique' => 'El nombre del área ya existe.',
         ]);
 
-        $area = new Area($data);
-        $area->save();
+        $this->areaService->crearArea($request->all());
 
         return redirect()
             ->route('crud.area.ver')
             ->with('success', 'Área creada correctamente');
     }
 
-    public function show($id)
+    public function show(int $id)
     {
-        $area = Area::findOrFail($id);
+        $area = $this->areaService->obtenerAreaPorId($id);
 
         return response()->json([
             'success' => true,
@@ -46,39 +54,46 @@ class AreaController extends Controller
         ]);
     }
 
-    public function edit($id)
+    public function edit(int $id)
     {
-        $area = Area::findOrFail($id);
+        $area = $this->areaService->obtenerAreaPorId($id);
         return view('crud.area.editar', compact('area'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
-        $area = Area::findOrFail($id);
+        $area = $this->areaService->obtenerAreaPorId($id);
 
-        $data = $request->validate([
-            'area' => 'required|string|max:30',
+        $request->validate([
+            'area' => 'required|string|max:100|unique:Area,area',
+        ], [
+            'area.required' => 'El nombre del área es obligatorio.',
+            'area.string' => 'El nombre del área debe ser texto.',
+            'area.max' => 'El nombre del área no puede exceder 100 caracteres.',
+            'area.unique' => 'El nombre del área ya existe.',
         ]);
 
-        $area->update($data);
+        $this->areaService->editarArea($request->all(), $area);
 
         return redirect()
             ->route('crud.area.ver')
             ->with('success', 'Área actualizada correctamente');
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
-        $area = Area::findOrFail($id);
-        $area->delete();
+        try {
+            $area = $this->areaService->obtenerAreaPorId($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Área eliminada correctamente',
-            'data' => [
-                'id' => (int) $id,
-                'area' => $area->area,
-            ],
-        ]);
+            $this->areaService->eliminarArea($area);
+
+            return redirect()
+                ->route('crud.area.ver')
+                ->with('success', 'Área eliminada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.area.ver')
+                ->with('error', 'Error al eliminar el área: ' . $e->getMessage());
+        }
     }
 }

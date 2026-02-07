@@ -10,7 +10,8 @@
         "aspera/xlsx-reader": "^2.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "league/csv": "9.0"
+        "league/csv": "9.0",
+        "thiagoprz/eloquent-composite-key": "^1.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

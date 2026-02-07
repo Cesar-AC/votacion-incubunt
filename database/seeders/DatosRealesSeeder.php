@@ -20,9 +20,26 @@ class DatosRealesSeeder extends Seeder
      */
     public function run(): void
     {
+
+        $areaPresidencia = Area::create([
+            'area' => 'Presidencia',
+        ]);
+
+        $cargosPresidencia = [
+            'Presidente',
+            'Vicepresidente',
+            'Coordinador general',
+        ];
+
+        foreach ($cargosPresidencia as $cargo) {
+            Cargo::create([
+                'cargo' => $cargo,
+                'idArea' => $areaPresidencia->getKey(),
+            ]);
+        }
+
         $areas = [
             'Sin área asignada',
-            'Presidencia',
             'Marketing',
             'Project Management Office',
             'Tecnologías de la Información',
@@ -31,22 +48,19 @@ class DatosRealesSeeder extends Seeder
             'Gestión del Talento Humano',
         ];
 
-        foreach ($areas as $index => $area) {
-            Area::create([
-                'area' => $area,
-            ]);
-        }
-
         $cargos = [
-            'Director',
-            'Presidencia'
+            'Director de Área',
         ];
 
-        foreach ($cargos as $cargo) {
-            foreach (Area::all() as $area) {
+        foreach ($areas as $area) {
+            $areaModelo = Area::create([
+                'area' => $area,
+            ]);
+
+            foreach ($cargos as $cargo) {
                 Cargo::create([
                     'cargo' => $cargo,
-                    'idArea' => $area->getKey(),
+                    'idArea' => $areaModelo->getKey(),
                 ]);
             }
         }

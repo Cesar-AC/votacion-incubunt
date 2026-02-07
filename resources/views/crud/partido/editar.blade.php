@@ -10,7 +10,7 @@
   @else
 
   <!-- Header -->
-  <form method="POST" action="{{ route('crud.partido.editar', $partido->idPartido) }}">
+  <form method="POST" action="{{ route('crud.partido.editar', $partido->idPartido) }}" enctype="multipart/form-data">
     @csrf
     @method('PUT')
 
@@ -62,39 +62,32 @@
 
         <!-- Plan de Trabajo -->
         <div class="form-group mt-3">
-          <label class="small font-weight-bold">Plan de Trabajo (opcional)</label>
-          <textarea name="planTrabajo"
-                    class="form-control @error('planTrabajo') is-invalid @enderror"
-                    rows="4">{{ old('planTrabajo', $partido->planTrabajo) }}</textarea>
+          <label class="small font-weight-bold">Enlace al plan de trabajo (opcional)</label>
+          <input type="url"
+                 name="planTrabajo"
+                 class="form-control @error('planTrabajo') is-invalid @enderror"
+                 value="{{ old('planTrabajo', $partido->planTrabajo) }}">
           @error('planTrabajo')
             <div class="invalid-feedback">{{ $message }}</div>
           @enderror
         </div>
 
-        <!-- Tipo -->
+        <!-- Foto -->
         <div class="form-group">
-          <label class="small font-weight-bold">Tipo de Partido</label>
-          <select name="tipo"
-                  class="form-control @error('tipo') is-invalid @enderror"
-                  required>
-            <option value="">Seleccione tipo</option>
-            <option value="LISTA" {{ old('tipo', $partido->tipo)=='LISTA'?'selected':'' }}>
-              Lista (Junta Directiva)
-            </option>
-            <option value="INDIVIDUAL" {{ old('tipo', $partido->tipo)=='INDIVIDUAL'?'selected':'' }}>
-              Individual (uso interno)
-            </option>
-          </select>
-          @error('tipo')
+          <label class="small font-weight-bold">Foto del Partido (adjuntar solo si se desea actualizar)</label>
+          <input type="file"
+                 name="foto"
+                 class="form-control @error('foto') is-invalid @enderror">
+          @error('foto')
             <div class="invalid-feedback">{{ $message }}</div>
           @enderror
         </div>
 
         <!-- Elecciones -->
         <div class="form-group">
-          <label class="small font-weight-bold">Elecciones asociadas</label>
+          <label class="small font-weight-bold">Elecciones asociadas (opcional)</label>
           <select name="elecciones[]" multiple
-                  class="form-control @error('elecciones') is-invalid @enderror" required>
+                  class="form-control @error('elecciones') is-invalid @enderror">
             @php $seleccionadas = $partido->elecciones->pluck('idElecciones')->toArray(); @endphp
             @foreach($elecciones as $eleccion)
               <option value="{{ $eleccion->idElecciones }}"

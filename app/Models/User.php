@@ -86,23 +86,28 @@ class User extends Authenticatable
         return $this->contraseña;
     }
 
-    public function username(){
+    public function username()
+    {
         return 'correo';
     }
 
-    public function estaActivo(){
+    public function estaActivo()
+    {
         return $this->idEstadoUsuario === EstadoUsuario::ACTIVO;
     }
 
-    public function estaInactivo(){
+    public function estaInactivo()
+    {
         return $this->idEstadoUsuario === EstadoUsuario::INACTIVO;
     }
 
-    public function estaSuspendido(){
+    public function estaSuspendido()
+    {
         return $this->idEstadoUsuario === EstadoUsuario::SUSPENDIDO;
     }
 
-    public function estaInhabilitado(){
+    public function estaInhabilitado()
+    {
         return $this->idEstadoUsuario === EstadoUsuario::INHABILITADO;
     }
 }

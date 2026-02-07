@@ -21,14 +21,7 @@ class Candidato extends Model implements IElegibleAVoto
 
     protected $fillable = [
         'idCandidato',
-        'idPartido',
-        'idCargo',
-        'idUsuario',
-        'planTrabajo'
-    ];
-
-    protected $casts = [
-        'idPartido' => 'integer',
+        'idUsuario'
     ];
 
     public function votos()
@@ -39,16 +32,6 @@ class Candidato extends Model implements IElegibleAVoto
     public function usuario()
     {
         return $this->belongsTo(User::class, 'idUsuario');
-    }
-
-    public function cargo()
-    {
-        return $this->belongsTo(Cargo::class, 'idCargo');
-    }
-
-    public function partido()
-    {
-        return $this->belongsTo(Partido::class, 'idPartido');
     }
 
     public function propuestas()

@@ -12,10 +12,10 @@
   </div>
 
   <!-- Información del Usuario -->
-  <div class="row">
+  <div class="row grid grid-cols-3 lg:gap-3">
     
     <!-- Datos Personales -->
-    <div class="col-lg-8">
+    <div class="col-span-3 lg:col-span-2">
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white">
           <h6 class="m-0 font-weight-bold">
@@ -121,24 +121,26 @@
     </div>
 
     <!-- Tarjeta de Perfil -->
-    <div class="col-lg-4">
+    <div class="col-span-3 lg:col-span-1">
       <div class="card shadow-sm mb-4">
         <div class="card-body text-center">
-          <img src="{{ asset('img/undraw_profile.svg') }}" 
-               class="img-fluid rounded-circle mb-3" 
-               alt="Foto de perfil"
-               style="max-width: 150px;">
-          
+          <div class="text-center">
+            <div class="flex justify-center items-center mb-3">
+              <img src="{{ Auth::user()->perfil?->obtenerFotoURL() ?? asset('img/undraw_profile.svg') }}" 
+                  class="block img-fluid z-10 max-w-48 sm:max-w-96 lg:max-w-72 xl:max-w-100" 
+                  alt="Foto de perfil">
+            </div>
+          </div>
           <h5 class="font-weight-bold mb-1">
             {{ $user->perfil->nombre ?? 'Usuario' }} 
             {{ $user->perfil->apellidoPaterno ?? '' }}
           </h5>
           
-          <p class="text-muted mb-3">
+          <p class="text-muted">
             {{ $user->roles->first()->rol ?? 'Sin rol' }}
           </p>
 
-          <hr>
+          <hr class="my-3">
 
           <div class="text-left">
             <p class="mb-2">
@@ -194,3 +196,21 @@
 
 </div>
 @endsection
+
+@push('scripts')
+
+<script>
+    document.getElementById('foto').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.querySelector('img');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+
+@endpush

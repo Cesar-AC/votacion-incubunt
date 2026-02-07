@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Thiagoprz\CompositeKey\HasCompositeKey;
 
 class UserPermiso extends Model
 {
+    use HasCompositeKey;
     protected $table = 'UserPermiso';
 
-    protected $primaryKey = null;
+    protected $primaryKey = ['idUser', 'idPermiso'];
 
     public $incrementing = false;
 

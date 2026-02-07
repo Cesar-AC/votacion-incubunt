@@ -1,4 +1,3 @@
-{{-- resources/views/votante/votar/lista.blade.php --}}
 @extends('layouts.admin')
 
 @section('content')
@@ -41,6 +40,7 @@
 
         <form id="votingForm" action="#" method="POST" x-data="votingForm()">
             @csrf
+            <input type="hidden" name="partido_id" x-model="selectedParty">
 
             {{-- Instructions --}}
             <div class="mb-8 animate-fade-in">
