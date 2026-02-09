@@ -23,12 +23,33 @@ class CandidatoController extends Controller
     {
         $elecciones = \App\Models\Elecciones::with([
             'candidatos.usuario.perfil',
-            'candidatos.cargo.area',
-            'candidatos.partido',
-            'partidos.candidatos.usuario.perfil',
-            'partidos.candidatos.cargo.area',
-            'partidos.candidatos.partido'
+            'candidatos.candidatoElecciones.cargo.area',
+            'candidatos.candidatoElecciones.partido',
         ])->get();
+
+        // Procesar candidatos para cada elección y agregar cargo/partido desde pivot
+        foreach ($elecciones as $eleccion) {
+            foreach ($eleccion->candidatos as $candidato) {
+                // Buscar la relación específica para esta elección
+                $candidatoEleccion = $candidato->candidatoElecciones
+                    ->where('idElecciones', $eleccion->idElecciones)
+                    ->first();
+                
+                if ($candidatoEleccion) {
+                    // Agregar cargo y partido como propiedades directas para facilitar acceso en la vista
+                    $candidato->cargo = $candidatoEleccion->cargo;
+                    $candidato->partido = $candidatoEleccion->partido;
+                    $candidato->idPartido = $candidatoEleccion->idPartido;
+                    $candidato->idCargo = $candidatoEleccion->idCargo;
+                } else {
+                    // Asegurar que las propiedades existan aunque sean null
+                    $candidato->cargo = null;
+                    $candidato->partido = null;
+                    $candidato->idPartido = null;
+                    $candidato->idCargo = null;
+                }
+            }
+        }
 
         return view('crud.candidato.ver', compact('elecciones'));
     }
@@ -50,46 +71,125 @@ class CandidatoController extends Controller
 
     public function store(Request $request)
     {
+        // Validar estructura de datos
         $request->validate([
-            'idUsuario' => 'required|integer|exists:User,idUser|unique:Candidato,idUsuario',
+            'idEleccion' => 'required|integer|exists:Elecciones,idElecciones',
+            'candidatos' => 'required|array|min:1',
+            'candidatos.*.idUsuario' => 'required|integer|exists:User,idUser',
+            'candidatos.*.idCargo' => 'required|integer|exists:Cargo,idCargo',
+            'candidatos.*.idPartido' => 'nullable|integer|exists:Partido,idPartido',
+            'candidatos.*.planTrabajo' => 'nullable|string|max:1000',
         ], [
-            'idUsuario.required' => 'El usuario es obligatorio.',
-            'idUsuario.integer' => 'El ID del usuario debe ser un número.',
-            'idUsuario.exists' => 'El usuario no es válido.',
-            'idUsuario.unique' => 'El usuario ya tiene un candidato vinculado.',
+            'idEleccion.required' => 'Debe seleccionar una elección.',
+            'idEleccion.exists' => 'La elección seleccionada no es válida.',
+            'candidatos.required' => 'Debe agregar al menos un candidato.',
+            'candidatos.min' => 'Debe agregar al menos un candidato.',
+            'candidatos.*.idUsuario.required' => 'Cada candidato debe tener un usuario asignado.',
+            'candidatos.*.idUsuario.exists' => 'Uno de los usuarios seleccionados no es válido.',
+            'candidatos.*.idCargo.required' => 'Cada candidato debe tener un cargo asignado.',
+            'candidatos.*.idCargo.exists' => 'Uno de los cargos seleccionados no es válido.',
+            'candidatos.*.idPartido.exists' => 'Uno de los partidos seleccionados no es válido.',
         ]);
 
-        $candidato = $this->candidatoService->crearCandidato([
-            'idUsuario' => $request->idUsuario,
-        ]);
+        $candidatosCreados = [];
+        $candidatosFallidos = [];
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($request->idEleccion);
 
-        if (isset($request->idElecciones) && isset($request->idCargo)) {
-            $request->validate([
-                'idElecciones' => 'required|integer|exists:Elecciones,idElecciones',
-                'idCargo' => 'required|integer|exists:Cargo,idCargo',
-                'idPartido' => 'nullable|integer|exists:Partido,idPartido',
-            ], [
-                'idElecciones.required' => 'La elección es obligatoria.',
-                'idElecciones.integer' => 'El ID de la elección debe ser un número.',
-                'idElecciones.exists' => 'La elección no es válida.',
-                'idCargo.required' => 'El cargo es obligatorio.',
-                'idCargo.integer' => 'El ID del cargo debe ser un número.',
-                'idCargo.exists' => 'El cargo no es válido.',
-                'idPartido.integer' => 'El ID del partido debe ser un número.',
-                'idPartido.exists' => 'El partido no es válido.',
+        DB::beginTransaction();
+
+        try {
+            foreach ($request->candidatos as $index => $candidatoData) {
+                try {
+                    // Verificar si el usuario ya es candidato
+                    $candidatoExistente = \App\Models\Candidato::where('idUsuario', $candidatoData['idUsuario'])->first();
+                    
+                    if ($candidatoExistente) {
+                        // Si ya es candidato, solo vincular a la elección
+                        $candidato = $candidatoExistente;
+                        $accion = 'vinculado a la elección';
+                    } else {
+                        // Crear nuevo candidato
+                        $candidato = $this->candidatoService->crearCandidato([
+                            'idUsuario' => $candidatoData['idUsuario'],
+                        ]);
+                        $accion = 'creado y vinculado';
+                    }
+
+                    // Vincular a la elección
+                    $this->candidatoService->vincularCandidatoAEleccion([
+                        'idCargo' => $candidatoData['idCargo'],
+                        'idPartido' => $candidatoData['idPartido'] ?? null,
+                    ], $candidato, $eleccion);
+
+                    $usuario = \App\Models\User::with('perfil')->find($candidatoData['idUsuario']);
+                    $nombreUsuario = $usuario->perfil->nombre ?? $usuario->correo;
+                    
+                    $candidatosCreados[] = $nombreUsuario . ' (' . $accion . ')';
+
+                } catch (\Exception $e) {
+                    $usuario = \App\Models\User::with('perfil')->find($candidatoData['idUsuario']);
+                    $nombreUsuario = $usuario->perfil->nombre ?? $usuario->correo ?? 'Usuario ID ' . $candidatoData['idUsuario'];
+                    
+                    $candidatosFallidos[] = [
+                        'nombre' => $nombreUsuario,
+                        'error' => $e->getMessage()
+                    ];
+                    
+                    Log::error('Error al crear candidato', [
+                        'index' => $index,
+                        'data' => $candidatoData,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            }
+
+            // Si todos fallaron, hacer rollback
+            if (empty($candidatosCreados)) {
+                DB::rollBack();
+                
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->withErrors([
+                        'error_general' => 'No se pudo crear ningún candidato.',
+                        'detalles' => $candidatosFallidos
+                    ]);
+            }
+
+            DB::commit();
+
+            // Preparar mensaje de éxito
+            $mensaje = count($candidatosCreados) . ' candidato(s) procesado(s) correctamente.';
+            
+            // Si hubo algunos que fallaron, agregar advertencia
+            if (!empty($candidatosFallidos)) {
+                return redirect()
+                    ->route('crud.candidato.ver')
+                    ->with('success', $mensaje)
+                    ->with('warning', count($candidatosFallidos) . ' candidato(s) no pudo(pudieron) ser procesado(s).')
+                    ->with('candidatos_exitosos', $candidatosCreados)
+                    ->with('candidatos_fallidos', $candidatosFallidos);
+            }
+
+            return redirect()
+                ->route('crud.candidato.ver')
+                ->with('success', $mensaje)
+                ->with('candidatos_exitosos', $candidatosCreados);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Error general al crear candidatos', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-            $eleccion = $this->eleccionesService->obtenerEleccionPorId($request->idElecciones);
-
-            $this->candidatoService->vincularCandidatoAEleccion([
-                'idCargo' => $request->idCargo,
-                'idPartido' => $request->idPartido,
-            ], $candidato, $eleccion);
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['error_general' => 'Error al procesar los candidatos: ' . $e->getMessage()]);
         }
-
-        return redirect()
-            ->route('crud.candidato.ver')
-            ->with('success', 'Candidatos creados correctamente.');
     }
 
 

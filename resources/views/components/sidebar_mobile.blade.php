@@ -5,10 +5,12 @@
     $permisoService = app(\App\Interfaces\Services\IPermisoService::class);
     $permisoCandidato = $permisoService->permisoDesdeEnum(\App\Enum\Permiso::PROPUESTA_CANDIDATO_CRUD);
     $permisoPartido = $permisoService->permisoDesdeEnum(\App\Enum\Permiso::PROPUESTA_PARTIDO_CRUD);
+    $permisoPerfil = $permisoService->permisoDesdeEnum(\App\Enum\Permiso::PERFIL_EDITAR);
     
     $tienePropuestaCandidato = Auth::check() && $permisoService->comprobarUsuario(Auth::user(), $permisoCandidato);
     $tienePropuestaPartido = Auth::check() && $permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
     $puedeGestionarPropuestas = $tienePropuestaCandidato || $tienePropuestaPartido;
+    $tienePermisoPerfil = Auth::check() && $permisoService->comprobarUsuario(Auth::user(), $permisoPerfil);
     
     // Verificar si es candidato
     $esCandidato = Auth::check() && \App\Models\Candidato::where('idUsuario', Auth::id())->exists();
@@ -126,6 +128,12 @@
                             <i class="fas fa-clipboard-list mr-3" style="color: #161349; font-size: 1.1rem;"></i>
                             <span>Padrones</span>
                         </a>
+                        <a href="{{ route('crud.voto.ver') }}" 
+                       class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
+                       data-dismiss="modal">
+                        <i class="fas fa-box mr-3" style="color: #161349; font-size: 1.1rem;"></i>
+                        <span>Mis Votos</span>
+                    </a>
                         <a href="{{ route('crud.lista_votante.ver') }}" 
                            class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
                            data-dismiss="modal">
@@ -232,6 +240,15 @@
                             <i class="fas fa-user mr-3" style="color: #161349; font-size: 1.1rem;"></i>
                             <span>Mi Perfil</span>
                         </a>
+
+                        @if($tienePermisoPerfil)
+                        <a href="{{ route('votante.perfil.editar') }}" 
+                           class="list-group-item list-group-item-action d-flex align-items-center py-3 px-4 border-0 menu-item"
+                           data-dismiss="modal">
+                            <i class="fas fa-user-edit mr-3" style="color: #161349; font-size: 1.1rem;"></i>
+                            <span>Editar Perfil</span>
+                        </a>
+                        @endif
 
                         @if($esCandidato && $puedeGestionarPropuestas)
                             <!-- Sección Propuestas (solo para candidatos con permisos) -->

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Area;
 use App\Models\Candidato;
+use App\Models\CandidatoEleccion;
 use App\Models\Cargo;
 use App\Models\Elecciones;
 use App\Models\EstadoElecciones;
@@ -114,15 +115,17 @@ class VotoServiceTest extends TestCase
         $usuario = $usuario ?? $this->crearUsuario();
 
         $candidato = new Candidato([
+            'idUsuario' => $usuario->getKey(),
+        ]);
+
+        $candidato->save();
+
+        CandidatoEleccion::insert([
+            'idCandidato' => $candidato->getKey(),
             'idElecciones' => $eleccion->getKey(),
             'idCargo' => $cargo->getKey(),
             'idPartido' => $partido->getKey(),
-            'idUsuario' => $usuario->getKey(),
         ]);
-        $candidato->save();
-
-        // Asociar candidato a la elección
-        $eleccion->candidatos()->attach($candidato);
 
         return $candidato;
     }
@@ -163,6 +166,7 @@ class VotoServiceTest extends TestCase
         $eleccion = $this->crearEleccion();
         $usuario = $this->crearUsuario();
         $candidato = $this->crearCandidato($eleccion);
+        $partido = $this->crearPartido();
         $permisoVotar = $this->crearPermisoVotar();
 
         // Agregar usuario al padrón y darle permiso
@@ -170,7 +174,7 @@ class VotoServiceTest extends TestCase
         $usuario->permisos()->attach($permisoVotar->getKey());
 
         $service = $this->crearVotoService($eleccion);
-        $service->votar($usuario, $candidato);
+        $service->votar($usuario, collect([$candidato, $partido]));
 
         // Verificar que se registró el voto
         $this->assertDatabaseHas('VotoCandidato', [
@@ -191,6 +195,7 @@ class VotoServiceTest extends TestCase
         $eleccion = $this->crearEleccion();
         $usuario = $this->crearUsuario();
         $candidato = $this->crearCandidato($eleccion);
+        $partido = $this->crearPartido();
         $this->crearPermisoVotar();
 
         // Agregar usuario al padrón pero NO darle permiso
@@ -201,7 +206,7 @@ class VotoServiceTest extends TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('No tienes permiso para votar.');
 
-        $service->votar($usuario, $candidato);
+        $service->votar($usuario, collect([$candidato, $partido]));
     }
 
     public function test_rechazar_voto_usuario_no_en_padron(): void
@@ -209,6 +214,7 @@ class VotoServiceTest extends TestCase
         $eleccion = $this->crearEleccion();
         $usuario = $this->crearUsuario();
         $candidato = $this->crearCandidato($eleccion);
+        $partido = $this->crearPartido();
         $permisoVotar = $this->crearPermisoVotar();
 
         // Dar permiso pero NO agregar al padrón
@@ -219,7 +225,7 @@ class VotoServiceTest extends TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('No estás registrado en el padrón electoral.');
 
-        $service->votar($usuario, $candidato);
+        $service->votar($usuario, collect([$candidato, $partido]));
     }
 
     public function test_rechazar_voto_candidato_no_pertenece_a_eleccion(): void
@@ -227,6 +233,7 @@ class VotoServiceTest extends TestCase
         $eleccion = $this->crearEleccion();
         $otraEleccion = $this->crearEleccion();
         $usuario = $this->crearUsuario();
+        $partido = $this->crearPartido();
         $permisoVotar = $this->crearPermisoVotar();
 
         // Crear candidato en otra elección
@@ -239,9 +246,9 @@ class VotoServiceTest extends TestCase
         $service = $this->crearVotoService($eleccion);
 
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('La entidad no es elegible a voto en esta elección.');
+        $this->expectExceptionMessage('Alguna de las entidades a votar no es elegible en esta elección.');
 
-        $service->votar($usuario, $candidato);
+        $service->votar($usuario, collect([$candidato, $partido]));
     }
 
     public function test_rechazar_voto_duplicado(): void
@@ -249,6 +256,7 @@ class VotoServiceTest extends TestCase
         $eleccion = $this->crearEleccion();
         $usuario = $this->crearUsuario();
         $candidato = $this->crearCandidato($eleccion);
+        $partido = $this->crearPartido();
         $permisoVotar = $this->crearPermisoVotar();
 
         // Agregar usuario al padrón con fecha de voto ya registrada
@@ -265,7 +273,7 @@ class VotoServiceTest extends TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Ya has votado en esta elección.');
 
-        $service->votar($usuario, $candidato);
+        $service->votar($usuario, collect([$candidato, $partido]));
     }
 
     public function test_usuario_puede_votar_en_diferentes_elecciones(): void
@@ -273,6 +281,7 @@ class VotoServiceTest extends TestCase
         $eleccion1 = $this->crearEleccion();
         $eleccion2 = $this->crearEleccion();
         $usuario = $this->crearUsuario();
+        $partido = $this->crearPartido();
         $permisoVotar = $this->crearPermisoVotar();
 
         $candidato1 = $this->crearCandidato($eleccion1);
@@ -285,11 +294,11 @@ class VotoServiceTest extends TestCase
 
         // Votar en la primera elección
         $service1 = $this->crearVotoService($eleccion1);
-        $service1->votar($usuario, $candidato1);
+        $service1->votar($usuario, collect([$candidato1, $partido]));
 
         // Votar en la segunda elección
         $service2 = $this->crearVotoService($eleccion2);
-        $service2->votar($usuario, $candidato2);
+        $service2->votar($usuario, collect([$candidato2, $partido]));
 
         // Verificar que se registraron ambos votos
         $this->assertDatabaseHas('VotoCandidato', [
@@ -307,6 +316,7 @@ class VotoServiceTest extends TestCase
     {
         $eleccion = $this->crearEleccion();
         $candidato = $this->crearCandidato($eleccion);
+        $partido = $this->crearPartido();
         $permisoVotar = $this->crearPermisoVotar();
 
         // Crear varios usuarios y hacerlos votar
@@ -316,7 +326,7 @@ class VotoServiceTest extends TestCase
             $usuario->permisos()->attach($permisoVotar->getKey());
 
             $service = $this->crearVotoService($eleccion);
-            $service->votar($usuario, $candidato);
+            $service->votar($usuario, collect([$candidato, $partido]));
         }
 
         // Verificar conteo de votos
@@ -344,7 +354,7 @@ class VotoServiceTest extends TestCase
             $usuario->permisos()->attach($permisoVotar->getKey());
 
             $service = $this->crearVotoService($eleccion);
-            $service->votar($usuario, $partido);
+            $service->votar($usuario, collect([$partido]));
         }
 
         // Verificar conteo de votos de partido
@@ -359,6 +369,7 @@ class VotoServiceTest extends TestCase
     {
         $eleccion = $this->crearEleccion();
         $area = $this->crearArea();
+        $partido = $this->crearPartido();
 
         // Crear candidato con un usuario en el área específica
         $usuarioCandidato = $this->crearUsuario($area);
@@ -371,7 +382,7 @@ class VotoServiceTest extends TestCase
         $votante->permisos()->attach($permisoVotar->getKey());
 
         $service = $this->crearVotoService($eleccion);
-        $service->votar($votante, $candidato);
+        $service->votar($votante, collect([$candidato, $partido]));
 
         $this->assertDatabaseHas('VotoCandidato', [
             'idCandidato' => $candidato->getKey(),
@@ -383,6 +394,7 @@ class VotoServiceTest extends TestCase
     public function test_voto_candidato_otra_area_es_tipo_3(): void
     {
         $eleccion = $this->crearEleccion();
+        $partido = $this->crearPartido();
         $area1 = $this->crearArea();
         $area2 = $this->crearArea();
 
@@ -397,7 +409,7 @@ class VotoServiceTest extends TestCase
         $votante->permisos()->attach($permisoVotar->getKey());
 
         $service = $this->crearVotoService($eleccion);
-        $service->votar($votante, $candidato);
+        $service->votar($votante, collect([$candidato, $partido]));
 
         $this->assertDatabaseHas('VotoCandidato', [
             'idCandidato' => $candidato->getKey(),
@@ -420,10 +432,94 @@ class VotoServiceTest extends TestCase
         $votante->permisos()->attach($permisoVotar->getKey());
 
         $service = $this->crearVotoService($eleccion);
-        $service->votar($votante, $partido);
+        $service->votar($votante, collect([$partido]));
 
         $this->assertDatabaseHas('VotoPartido', [
             'idPartido' => $partido->getKey(),
+            'idElecciones' => $eleccion->getKey(),
+            'idTipoVoto' => TipoVoto::ID_NO_APLICABLE, // 1
+        ]);
+    }
+
+    public function test_no_debe_permitirse_votar_por_mas_de_un_partido(): void
+    {
+        $eleccion = $this->crearEleccion();
+        $partido = $this->crearPartido();
+        $partido2 = $this->crearPartido();
+        $eleccion->partidos()->attach($partido->getKey());
+        $eleccion->partidos()->attach($partido2->getKey());
+
+        $votante = $this->crearUsuario();
+        $this->agregarUsuarioAPadron($votante, $eleccion);
+        $permisoVotar = $this->crearPermisoVotar();
+        $votante->permisos()->attach($permisoVotar->getKey());
+
+        $service = $this->crearVotoService($eleccion);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Se debe votar por exactamente un partido.');
+        $service->votar($votante, collect([$partido, $partido2]));
+    }
+
+    public function test_no_debe_permitirse_votar_por_mas_de_un_candidato_que_postula_a_la_misma_area(): void
+    {
+        $eleccion = $this->crearEleccion();
+        $area = $this->crearArea();
+        $cargo = $this->crearCargo($area);
+        $candidato = $this->crearCandidato($eleccion, $cargo);
+        $candidato2 = $this->crearCandidato($eleccion, $cargo);
+
+        $partido = $this->crearPartido();
+        $eleccion->partidos()->attach($partido->getKey());
+
+        $votante = $this->crearUsuario($area);
+        $this->agregarUsuarioAPadron($votante, $eleccion);
+        $permisoVotar = $this->crearPermisoVotar();
+        $votante->permisos()->attach($permisoVotar->getKey());
+
+        $service = $this->crearVotoService($eleccion);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('No está permitido votar por más de un candidato que postule a la misma área.');
+        $service->votar($votante, collect([$candidato, $candidato2, $partido]));
+    }
+
+    public function test_despues_de_un_error_se_puede_volver_a_votar(): void
+    {
+        $eleccion = $this->crearEleccion();
+        $partido = $this->crearPartido();
+        $partido2 = $this->crearPartido();
+        $eleccion->partidos()->attach($partido->getKey());
+
+        $votante = $this->crearUsuario();
+        $this->agregarUsuarioAPadron($votante, $eleccion);
+        $permisoVotar = $this->crearPermisoVotar();
+        $votante->permisos()->attach($permisoVotar->getKey());
+
+        $service = $this->crearVotoService($eleccion);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Se debe votar por exactamente un partido.');
+        $service->votar($votante, collect([$partido, $partido2]));
+
+        $this->assertDatabaseMissing('VotoPartido', [
+            'idPartido' => $partido->getKey(),
+            'idElecciones' => $eleccion->getKey(),
+            'idTipoVoto' => TipoVoto::ID_NO_APLICABLE, // 1
+        ]);
+
+        $service->votar($votante, collect([$partido]));
+
+        $this->assertDatabaseHas('VotoPartido', [
+            'idPartido' => $partido->getKey(),
+            'idElecciones' => $eleccion->getKey(),
+            'idTipoVoto' => TipoVoto::ID_NO_APLICABLE, // 1
+        ]);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Ya has votado en esta elección.');
+        $service->votar($votante, collect([$partido2]));
+
+        $this->assertDatabaseMissing('VotoPartido', [
+            'idPartido' => $partido2->getKey(),
             'idElecciones' => $eleccion->getKey(),
             'idTipoVoto' => TipoVoto::ID_NO_APLICABLE, // 1
         ]);

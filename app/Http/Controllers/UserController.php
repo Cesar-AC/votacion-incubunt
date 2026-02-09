@@ -9,6 +9,8 @@ use App\Interfaces\Services\IUserService;
 use App\Models\User;
 use App\Models\Permiso;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -29,7 +31,7 @@ class UserController extends Controller
         return view('crud.user.crear', compact('carreras', 'areas'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, IPermisoService $permisoService)
     {
         $datosUsuario = $request->validate([
             'correo' => 'required|email|unique:User,correo|max:255',
@@ -53,6 +55,8 @@ class UserController extends Controller
             'telefono' => 'required|string|max:20',
             'idCarrera' => 'required|integer|exists:Carrera,idCarrera',
             'idArea' => 'required|integer|exists:Area,idArea',
+            'idRol' => 'required|integer|exists:Rol,idRol',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ], [
             'apellidoPaterno.required' => 'El apellido paterno es obligatorio.',
             'apellidoPaterno.string' => 'El apellido paterno debe ser texto.',
@@ -77,9 +81,23 @@ class UserController extends Controller
             'idArea.required' => 'El área es obligatoria.',
             'idArea.integer' => 'El área debe ser un número entero.',
             'idArea.exists' => 'El área no es válida.',
+            'idRol.required' => 'El rol es obligatorio.',
+            'idRol.integer' => 'El rol debe ser un número entero.',
+            'idRol.exists' => 'El rol no es válido.',
+            'foto.image' => 'La foto debe ser una imagen.',
+            'foto.mimes' => 'La foto debe ser una imagen con extensión .jpeg, .png, .jpg o .gif.',
+            'foto.max' => 'La foto no puede exceder los 5MB.',
         ]);
 
-        $this->userService->crearUsuario($datosUsuario, $datosPerfil);
+        DB::transaction(function () use ($datosUsuario, $datosPerfil, $permisoService, $request) {
+            $usuario = $this->userService->crearUsuario($datosUsuario, $datosPerfil);
+            $rol = $permisoService->obtenerRolPorId($datosPerfil['idRol']);
+            $permisoService->agregarUsuarioARol($usuario, $rol);
+
+            if ($request->hasFile('foto')) {
+                $this->userService->subirFoto($usuario, $request->file('foto'));
+            }
+        });
 
         return redirect()
             ->route('crud.user.ver')
@@ -141,7 +159,7 @@ class UserController extends Controller
             'apellidoPaterno' => 'string|max:20',
             'apellidoMaterno' => 'string|max:20',
             'nombre' => 'string|max:20',
-            'otrosNombres' => 'string|max:40',
+            'otrosNombres' => 'nullable|string|max:40',
             'dni' => 'string|max:8',
             'telefono' => 'string|max:20',
             'idCarrera' => 'integer|exists:Carrera,idCarrera',
@@ -165,7 +183,22 @@ class UserController extends Controller
             'idArea.exists' => 'El área no es válida.',
         ]);
 
-        $this->userService->editarPerfilUsuario($datosPerfil, $usuario);
+        $request->validate([
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ], [
+            'foto.image' => 'La foto debe ser una imagen.',
+            'foto.mimes' => 'La foto debe ser una imagen con extensión .jpeg, .png, .jpg o .gif.',
+            'foto.max' => 'La foto no puede exceder los 5MB.',
+        ]);
+
+        DB::transaction(function () use ($datosUsuario, $datosPerfil, $request, $usuario) {
+            $this->userService->editarUsuario($datosUsuario, $usuario);
+            $this->userService->editarPerfilUsuario($datosPerfil, $usuario);
+
+            if ($request->hasFile('foto')) {
+                $this->userService->cambiarFoto($usuario, $request->file('foto'));
+            }
+        });
 
         return redirect()
             ->route('crud.user.ver')
@@ -216,5 +249,23 @@ class UserController extends Controller
         return redirect()
             ->route('crud.user.ver')
             ->with('success', 'Usuario eliminado correctamente');
+    }
+
+    public function subirFoto(Request $request)
+    {
+        $request->validate([
+            'foto' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ], [
+            'foto.required' => 'La foto es requerida.',
+            'foto.image' => 'La foto debe ser una imagen.',
+            'foto.mimes' => 'La foto debe ser un archivo de tipo: jpeg, png, jpg, gif.',
+            'foto.max' => 'La foto no puede exceder los 5MB.'
+        ]);
+
+        $this->userService->cambiarFoto(Auth::user(), $request->file('foto'));
+
+        return redirect()
+            ->route('profile.show')
+            ->with('success', 'Se ha actualizado la foto correctamente.');
     }
 }

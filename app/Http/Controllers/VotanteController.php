@@ -4,23 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\Voto;
-use App\Models\VotoPartido;
-use App\Models\VotoCandidato;
 use App\Models\Partido;
-use App\Models\Area;
 use App\Models\Candidato;
 use App\Models\PropuestaPartido;
 use App\Models\PropuestaCandidato;
 use App\Interfaces\Services\IPermisoService;
 use App\Enum\Permiso as PermisoEnum;
 use App\Interfaces\Services\IAreaService;
+use App\Interfaces\Services\ICarreraService;
 use App\Interfaces\Services\ICandidatoService;
 use App\Interfaces\Services\IEleccionesService;
-use App\Interfaces\Services\IPadronElectoralService;
+use App\Interfaces\Services\IPartidoService;
+use App\Interfaces\Services\IUserService;
+use App\Interfaces\Services\IVotoService;
 use App\Models\CandidatoEleccion;
 use App\Models\PartidoEleccion;
 
@@ -28,7 +27,8 @@ class VotanteController extends Controller
 {
     public function __construct(
         protected IEleccionesService $eleccionesService,
-        protected IPermisoService $permisoService
+        protected IPermisoService $permisoService,
+        protected IVotoService $votoService
     ) {}
     /**
      * Página principal del votante
@@ -46,6 +46,151 @@ class VotanteController extends Controller
         }
 
         return view('votante.home', compact('eleccionActiva', 'esPeriodoDeVotar'));
+    }
+
+    /**
+     * Editar perfil del votante
+     */
+    public function editarPerfil(IAreaService $areaService, ICarreraService $carreraService)
+    {
+        $permiso = $this->permisoService->permisoDesdeEnum(PermisoEnum::PERFIL_EDITAR);
+
+        if (!$permiso || !$this->permisoService->comprobarUsuario(Auth::user(), $permiso)) {
+            abort(403, 'No tienes permiso para editar tu perfil.');
+        }
+
+        $user = Auth::user()->load(['perfil.carrera', 'perfil.area']);
+        $areas = $areaService->obtenerAreas();
+        $carreras = $carreraService->obtenerCarreras();
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        $partido = $this->obtenerPartidoDeCandidato($candidato);
+        $puedeEditarPartido = $partido ? Auth::user()->can('update', $partido) : false;
+
+        return view('votante.perfil.editar', compact('user', 'candidato', 'partido', 'puedeEditarPartido', 'areas', 'carreras'));
+    }
+
+    /**
+     * Actualizar perfil del votante
+     */
+    public function actualizarPerfil(Request $request, IUserService $userService, IPartidoService $partidoService)
+    {
+        $permiso = $this->permisoService->permisoDesdeEnum(PermisoEnum::PERFIL_EDITAR);
+
+        if (!$permiso || !$this->permisoService->comprobarUsuario(Auth::user(), $permiso)) {
+            abort(403, 'No tienes permiso para editar tu perfil.');
+        }
+
+        $user = Auth::user();
+
+        $perfilData = $request->validate([
+            'apellidoPaterno' => 'required|string|max:20',
+            'apellidoMaterno' => 'required|string|max:20',
+            'nombre' => 'required|string|max:20',
+            'otrosNombres' => 'nullable|string|max:40',
+            'dni' => 'required|string|max:8',
+            'telefono' => 'nullable|string|max:20',
+            'idCarrera' => 'required|integer|exists:Carrera,idCarrera',
+            'idArea' => 'required|integer|exists:Area,idArea',
+        ], [
+            'apellidoPaterno.required' => 'El apellido paterno es obligatorio.',
+            'apellidoMaterno.required' => 'El apellido materno es obligatorio.',
+            'nombre.required' => 'El nombre es obligatorio.',
+            'dni.required' => 'El DNI es obligatorio.',
+            'idCarrera.required' => 'La carrera es obligatoria.',
+            'idCarrera.exists' => 'La carrera no es valida.',
+            'idArea.required' => 'El area es obligatoria.',
+            'idArea.exists' => 'El area no es valida.',
+        ]);
+
+        try {
+            if ($user->perfil) {
+                $userService->editarPerfilUsuario($perfilData, $user);
+            } else {
+                $perfilData['idUser'] = $user->getKey();
+                \App\Models\PerfilUsuario::create($perfilData);
+            }
+
+            $candidato = Candidato::where('idUsuario', Auth::id())->first();
+            $request->validate([
+                'planTrabajoCandidato' => 'nullable|url|max:1000',
+            ], [
+                'planTrabajoCandidato.url' => 'El plan de trabajo del candidato debe ser una URL valida.',
+            ]);
+
+            if ($candidato) {
+                $candidato->update([
+                    'planTrabajo' => $request->input('planTrabajoCandidato'),
+                ]);
+            }
+
+            $partido = $this->obtenerPartidoDeCandidato($candidato);
+            $intentaEditarPartido = $partido && (
+                $request->filled('partido_urlPartido') ||
+                $request->filled('partido_descripcion') ||
+                $request->filled('partido_planTrabajo') ||
+                $request->filled('partido_tipo') ||
+                $request->hasFile('partido_foto')
+            );
+
+            if ($intentaEditarPartido) {
+                $this->authorize('update', $partido);
+
+                $request->validate([
+                    'partido_urlPartido' => 'nullable|url|max:255',
+                    'partido_descripcion' => 'nullable|string',
+                    'partido_planTrabajo' => 'nullable|url|max:1000',
+                    'partido_tipo' => 'nullable|string|max:255',
+                    'partido_foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+                ], [
+                    'partido_urlPartido.url' => 'La URL del partido debe ser valida.',
+                    'partido_planTrabajo.url' => 'El plan de trabajo del partido debe ser una URL valida.',
+                ]);
+
+                $partidoData = array_filter([
+                    'urlPartido' => $request->input('partido_urlPartido'),
+                    'descripcion' => $request->input('partido_descripcion'),
+                    'planTrabajo' => $request->input('partido_planTrabajo'),
+                    'tipo' => $request->input('partido_tipo'),
+                ], function ($value) {
+                    return $value !== null;
+                });
+
+                if (!empty($partidoData)) {
+                    $partidoService->editarPartido($partidoData, $partido);
+                }
+
+                if ($request->hasFile('partido_foto')) {
+                    $partidoService->cambiarFotoPartido($partido, $request->file('partido_foto'));
+                }
+            }
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['error_general' => 'Error al guardar los cambios: ' . $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('profile.show')
+            ->with('success', 'Perfil actualizado correctamente.');
+    }
+
+    private function obtenerPartidoDeCandidato(?Candidato $candidato): ?Partido
+    {
+        if (!$candidato) {
+            return null;
+        }
+
+        $candidatoEleccion = CandidatoEleccion::where('idCandidato', $candidato->getKey())
+            ->whereNotNull('idPartido')
+            ->orderByDesc('idElecciones')
+            ->first();
+
+        if (!$candidatoEleccion) {
+            return null;
+        }
+
+        return Partido::find($candidatoEleccion->idPartido);
     }
 
     /**
@@ -87,33 +232,21 @@ class VotanteController extends Controller
     /**
      * Ver detalle de una elección
      */
-    public function verDetalleEleccion($id)
+    public function verDetalleEleccion(int $id)
     {
-        $eleccion = Elecciones::with(['estadoEleccion', 'candidatos.usuario.perfil'])
-            ->findOrFail($id);
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-        // Verificar si el usuario ya votó en esta elección
-        // Primero obtener el registro del padrón electoral del usuario para esta elección
-        $padron = PadronElectoral::where('idUsuario', Auth::id())
-            ->where('idElecciones', $id)
-            ->first();
+        $yaVoto = $this->votoService->haVotado(Auth::user(), $eleccion);
 
-        $yaVoto = false;
-        if ($padron) {
-            $yaVoto = Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists();
-        }
-
-        $candidatos = $eleccion->candidatos;
-
-        return view('votante.elecciones.detalle', compact('eleccion', 'candidatos', 'yaVoto'));
+        return view('votante.elecciones.detalle', compact('eleccion', 'yaVoto'));
     }
 
     /**
      * Iniciar proceso de votación
      */
-    public function iniciarVotacion($eleccionId)
+    public function iniciarVotacion(int $eleccionId)
     {
-        $eleccion = Elecciones::findOrFail($eleccionId);
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccionId);
 
         // Verificar que la elección esté activa
         if (!$eleccion->estaActivo()) {
@@ -132,7 +265,7 @@ class VotanteController extends Controller
         }
 
         // Verificar si ya votó
-        $yaVoto = Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists();
+        $yaVoto = $this->votoService->haVotado(Auth::user(), $eleccion);
 
         if ($yaVoto) {
             return redirect()->route('votante.elecciones.detalle', $eleccionId)
@@ -174,7 +307,7 @@ class VotanteController extends Controller
             ])
             ->get();
 
-        return view('votante.votar.lista', compact('eleccion', 'cargos', 'candidatosPorCargo'));
+        return view('votante.votar.lista', compact('eleccionActiva', 'candidatosPorArea', 'partidos', 'areas'));
     }
 
     /**
@@ -201,65 +334,44 @@ class VotanteController extends Controller
     /**
      * Procesa y emite el voto
      */
-    public function emitirVoto(Request $request, $eleccionId)
+    public function emitirVoto(Request $request, IPartidoService $partidoService, ICandidatoService $candidatoService)
     {
-        $eleccion = Elecciones::findOrFail($eleccionId);
+        $eleccion = $this->eleccionesService->obtenerEleccionActiva();
 
-        // Verificar estado
-        if (!$eleccion->estaActivo()) {
-            return response()->json(['error' => 'Esta elección no está activa.'], 400);
+        $request->validate(
+            [
+                'idPartido' => 'required|integer|exists:Partido,idPartido',
+                'candidatos' => 'required|array',
+                'candidatos.*' => 'required|integer|exists:Candidato,idCandidato',
+            ],
+            [
+                'idPartido.required' => 'Se debe ingresar exactamente un partido.',
+                'idPartido.integer' => 'El id del partido debe ser un número.',
+                'idPartido.exists' => 'El partido no existe.',
+                'candidatos.required' => 'Se debe ingresar al menos un candidato.',
+                'candidatos.array' => 'Los candidatos deben ser una lista.',
+                'candidatos.*.required' => 'Se debe ingresar al menos un candidato.',
+                'candidatos.*.integer' => 'El id del candidato debe ser un número.',
+                'candidatos.*.exists' => 'El candidato no existe.',
+            ]
+        );
+
+        $entidades = [];
+
+        $entidades[] = $partidoService->obtenerPartidoPorId($request->idPartido);
+
+        foreach ($request->candidatos as $candidatoId) {
+            $entidades[] = $candidatoService->obtenerCandidatoPorId($candidatoId);
         }
-
-        // Obtener padrón
-        $padron = PadronElectoral::where('idUsuario', Auth::id())
-            ->where('idElecciones', $eleccionId)
-            ->first();
-
-        // Verificar si ya votó
-        if (Voto::where('idPadronElectoral', $padron->idPadronElectoral)->exists()) {
-            return redirect()->route('votante.elecciones.detalle', $eleccionId)
-                ->with('error', 'Ya has votado en esta elección.');
-        }
-
-        // Validar datos
-        $request->validate([
-            'candidatos' => 'required|array',
-            'candidatos.*' => 'required|exists:Candidato,idCandidato'
-        ]);
 
         try {
-            DB::beginTransaction();
-
-            // Registrar votos
-            $votosRegistrados = 0;
-            foreach ($request->candidatos as $cargoId => $candidatoId) {
-                Voto::create([
-                    'idCandidato' => $candidatoId,
-                    'idPadronElectoral' => $padron->idPadronElectoral,
-                    'fechaVoto' => now(),
-                ]);
-                $votosRegistrados++;
-            }
-
-            \Log::info("Total de votos registrados: {$votosRegistrados}");
-            \Log::info('=== VOTACIÓN COMPLETADA EXITOSAMENTE ===');
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => '¡Tu voto ha sido registrado exitosamente!',
-                'votos_registrados' => $votosRegistrados
-            ], 200);
+            $this->votoService->votar(Auth::user(), collect($entidades));
         } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Error al registrar voto: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-
-            return response()->json([
-                'error' => 'Hubo un error al registrar tu voto: ' . $e->getMessage()
-            ], 500);
+            return redirect()->route('votante.votar.lista', $eleccion->idElecciones)
+                ->with('error', 'Error al emitir el voto: ' . $e->getMessage());
         }
+
+        return redirect()->route('votante.votar.exito', $eleccion->idElecciones);
     }
 
     /**
@@ -267,22 +379,7 @@ class VotanteController extends Controller
      */
     public function votoExitoso($eleccionId)
     {
-        $eleccion = Elecciones::findOrFail($eleccionId);
-        
-        // Obtener el padrón y votos del usuario
-        $padron = PadronElectoral::where('idUsuario', Auth::id())
-            ->where('idElecciones', $eleccionId)
-            ->first();
-
-        // Si no hay padrón (modo demo), usar colección vacía
-        $votos = collect([]);
-        if ($padron) {
-            $votos = Voto::with(['candidato.usuario.perfil', 'candidato.partido', 'candidato.cargo'])
-                ->where('idPadronElectoral', $padron->idPadronElectoral)
-                ->get();
-        }
-
-        return view('votante.votar.exito', compact('eleccion', 'votos'));
+        return view('votante.votar.exito', compact('eleccion'));
     }
 
     // =============================================

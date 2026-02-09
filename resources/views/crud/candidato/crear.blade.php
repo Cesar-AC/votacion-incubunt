@@ -10,6 +10,9 @@
         </a>
     </div>
 
+    {{-- Mensajes de error, advertencia y éxito --}}
+    @include('components.error-message')
+
     {{-- Seleccionar Elección --}}
     <div class="card shadow mb-4">
         <div class="card-body">

@@ -66,6 +66,7 @@ class PermisoSeeder extends Seeder
             'propuesta_candidato:crud:ver:*',       // Ver propuestas de candidatos
             'propuesta_partido:crud:ver:*',         // Ver propuestas de partidos
             'partido:crud:ver:*',                   // Ver partidos
+            'usuario:cambiar_foto',
         ];
     }
 
@@ -112,6 +113,13 @@ class PermisoSeeder extends Seeder
         ]);
     }
 
+    private function crearPermisoEditarPerfil()
+    {
+        Permiso::create([
+            'permiso' => 'perfil:editar',
+        ]);
+    }
+
     private function crearPermisos()
     {
         $entidades = $this->obtenerEntidades();
@@ -121,6 +129,7 @@ class PermisoSeeder extends Seeder
         $this->crearPermisosVotante();
         $this->crearPermisosDashboard();
         $this->crearPermisoVotar();
+        $this->crearPermisoEditarPerfil();
     }
 
     private function crearRoles()

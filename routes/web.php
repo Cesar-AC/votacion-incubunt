@@ -34,10 +34,18 @@ Route::middleware(['auth', 'throttle:login'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show'])->name('profile.show');
-    Route::get('/profile/edit', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ProfileController::class, 'show'])->name('show');
+
+        /** Rutas deshabilitadas ya que no se permite la edición de datos, solo foto
+         * Route::get('/edit', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('edit');
+         * Route::patch('/', [\App\Http\Controllers\ProfileController::class, 'update'])->name('update');
+         * Route::delete('/', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('destroy');
+         */
+
+        Route::post('/subirFoto', [UserController::class, 'subirFoto'])->name('subirFoto');
+    });
 });
 
 // Rutas del Votante
@@ -46,6 +54,8 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('votante')->name('votante.')->group(function () {
         Route::get('/home', [VotanteController::class, 'home'])->name('home');
         Route::get('/propuestas', [VotanteController::class, 'propuestas'])->name('propuestas');
+        Route::get('/perfil/editar', [VotanteController::class, 'editarPerfil'])->name('perfil.editar');
+        Route::put('/perfil', [VotanteController::class, 'actualizarPerfil'])->name('perfil.actualizar');
         Route::get('/elecciones', [VotanteController::class, 'listarElecciones'])->name('elecciones');
         Route::get('/elecciones/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
 
@@ -163,13 +173,13 @@ Route::middleware(['auth'])->group(function () {
 
 // Voto
 Route::middleware(['auth'])->group(function () {
-    Route::get('/votos', [VotoController::class, 'index'])->name('crud.voto.ver')->middleware('can:viewAny,App\Models\Voto');
-    Route::get('/votos/crear', [VotoController::class, 'create'])->name('crud.voto.crear')->middleware('can:create,App\Models\Voto');
-    Route::post('/votos/crear', [VotoController::class, 'store'])->name('crud.voto.crear')->middleware('can:create,App\Models\Voto');
-    Route::get('/votos/{id}/editar', [VotoController::class, 'edit'])->name('crud.voto.editar')->middleware('can:update,App\Models\Voto');
-    Route::put('/votos/{id}/editar', [VotoController::class, 'update'])->name('crud.voto.editar')->middleware('can:update,App\Models\Voto');
-    Route::delete('/votos/{id}', [VotoController::class, 'destroy'])->name('crud.voto.eliminar')->middleware('can:delete,App\Models\Voto');
-    Route::get('/votos/{id}', [VotoController::class, 'show'])->name('crud.voto.ver_datos')->middleware('can:view,App\Models\Voto');
+    Route::get('/votos', [VotoController::class, 'index'])->name('crud.voto.ver')->middleware('can:viewAny,App\Models\VotoCandidato');
+    Route::get('/votos/crear', [VotoController::class, 'create'])->name('crud.voto.crear')->middleware('can:create,App\Models\VotoCandidato');
+    Route::post('/votos', [VotoController::class, 'store'])->name('crud.voto.guardar')->middleware('can:create,App\Models\VotoCandidato');
+    Route::get('/votos/{id}/editar', [VotoController::class, 'edit'])->name('crud.voto.editar');
+    Route::put('/votos/{id}', [VotoController::class, 'update'])->name('crud.voto.actualizar');
+    Route::delete('/votos/{id}', [VotoController::class, 'destroy'])->name('crud.voto.eliminar');
+    Route::get('/votos/{id}', [VotoController::class, 'show'])->name('crud.voto.ver_datos');
 });
 
 // Cargo

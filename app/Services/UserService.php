@@ -71,26 +71,44 @@ class UserService implements IUserService
         $usuario->delete();
     }
 
-    public function subirFotoUsuario(User $usuario, UploadedFile $archivo): void
+    public function subirFoto(User $usuario, UploadedFile $archivo): void
     {
-        $archivo = $this->archivoService->subirArchivo('usuarios/fotos', $archivo->hashName(), $archivo);
+        if ($usuario->perfil?->foto) {
+            throw new \Exception('El usuario ya tiene una foto.');
+        }
 
-        $usuario->foto()->associate($archivo);
-        $usuario->save();
+        $archivo = $this->archivoService->subirArchivo('usuarios/fotos', $archivo->hashName(), $archivo, 'public');
+
+        $usuario->perfil->foto()->associate($archivo);
+        $usuario->perfil->save();
     }
 
-    public function removerFotoUsuario(User $usuario): void
+    public function removerFoto(User $usuario): void
     {
-        $this->archivoService->eliminarArchivo($usuario->perfil->foto->getKey());
+        $foto = $usuario->perfil?->foto;
+
+        $usuario->perfil?->foto()->disassociate();
+        $usuario->perfil?->save();
+
+        if ($foto == null) {
+            throw new \Exception('El usuario no tiene una foto.');
+        }
+
+        $this->archivoService->eliminarArchivo($foto->getKey());
     }
 
-    public function cambiarFotoUsuario(User $usuario, UploadedFile $archivo): void
+    public function cambiarFoto(User $usuario, UploadedFile $archivo): void
     {
-        $this->archivoService->eliminarArchivo($usuario->perfil->foto->getKey());
-        $this->subirFotoUsuario($usuario, $archivo);
+        try {
+            $this->removerFoto($usuario);
+        } catch (\Exception $e) {
+            // Ignorar, puede que no tenga foto.
+        }
+
+        $this->subirFoto($usuario, $archivo);
     }
 
-    public function obtenerFotoUsuarioURL(User $usuario): string
+    public function obtenerFotoURL(User $usuario): string
     {
         return $usuario->perfil->obtenerFotoURL();
     }

@@ -72,16 +72,7 @@
           @enderror
         </div>
 
-        <!-- Foto -->
-        <div class="form-group">
-          <label class="small font-weight-bold">Foto del Partido (adjuntar solo si se desea actualizar)</label>
-          <input type="file"
-                 name="foto"
-                 class="form-control @error('foto') is-invalid @enderror">
-          @error('foto')
-            <div class="invalid-feedback">{{ $message }}</div>
-          @enderror
-        </div>
+        @include('components.previewable-upload-photo-for-crud', ['foto' => $partido->obtenerFotoURL()])
 
         <!-- Elecciones -->
         <div class="form-group">
