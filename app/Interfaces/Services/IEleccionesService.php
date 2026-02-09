@@ -5,6 +5,7 @@ namespace App\Interfaces\Services;
 use App\Interfaces\DTO\Services\IVotosCandidatoDTO;
 use App\Interfaces\DTO\Services\IVotosPartidoDTO;
 use App\Models\Candidato;
+use App\Models\CandidatoEleccion;
 use App\Models\Cargo;
 use App\Models\Elecciones;
 use App\Models\Interfaces\IElegibleAVoto;
@@ -60,8 +61,42 @@ interface IEleccionesService
      *      Si no, el método utilizará la elección activa.
      * @return Collection<Candidato>
      *      Retorna una colección de candidatos.
+     * @see self::obtenerCandidatosIndividuales() Es un alias de este método.
      */
     public function obtenerCandidatos(?Elecciones $eleccion = null): Collection;
+
+    /**
+     * @param Elecciones $eleccion
+     *      Opcional.
+     *      Si es enviado, el método utilizará la elección especificada.
+     *      Si no, el método utilizará la elección activa.
+     * @return Collection<Candidato>
+     *      Retorna una colección de candidatos que no pertenecen a ningún partido.
+     */
+    public function obtenerCandidatosIndividuales(?Elecciones $eleccion = null): Collection;
+
+    /**
+     * @param Elecciones $eleccion
+     *      Opcional.
+     *      Si es enviado, el método utilizará la elección especificada.
+     *      Si no, el método utilizará la elección activa.
+     * @return Collection<Candidato>
+     *      Retorna una colección de candidatos que pertenecen a algún partido.
+     */
+    public function obtenerCandidatosMiembrosDePartido(?Elecciones $eleccion = null): Collection;
+
+    /**
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido del cual se obtendrán los candidatos.
+     * @param Elecciones $eleccion
+     *      Opcional.
+     *      Si es enviado, el método utilizará la elección especificada.
+     *      Si no, el método utilizará la elección activa.
+     * @return Collection<Candidato>
+     *      Retorna una colección de candidatos que pertenecen al partido especificado.
+     */
+    public function obtenerCandidatosDePartido(Partido $partido, ?Elecciones $eleccion = null): Collection;
 
     /**
      * @param Cargo $cargo
@@ -202,4 +237,17 @@ interface IEleccionesService
      *      Retorna true si la votación está habilitada, false en caso contrario.
      */
     public function votacionHabilitada(?Elecciones $eleccion = null): bool;
+
+    /**
+     * @param Candidato $candidato
+     *      Obligatorio.
+     *      El candidato que se desea obtener.
+     * @param Elecciones|null $eleccion
+     *      Opcional.
+     *      Si es enviado, se obtendrá el candidato para la elección especificada.
+     *      Si no es enviado, se obtendrá el candidato de la elección activa.
+     * @return CandidatoEleccion
+     *      Retorna la vinculación de un candidato con una elección. Incluye su cargo y partido.
+     */
+    public function obtenerCandidatoEleccion(Candidato $candidato, ?Elecciones $eleccion = null): CandidatoEleccion;
 }

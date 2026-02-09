@@ -29,7 +29,7 @@ class PartidoService implements IPartidoService
         $elecciones = $elecciones ?? $this->eleccionesService->obtenerEleccionActiva();
 
         return Partido::whereHas('elecciones', function ($query) use ($elecciones) {
-            $query->where('idElecciones', '=', $elecciones->getKey());
+            $query->where('PartidoEleccion.idElecciones', '=', $elecciones->getKey());
         })->get();
     }
 

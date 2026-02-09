@@ -85,7 +85,7 @@ class CandidatoService implements ICandidatoService
         CandidatoEleccion::create([
             'idCandidato' => $candidato->getKey(),
             'idElecciones' => $elecciones->getKey(),
-            'idPartido' => $datos['idPartido'],
+            'idPartido' => $datos['idPartido'] ?? null,
             'idCargo' => $datos['idCargo'],
         ]);
     }
