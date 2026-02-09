@@ -22,6 +22,7 @@ use App\Interfaces\Services\IUserService;
 use App\Interfaces\Services\IVotoService;
 use App\Models\CandidatoEleccion;
 use App\Models\PartidoEleccion;
+use App\Models\Area;
 
 class VotanteController extends Controller
 {
@@ -281,33 +282,26 @@ class VotanteController extends Controller
     public function vistaVotar(IAreaService $areaService)
     {
         $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
-        $areas = $areaService->obtenerAreas();
-
-        $candidatosPorArea = CandidatoEleccion::query()
-            ->where('idElecciones', '=', $eleccionActiva->getKey())
-            ->whereNull('idPartido')
-            ->with([
-                'candidato.usuario.perfil',
-                'candidato.propuestas' => function ($q) use ($eleccionActiva) {
-                    $q->where('idElecciones', '=', $eleccionActiva->getKey());
-                },
-                'cargo.area',
-            ])
+        $areas = Area::where('idArea', '!=', Area::PRESIDENCIA)
+            ->where('idArea', '!=', Area::SIN_AREA_ASIGNADA)
+            ->with('cargos.candidatoElecciones.candidato.usuario.perfil')
             ->get();
 
         $partidos = PartidoEleccion::query()
             ->where('idElecciones', $eleccionActiva->getKey())
             ->with([
-                'partido.propuestas' => function ($q) use ($eleccionActiva) {
-                    $q->where('idElecciones', $eleccionActiva->getKey());
-                },
-                'partido.candidatos.propuestas' => function ($q) use ($eleccionActiva) {
-                    $q->where('idElecciones', $eleccionActiva->getKey());
-                },
+                'partido' => function ($q) {
+                    $q->with([
+                        'candidatos.usuario.perfil',
+                        'propuestas' => function ($pq) {
+                            $pq->whereNull('idElecciones')->orWhere('idElecciones', request()->route('eleccionId'));
+                        }
+                    ]);
+                }
             ])
             ->get();
 
-        return view('votante.votar.lista', compact('eleccionActiva', 'candidatosPorArea', 'partidos', 'areas'));
+        return view('votante.votar.lista', compact('eleccionActiva', 'areas', 'partidos'));
     }
 
     /**
@@ -379,7 +373,19 @@ class VotanteController extends Controller
      */
     public function votoExitoso($eleccionId)
     {
-        return view('votante.votar.exito', compact('eleccion'));
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccionId);
+        $user = Auth::user();
+        // Obtener votos a partido
+        $votosPartido = \App\Models\VotoPartido::where('idUsuario', $user->id)
+            ->where('idElecciones', $eleccionId)
+            ->with(['partido'])
+            ->get();
+        // Obtener votos a candidato
+        $votosCandidato = \App\Models\VotoCandidato::where('idUsuario', $user->id)
+            ->where('idElecciones', $eleccionId)
+            ->with(['candidato.cargo'])
+            ->get();
+        return view('votante.votar.exito', compact('eleccion', 'votosPartido', 'votosCandidato'));
     }
 
     // =============================================

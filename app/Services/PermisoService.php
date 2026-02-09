@@ -12,8 +12,12 @@ use App\Models\UserPermiso;
 
 class PermisoService implements IPermisoService
 {
-    public function comprobarUsuario(User $usuario, Permiso $permiso, bool $estricto = false): bool
+    public function comprobarUsuario(User $usuario, ?Permiso $permiso, bool $estricto = false): bool
     {
+        if (!$permiso) {
+            return false;
+        }
+
         $poseePermisoUsuario = UserPermiso::where('idUser', '=', $usuario->getKey())
             ->where('idPermiso', '=', $permiso->getKey())
             ->exists();
@@ -31,8 +35,12 @@ class PermisoService implements IPermisoService
         return $poseePermisoUsuario || $poseePermisoRol;
     }
 
-    public function comprobarRol(Rol $rol, Permiso $permiso): bool
+    public function comprobarRol(Rol $rol, ?Permiso $permiso): bool
     {
+        if (!$permiso) {
+            return false;
+        }
+
         return RolPermiso::where('idRol', '=', $rol->getKey())
             ->where('idPermiso', '=', $permiso->getKey())
             ->exists();

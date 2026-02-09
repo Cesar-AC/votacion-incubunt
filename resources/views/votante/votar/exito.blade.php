@@ -52,7 +52,23 @@
 
 
                 <div class="space-y-4">
-                    @forelse($votos as $voto)
+                    {{-- Voto a Partido --}}
+                    @foreach($votosPartido as $voto)
+                    <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-5 border border-gray-200">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                                    Partido
+                                </p>
+                                <p class="font-bold text-lg text-blue-900">
+                                    {{ $voto->partido->partido ?? 'Partido' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                    {{-- Votos a Candidatos --}}
+                    @foreach($votosCandidato as $voto)
                     <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-5 border border-gray-200">
                         <div class="flex items-start justify-between mb-3">
                             <div>
