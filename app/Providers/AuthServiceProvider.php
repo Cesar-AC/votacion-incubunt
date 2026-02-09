@@ -8,12 +8,9 @@ use App\Models\Cargo;
 use App\Models\Carrera;
 use App\Models\Elecciones;
 use App\Models\EstadoElecciones;
-use App\Models\EstadoParticipante;
 use App\Models\ExcepcionPermiso;
-use App\Models\ListaVotante;
 use App\Models\Log;
 use App\Models\PadronElectoral;
-use App\Models\Participante;
 use App\Models\Partido;
 use App\Models\Permiso;
 use App\Models\PropuestaCandidato;
@@ -32,12 +29,9 @@ use App\Policies\CargoPolicy;
 use App\Policies\CarreraPolicy;
 use App\Policies\EleccionesPolicy;
 use App\Policies\EstadoEleccionesPolicy;
-use App\Policies\EstadoParticipantePolicy;
 use App\Policies\ExcepcionPermisoPolicy;
-use App\Policies\ListaVotantePolicy;
 use App\Policies\LogPolicy;
 use App\Policies\PadronElectoralPolicy;
-use App\Policies\ParticipantePolicy;
 use App\Policies\PartidoPolicy;
 use App\Policies\PermisoPolicy;
 use App\Policies\PropuestaCandidatoPolicy;
@@ -60,12 +54,9 @@ class AuthServiceProvider extends ServiceProvider
         Carrera::class => CarreraPolicy::class,
         Elecciones::class => EleccionesPolicy::class,
         EstadoElecciones::class => EstadoEleccionesPolicy::class,
-        EstadoParticipante::class => EstadoParticipantePolicy::class,
         ExcepcionPermiso::class => ExcepcionPermisoPolicy::class,
-        ListaVotante::class => ListaVotantePolicy::class,
         Log::class => LogPolicy::class,
         PadronElectoral::class => PadronElectoralPolicy::class,
-        Participante::class => ParticipantePolicy::class,
         Partido::class => PartidoPolicy::class,
         Permiso::class => PermisoPolicy::class,
         PropuestaCandidato::class => PropuestaCandidatoPolicy::class,
