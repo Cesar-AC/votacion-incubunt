@@ -362,7 +362,7 @@ class VotanteController extends Controller
             $this->votoService->votar(Auth::user(), collect($entidades));
         } catch (\Exception $e) {
             return redirect()->route('votante.votar.lista', $eleccion->idElecciones)
-                ->with('error', 'Error al emitir el voto: ' . $e->getMessage());
+                ->withErrors('Error al emitir el voto: ' . $e->getMessage());
         }
 
         return redirect()->route('votante.votar.exito', $eleccion->idElecciones);
