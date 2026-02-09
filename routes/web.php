@@ -14,7 +14,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VotoController;
 use App\Http\Controllers\CargoController;
 use App\Http\Controllers\EstadoEleccionesController;
-use App\Http\Controllers\ListaVotanteController;
 use App\Http\Controllers\PermisoController;
 
 use App\Http\Controllers\PropuestaCandidatoController;
@@ -174,12 +173,6 @@ Route::middleware(['auth'])->group(function () {
 // Voto
 Route::middleware(['auth'])->group(function () {
     Route::get('/votos', [VotoController::class, 'index'])->name('crud.voto.ver')->middleware('can:viewAny,App\Models\VotoCandidato');
-    Route::get('/votos/crear', [VotoController::class, 'create'])->name('crud.voto.crear')->middleware('can:create,App\Models\VotoCandidato');
-    Route::post('/votos', [VotoController::class, 'store'])->name('crud.voto.guardar')->middleware('can:create,App\Models\VotoCandidato');
-    Route::get('/votos/{id}/editar', [VotoController::class, 'edit'])->name('crud.voto.editar');
-    Route::put('/votos/{id}', [VotoController::class, 'update'])->name('crud.voto.actualizar');
-    Route::delete('/votos/{id}', [VotoController::class, 'destroy'])->name('crud.voto.eliminar');
-    Route::get('/votos/{id}', [VotoController::class, 'show'])->name('crud.voto.ver_datos');
 });
 
 // Cargo
@@ -202,17 +195,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/estado-elecciones/{id}/editar', [EstadoEleccionesController::class, 'update'])->name('crud.estado_elecciones.editar')->middleware('can:update,App\Models\EstadoElecciones');
     Route::delete('/estado-elecciones/{id}', [EstadoEleccionesController::class, 'destroy'])->name('crud.estado_elecciones.eliminar')->middleware('can:delete,App\Models\EstadoElecciones');
     Route::get('/estado-elecciones/{id}', [EstadoEleccionesController::class, 'show'])->name('crud.estado_elecciones.ver_datos')->middleware('can:view,App\Models\EstadoElecciones');
-});
-
-// Lista Votante
-Route::middleware(['auth'])->group(function () {
-    Route::get('/lista-votante', [ListaVotanteController::class, 'index'])->name('crud.lista_votante.ver')->middleware('can:viewAny,App\Models\ListaVotante');
-    Route::get('/lista-votante/crear', [ListaVotanteController::class, 'create'])->name('crud.lista_votante.crear')->middleware('can:create,App\Models\ListaVotante');
-    Route::post('/lista-votante/crear', [ListaVotanteController::class, 'store'])->name('crud.lista_votante.crear')->middleware('can:create,App\Models\ListaVotante');
-    Route::get('/lista-votante/{id}/editar', [ListaVotanteController::class, 'edit'])->name('crud.lista_votante.editar')->middleware('can:update,App\Models\ListaVotante');
-    Route::post('/lista-votante/{id}/editar', [ListaVotanteController::class, 'update'])->name('crud.lista_votante.editar')->middleware('can:update,App\Models\ListaVotante');
-    Route::delete('/lista-votante/{id}', [ListaVotanteController::class, 'destroy'])->name('crud.lista_votante.eliminar')->middleware('can:delete,App\Models\ListaVotante');
-    Route::get('/lista-votante/{id}', [ListaVotanteController::class, 'show'])->name('crud.lista_votante.ver_datos')->middleware('can:view,App\Models\ListaVotante');
 });
 
 // Permiso

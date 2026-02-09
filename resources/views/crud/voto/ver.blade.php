@@ -4,9 +4,6 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 text-gray-800">Gestión de Votos</h1>
-        <a href="{{ route('crud.voto.crear') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nuevo Voto
-        </a>
     </div>
 
     <div class="card shadow mb-4">
@@ -22,7 +19,6 @@
                             <th>Entidad</th>
                             <th>Elección</th>
                             <th>Tipo de Voto</th>
-                            <th style="width: 150px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -37,23 +33,6 @@
                                 <td>{{ $voto['entidad'] }}</td>
                                 <td>{{ $voto['eleccion'] }}</td>
                                 <td>{{ $voto['tipoVoto'] }}</td>
-                                <td class="text-center">
-                                    <a href="{{ route('crud.voto.editar', $voto['id']) }}"
-                                       class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-
-                                    <form action="{{ route('crud.voto.eliminar', $voto['id']) }}"
-                                          method="POST"
-                                          class="d-inline"
-                                          onsubmit="return confirm('¿Desea eliminar este voto?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
                             </tr>
                         @empty
                             <tr>
