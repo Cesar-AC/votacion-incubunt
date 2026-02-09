@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Interfaces\Services\IAreaService;
 use App\Interfaces\Services\ICandidatoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use App\Models\Partido;
-use App\Models\PartidoEleccion;
-use App\Models\CandidatoEleccion;
-use App\Models\Cargo;
 use App\Interfaces\Services\IEleccionesService;
+use App\Interfaces\Services\IPartidoService;
+use App\Interfaces\Services\IUserService;
+use App\Models\Area;
+use Illuminate\Support\Facades\Validator;
 
 class CandidatoController extends Controller
 {
@@ -19,177 +19,136 @@ class CandidatoController extends Controller
         protected IEleccionesService $eleccionesService,
     ) {}
 
-    public function index()
+    public function index(IPartidoService $partidoService)
     {
-        $elecciones = \App\Models\Elecciones::with([
-            'candidatos.usuario.perfil',
-            'candidatos.candidatoElecciones.cargo.area',
-            'candidatos.candidatoElecciones.partido',
-        ])->get();
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+        $eleccionesService = $this->eleccionesService;
 
-        // Procesar candidatos para cada elección y agregar cargo/partido desde pivot
-        foreach ($elecciones as $eleccion) {
-            foreach ($eleccion->candidatos as $candidato) {
-                // Buscar la relación específica para esta elección
-                $candidatoEleccion = $candidato->candidatoElecciones
-                    ->where('idElecciones', $eleccion->idElecciones)
-                    ->first();
-                
-                if ($candidatoEleccion) {
-                    // Agregar cargo y partido como propiedades directas para facilitar acceso en la vista
-                    $candidato->cargo = $candidatoEleccion->cargo;
-                    $candidato->partido = $candidatoEleccion->partido;
-                    $candidato->idPartido = $candidatoEleccion->idPartido;
-                    $candidato->idCargo = $candidatoEleccion->idCargo;
-                } else {
-                    // Asegurar que las propiedades existan aunque sean null
-                    $candidato->cargo = null;
-                    $candidato->partido = null;
-                    $candidato->idPartido = null;
-                    $candidato->idCargo = null;
-                }
-            }
-        }
-
-        return view('crud.candidato.ver', compact('elecciones'));
+        return view('crud.candidato.ver', compact('elecciones', 'eleccionesService', 'partidoService'));
     }
 
-    public function create()
+    public function create(IPartidoService $partidoService, IUserService $userService, IAreaService $areaService)
     {
-        $partidos   = \App\Models\Partido::all();
-        $cargos     = \App\Models\Cargo::with('area')->get();
-        $usuarios   = \App\Models\User::with('perfil')->get();
-        $elecciones = \App\Models\Elecciones::all();
+        $partidos   = $partidoService->obtenerPartidos();
+        $areas = $areaService->obtenerAreas();
+        $usuarios   = $userService->obtenerUsuarios();
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+
+        $areaPresidencia = $areaService->obtenerAreaPorId(Area::PRESIDENCIA);
+        $cargosPresidencia = $areaPresidencia->cargos;
+
+        $eleccionesService = $this->eleccionesService;
+        $cargosPorArea = $areas->pluck('cargos', 'idArea');
 
         return view('crud.candidato.crear', compact(
+            'eleccionesService',
             'partidos',
-            'cargos',
+            'areas',
             'usuarios',
-            'elecciones'
+            'elecciones',
+            'cargosPorArea',
+            'cargosPresidencia'
         ));
     }
 
     public function store(Request $request)
     {
-        // Validar estructura de datos
-        $request->validate([
-            'idEleccion' => 'required|integer|exists:Elecciones,idElecciones',
-            'candidatos' => 'required|array|min:1',
-            'candidatos.*.idUsuario' => 'required|integer|exists:User,idUser',
-            'candidatos.*.idCargo' => 'required|integer|exists:Cargo,idCargo',
-            'candidatos.*.idPartido' => 'nullable|integer|exists:Partido,idPartido',
-            'candidatos.*.planTrabajo' => 'nullable|string|max:1000',
-        ], [
-            'idEleccion.required' => 'Debe seleccionar una elección.',
-            'idEleccion.exists' => 'La elección seleccionada no es válida.',
-            'candidatos.required' => 'Debe agregar al menos un candidato.',
-            'candidatos.min' => 'Debe agregar al menos un candidato.',
-            'candidatos.*.idUsuario.required' => 'Cada candidato debe tener un usuario asignado.',
-            'candidatos.*.idUsuario.exists' => 'Uno de los usuarios seleccionados no es válido.',
-            'candidatos.*.idCargo.required' => 'Cada candidato debe tener un cargo asignado.',
-            'candidatos.*.idCargo.exists' => 'Uno de los cargos seleccionados no es válido.',
-            'candidatos.*.idPartido.exists' => 'Uno de los partidos seleccionados no es válido.',
-        ]);
+        $request->validate(
+            [
+                'idEleccion' => 'required|integer|exists:Elecciones,idElecciones',
+                'candidatos' => 'required|array|min:1',
+                'candidatos.*.tipo' => 'required|in:individual,grupal'
+            ],
+            [
+                'idEleccion.required' => 'Debe seleccionar una elección.',
+                'idEleccion.exists' => 'La elección seleccionada no es válida.',
+                'candidatos.required' => 'Debe agregar al menos un candidato.',
+                'candidatos.array' => 'Los candidatos deben ser un array.',
+                'candidatos.min' => 'Debe agregar al menos un candidato.',
+                'candidatos.*.tipo.required' => 'Alguno de los candidatos no tiene un tipo de candidatura asignado.',
+                'candidatos.*.tipo.in' => 'Alguno de los candidatos tiene un tipo de candidatura no válido.',
+            ]
+        );
 
-        $candidatosCreados = [];
-        $candidatosFallidos = [];
-        $eleccion = $this->eleccionesService->obtenerEleccionPorId($request->idEleccion);
+        $individuales = array_filter($request->all()['candidatos'], function ($candidato) {
+            return $candidato['tipo'] == 'individual';
+        });
 
-        DB::beginTransaction();
+        $grupales = array_filter($request->all()['candidatos'], function ($candidato) {
+            return $candidato['tipo'] == 'grupal';
+        });
 
-        try {
-            foreach ($request->candidatos as $index => $candidatoData) {
-                try {
-                    // Verificar si el usuario ya es candidato
-                    $candidatoExistente = \App\Models\Candidato::where('idUsuario', $candidatoData['idUsuario'])->first();
-                    
-                    if ($candidatoExistente) {
-                        // Si ya es candidato, solo vincular a la elección
-                        $candidato = $candidatoExistente;
-                        $accion = 'vinculado a la elección';
-                    } else {
-                        // Crear nuevo candidato
-                        $candidato = $this->candidatoService->crearCandidato([
-                            'idUsuario' => $candidatoData['idUsuario'],
-                        ]);
-                        $accion = 'creado y vinculado';
-                    }
-
-                    // Vincular a la elección
-                    $this->candidatoService->vincularCandidatoAEleccion([
-                        'idCargo' => $candidatoData['idCargo'],
-                        'idPartido' => $candidatoData['idPartido'] ?? null,
-                    ], $candidato, $eleccion);
-
-                    $usuario = \App\Models\User::with('perfil')->find($candidatoData['idUsuario']);
-                    $nombreUsuario = $usuario->perfil->nombre ?? $usuario->correo;
-                    
-                    $candidatosCreados[] = $nombreUsuario . ' (' . $accion . ')';
-
-                } catch (\Exception $e) {
-                    $usuario = \App\Models\User::with('perfil')->find($candidatoData['idUsuario']);
-                    $nombreUsuario = $usuario->perfil->nombre ?? $usuario->correo ?? 'Usuario ID ' . $candidatoData['idUsuario'];
-                    
-                    $candidatosFallidos[] = [
-                        'nombre' => $nombreUsuario,
-                        'error' => $e->getMessage()
-                    ];
-                    
-                    Log::error('Error al crear candidato', [
-                        'index' => $index,
-                        'data' => $candidatoData,
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
-                    ]);
-                }
-            }
-
-            // Si todos fallaron, hacer rollback
-            if (empty($candidatosCreados)) {
-                DB::rollBack();
-                
-                return redirect()
-                    ->back()
-                    ->withInput()
-                    ->withErrors([
-                        'error_general' => 'No se pudo crear ningún candidato.',
-                        'detalles' => $candidatosFallidos
-                    ]);
-            }
-
-            DB::commit();
-
-            // Preparar mensaje de éxito
-            $mensaje = count($candidatosCreados) . ' candidato(s) procesado(s) correctamente.';
-            
-            // Si hubo algunos que fallaron, agregar advertencia
-            if (!empty($candidatosFallidos)) {
-                return redirect()
-                    ->route('crud.candidato.ver')
-                    ->with('success', $mensaje)
-                    ->with('warning', count($candidatosFallidos) . ' candidato(s) no pudo(pudieron) ser procesado(s).')
-                    ->with('candidatos_exitosos', $candidatosCreados)
-                    ->with('candidatos_fallidos', $candidatosFallidos);
-            }
-
-            return redirect()
-                ->route('crud.candidato.ver')
-                ->with('success', $mensaje)
-                ->with('candidatos_exitosos', $candidatosCreados);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            Log::error('Error general al crear candidatos', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+        if (count($individuales) > 0) {
+            $validador = Validator::make($individuales, [
+                'candidatos' => 'array',
+                'candidatos.*.idUsuario' => 'required|integer|exists:PadronElectoral,idUsuario',
+                'candidatos.*.idCargo' => 'required|integer|exists:Cargo,idCargo',
+                'candidatos.*.idPartido' => 'nullable|integer|exists:Partido,idPartido',
+                'candidatos.*.planTrabajo' => 'nullable|url|max:255',
+            ], [
+                'candidatos.array' => 'Los candidatos deben ser un array.',
+                'candidatos.*.idUsuario.required' => 'Cada candidato debe tener un usuario asignado.',
+                'candidatos.*.idUsuario.exists' => 'Cada candidato debe tener un usuario registrado en el padrón electoral.',
+                'candidatos.*.idCargo.required' => 'Cada candidato debe tener un cargo asignado.',
+                'candidatos.*.idCargo.exists' => 'Cada cargo debe ser un cargo válido.',
+                'candidatos.*.idPartido.exists' => 'Cada partido debe ser un partido válido.',
+                'candidatos.*.planTrabajo.url' => 'El plan de trabajo debe ser una URL válida.',
+                'candidatos.*.planTrabajo.max' => 'El plan de trabajo no puede exceder los 255 caracteres.',
             ]);
 
-            return redirect()
-                ->back()
-                ->withInput()
-                ->withErrors(['error_general' => 'Error al procesar los candidatos: ' . $e->getMessage()]);
+            $validador->validate();
         }
+
+        if (count($grupales) > 0) {
+            $validador = Validator::make($grupales, [
+                'candidatos' => 'array',
+                'candidatos.*.idUsuario' => 'required|integer|exists:PadronElectoral,idUsuario',
+                'candidatos.*.idCargo' => 'required|integer|exists:Cargo,idCargo',
+                'candidatos.*.idPartido' => 'required|integer|exists:Partido,idPartido',
+                'candidatos.*.planTrabajo' => 'nullable|url|max:255',
+            ], [
+                'candidatos.array' => 'Los candidatos deben ser un array.',
+                'candidatos.*.idUsuario.required' => 'Cada candidato miembro de partido debe tener un usuario asignado.',
+                'candidatos.*.idUsuario.exists' => 'Cada candidato miembro de partido debe tener un usuario registrado en el padrón electoral.',
+                'candidatos.*.idCargo.required' => 'Cada candidato miembro de partido debe tener un cargo asignado.',
+                'candidatos.*.idCargo.exists' => 'Cada cargo debe ser un cargo válido.',
+                'candidatos.*.idPartido.required' => 'Cada candidato miembro de partido debe tener un partido asignado.',
+                'candidatos.*.idPartido.exists' => 'Cada partido debe ser un partido válido.',
+                'candidatos.*.planTrabajo.url' => 'El plan de trabajo debe ser una URL válida.',
+                'candidatos.*.planTrabajo.max' => 'El plan de trabajo no puede exceder los 255 caracteres.',
+            ]);
+
+            $validador->validate();
+        }
+
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($request->idEleccion);
+
+        DB::transaction(function () use ($eleccion, $individuales, $grupales) {
+            foreach ($individuales as $candidato) {
+                $modeloCandidato = $this->candidatoService->crearCandidato([
+                    'idUsuario' => $candidato['idUsuario'],
+                    'planTrabajo' => $candidato['planTrabajo']
+                ]);
+
+                $this->candidatoService->vincularCandidatoAEleccion([
+                    'idCargo' => $candidato['idCargo'],
+                ], $modeloCandidato, $eleccion);
+            }
+
+            foreach ($grupales as $candidato) {
+                $modeloCandidato = $this->candidatoService->crearCandidato([
+                    'idUsuario' => $candidato['idUsuario'],
+                    'planTrabajo' => $candidato['planTrabajo']
+                ]);
+
+                $this->candidatoService->vincularCandidatoAEleccion([
+                    'idCargo' => $candidato['idCargo'],
+                    'idPartido' => $candidato['idPartido'],
+                ], $modeloCandidato, $eleccion);
+            }
+        });
+
+        return redirect()->route('crud.candidato.ver')->with('success', 'Los candidatos se han registrado correctamente.');
     }
 
 
@@ -208,58 +167,97 @@ class CandidatoController extends Controller
         ]);
     }
 
-    public function edit($id)
+    public function edit(int $eleccion, int $candidato, IPartidoService $partidoService, IUserService $userService, IAreaService $areaService)
     {
-        $candidato = $this->candidatoService->obtenerCandidatoPorId($id);
+        $candidato = $this->candidatoService->obtenerCandidatoPorId($candidato);
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccion);
+        $candidatoEleccion = $this->eleccionesService->obtenerCandidatoEleccion($candidato, $eleccion);
 
-        $partidos = \App\Models\Partido::all();
-        $cargos = \App\Models\Cargo::all();
-        $usuarios = \App\Models\User::all();
-        $elecciones = \App\Models\Elecciones::all();
-        return view('crud.candidato.editar', compact('candidato', 'partidos', 'cargos', 'usuarios', 'elecciones'));
+        $partidos   = $partidoService->obtenerPartidos();
+        $areas = $areaService->obtenerAreas();
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+
+        $areaPresidencia = $areaService->obtenerAreaPorId(Area::PRESIDENCIA);
+        $cargosPresidencia = $areaPresidencia->cargos;
+
+        $eleccionesService = $this->eleccionesService;
+        $cargosPorArea = $areas->pluck('cargos', 'idArea');
+
+        return view('crud.candidato.editar', compact(
+            'eleccionesService',
+            'eleccion',
+            'candidato',
+            'candidatoEleccion',
+            'partidos',
+            'areas',
+            'elecciones',
+            'cargosPorArea',
+            'cargosPresidencia'
+        ));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $eleccion, int $candidato)
     {
         $request->validate([
-            'idUsuario' => 'nullable|integer|exists:User,idUser',
-            'idElecciones' => 'nullable|integer|exists:Elecciones,idElecciones',
-            'idCargo' => 'nullable|integer|exists:Cargo,idCargo',
-            'idPartido' => 'nullable|integer|exists:Partido,idPartido',
+            'tipo' => 'required|in:individual,grupal',
+            'planTrabajo' => 'nullable|url|max:255',
+        ], [
+            'tipo.required' => 'El tipo de candidato es requerido.',
+            'tipo.in' => 'El tipo de candidato debe ser individual o grupal.',
+            'planTrabajo.url' => 'El plan de trabajo debe ser una URL válida.',
+            'planTrabajo.max' => 'El plan de trabajo no puede exceder los 255 caracteres.',
         ]);
 
-        $candidato = $this->candidatoService->obtenerCandidatoPorId($id);
+        $candidato = $this->candidatoService->obtenerCandidatoPorId($candidato);
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccion);
 
-        if (isset($request->idUsuario)) {
-            $this->candidatoService->editarCandidato([
-                'idUsuario' => $request->idUsuario,
-            ], $candidato);
-        }
+        DB::transaction(function () use ($request, $candidato, $eleccion) {
+            if ($request->tipo == 'individual') {
+                $request->validate([
+                    'idCargo' => 'required|integer|exists:Cargo,idCargo',
+                ], [
+                    'idCargo.required' => 'El cargo es requerido.',
+                    'idCargo.exists' => 'El cargo no existe.',
+                ]);
 
-        if (isset($request->idElecciones)) {
-            if (isset($request->idCargo)) {
-                $eleccion = $this->eleccionesService->obtenerEleccionPorId($request->idElecciones);
-                $this->candidatoService->actualizarDatosDeCandidatoEnElecciones([
-                    'idCargo' => $request->idCargo,
-                ], $candidato, $eleccion);
+                $candidatoEleccion = $this->eleccionesService->obtenerCandidatoEleccion($candidato, $eleccion);
+                $candidatoEleccion->idPartido = null;
+                $candidatoEleccion->idCargo = $request->idCargo;
+                $candidato->planTrabajo = $request->planTrabajo;
+                $candidato->save();
+                $candidatoEleccion->save();
             }
 
-            if (isset($request->idPartido)) {
-                $eleccion = $this->eleccionesService->obtenerEleccionPorId($request->idElecciones);
-                $this->candidatoService->actualizarDatosDeCandidatoEnElecciones([
-                    'idPartido' => $request->idPartido,
-                ], $candidato, $eleccion);
+            if ($request->tipo == 'grupal') {
+                $request->validate([
+                    'idCargo' => 'required|integer|exists:Cargo,idCargo',
+                    'idPartido' => 'required|integer|exists:Partido,idPartido',
+                ], [
+                    'idCargo.required' => 'El cargo es requerido.',
+                    'idCargo.exists' => 'El cargo no existe.',
+                    'idPartido.required' => 'El partido es requerido.',
+                    'idPartido.exists' => 'El partido no existe.',
+                ]);
+
+                $candidatoEleccion = $this->eleccionesService->obtenerCandidatoEleccion($candidato, $eleccion);
+                $candidatoEleccion->idPartido = $request->idPartido;
+                $candidatoEleccion->idCargo = $request->idCargo;
+                $candidato->planTrabajo = $request->planTrabajo;
+                $candidato->save();
+                $candidatoEleccion->save();
             }
-        }
+        });
 
         return redirect()->route('crud.candidato.ver')
             ->with('success', 'Candidato actualizado correctamente.');
     }
 
-    public function destroy($id)
+    public function destroy(int $eleccion, int $candidato)
     {
-        $candidato = $this->candidatoService->obtenerCandidatoPorId($id);
-        $this->candidatoService->eliminarCandidato($candidato);
+        $candidato = $this->candidatoService->obtenerCandidatoPorId($candidato);
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccion);
+        $candidatoEleccion = $this->eleccionesService->obtenerCandidatoEleccion($candidato, $eleccion);
+        $candidatoEleccion->delete();
 
         return redirect()->route('crud.candidato.ver')
             ->with('success', 'Candidato eliminado correctamente.');

@@ -127,10 +127,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/candidatos', [CandidatoController::class, 'index'])->name('crud.candidato.ver')->middleware('can:viewAny,App\Models\Candidato');
     Route::get('/candidatos/crear', [CandidatoController::class, 'create'])->name('crud.candidato.crear')->middleware('can:create,App\Models\Candidato');
     Route::post('/candidatos/crear', [CandidatoController::class, 'store'])->name('crud.candidato.crear')->middleware('can:create,App\Models\Candidato');
-    Route::get('/candidatos/{id}/editar', [CandidatoController::class, 'edit'])->name('crud.candidato.editar')->middleware('can:update,App\Models\Candidato');
-    Route::put('/candidatos/{id}/editar', [CandidatoController::class, 'update'])->name('crud.candidato.editar')->middleware('can:update,App\Models\Candidato');
-    Route::delete('/candidatos/{id}', [CandidatoController::class, 'destroy'])->name('crud.candidato.eliminar')->middleware('can:delete,App\Models\Candidato');
-    Route::get('/candidatos/{id}', [CandidatoController::class, 'show'])->name('crud.candidato.ver_datos')->middleware('can:view,App\Models\Candidato');
+    Route::get('/candidatos/{eleccion}/{candidato}/editar', [CandidatoController::class, 'edit'])->name('crud.candidato.editar')->middleware('can:update,App\Models\Candidato');
+    Route::put('/candidatos/{eleccion}/{candidato}/editar', [CandidatoController::class, 'update'])->name('crud.candidato.editar')->middleware('can:update,App\Models\Candidato');
+    Route::delete('/candidatos/{eleccion}/{candidato}', [CandidatoController::class, 'destroy'])->name('crud.candidato.eliminar')->middleware('can:delete,App\Models\Candidato');
+    Route::get('/candidatos/{eleccion}/{candidato}', [CandidatoController::class, 'show'])->name('crud.candidato.ver_datos')->middleware('can:view,App\Models\Candidato');
 });
 
 // Partido

@@ -8,6 +8,7 @@ use App\Models\Elecciones;
 use App\Interfaces\Services\IEleccionesService;
 use App\Models\User;
 use App\Models\Candidato;
+use App\Models\CandidatoEleccion;
 use Illuminate\Support\Collection;
 use App\Models\Cargo;
 use App\Models\EstadoElecciones;
@@ -75,7 +76,28 @@ class EleccionesService implements IEleccionesService
 
     public function obtenerCandidatos(?Elecciones $eleccion = null): Collection
     {
-        throw new \Exception('Not implemented');
+        return $this->obtenerCandidatosIndividuales($eleccion);
+    }
+
+    public function obtenerCandidatosIndividuales(?Elecciones $eleccion = null): Collection
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
+
+        return $eleccion->candidatos()->where('idPartido', '=', null)->get();
+    }
+
+    public function obtenerCandidatosMiembrosDePartido(?Elecciones $eleccion = null): Collection
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
+
+        return $eleccion->candidatos()->where('idPartido', '!=', null)->get();
+    }
+
+    public function obtenerCandidatosDePartido(Partido $partido, ?Elecciones $eleccion = null): Collection
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
+
+        return $eleccion->candidatos()->where('idPartido', '=', $partido->getKey())->get();
     }
 
     public function obtenerCandidatosPorCargo(Cargo $cargo, ?Elecciones $eleccion = null): Collection
@@ -217,5 +239,13 @@ class EleccionesService implements IEleccionesService
 
         $fechaActual = Carbon::now();
         return $fechaActual->between($eleccion->fechaInicio, $eleccion->fechaCierre);
+    }
+
+    public function obtenerCandidatoEleccion(Candidato $candidato, ?Elecciones $eleccion = null): CandidatoEleccion
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
+        return CandidatoEleccion::where('idCandidato', '=', $candidato->getKey())
+            ->where('idElecciones', '=', $eleccion->getKey())
+            ->first();
     }
 }

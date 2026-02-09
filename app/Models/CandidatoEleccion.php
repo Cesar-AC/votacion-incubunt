@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Thiagoprz\CompositeKey\HasCompositeKey;
 
 class CandidatoEleccion extends Model
 {
+    use HasCompositeKey;
+
     protected $table = 'CandidatoEleccion';
 
     protected $primaryKey = ['idCandidato', 'idElecciones'];
