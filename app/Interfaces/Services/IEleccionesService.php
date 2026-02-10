@@ -239,6 +239,16 @@ interface IEleccionesService
     public function votacionHabilitada(?Elecciones $eleccion = null): bool;
 
     /**
+     * @param Elecciones $eleccion
+     *      Opcional.
+     *      Si es enviado, el método utilizará la elección especificada.
+     *      Si no, el método utilizará la elección activa.
+     * @return bool
+     *      Retorna true si la fecha de hoy es posterior o igual a la fecha de cierre de la elección, false en caso contrario.
+     */
+    public function votacionPosteriorAFechaCierre(?Elecciones $eleccion = null): bool;
+
+    /**
      * @param Candidato $candidato
      *      Obligatorio.
      *      El candidato que se desea obtener.

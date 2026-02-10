@@ -18,6 +18,15 @@ interface ICandidatoService
     public function obtenerCandidatos(): Collection;
 
     /**
+     * @param Elecciones $eleccion
+     *      Obligatorio.
+     *      La elección en la que se desea obtener los candidatos.
+     * @return Collection<Candidato>
+     *      Retorna la lista de candidatos inscritos en la elección.
+     */
+    public function obtenerCandidatosInscritosEnEleccion(Elecciones $eleccion): Collection;
+
+    /**
      * @param int $id
      *      Obligatorio.
      *      El id del candidato que se desea obtener.
@@ -225,4 +234,17 @@ interface ICandidatoService
      * @throws \Exception Si no se envían los datos necesarios.
      */
     public function eliminarPropuestaDeCandidato(int $idPropuestaCandidato): void;
+
+    /**
+     * @param Cargo $cargo
+     *      Obligatorio.
+     *      El cargo del que se desea obtener los candidatos.
+     * @param Elecciones $elecciones
+     *      Obligatorio.
+     *      La elección en la que se desea obtener los candidatos.
+     * @return Collection<Candidato>
+     *      Retorna la lista de candidatos del cargo en la elección.
+     * @throws \Exception Si no se encuentra el cargo o la elección.
+     */
+    public function obtenerCandidatosPorCargoEnEleccion(Cargo $cargo, Elecciones $elecciones): Collection;
 }

@@ -119,6 +119,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/elecciones/{id}', [EleccionesController::class, 'show'])->name('crud.elecciones.ver_datos')->middleware('can:view,App\Models\Elecciones');
     Route::post('/elecciones/{id}/activar', [EleccionesController::class, 'activar'])->name('crud.elecciones.activar')->middleware('can:update,App\Models\Elecciones');
     Route::post('/elecciones/{id}/restaurar', [EleccionesController::class, 'restaurar'])->name('crud.elecciones.restaurar')->middleware('can:update,App\Models\Elecciones');
+    Route::post('/elecciones/{id}/finalizar', [EleccionesController::class, 'finalizar'])->name('crud.elecciones.finalizar')->middleware('can:update,App\Models\Elecciones');
 });
 
 // Candidato
@@ -173,6 +174,8 @@ Route::middleware(['auth'])->group(function () {
 // Voto
 Route::middleware(['auth'])->group(function () {
     Route::get('/votos', [VotoController::class, 'index'])->name('crud.voto.ver')->middleware('can:viewAny,App\Models\VotoCandidato');
+    Route::get('/votos/{idEleccion}', [VotoController::class, 'verResultadoElecciones'])->name('crud.voto.ver_resultados')->middleware('can:viewAny,App\Models\VotoCandidato');
+    Route::get('/votos/{idEleccion}/reporte', [VotoController::class, 'generarPDF'])->name('crud.voto.reporte')->middleware('can:view,App\Models\VotoCandidato');
 });
 
 // Cargo

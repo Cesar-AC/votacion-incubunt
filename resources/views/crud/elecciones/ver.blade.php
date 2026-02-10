@@ -61,6 +61,18 @@
           <!-- Acciones -->
           @if ($e->estaProgramado())
           <div class="col-12 col-md-4 text-md-right">
+            @if ($eleccionesService->votacionPosteriorAFechaCierre($e))
+            <form action="{{ route('crud.elecciones.finalizar', $e->idElecciones) }}"
+                  method="POST"
+                  class="d-inline">
+              @csrf
+              <button class="btn btn-outline-success btn-sm mb-1"
+                      onclick="return confirm('¿Finalizar esta elección?')">
+                <i class="fas fa-check"></i> Finalizar
+              </button>
+            </form>
+            @endif
+
             @if ($activaId !== $e->getKey())
             <form action="{{ route('crud.elecciones.activar', $e->idElecciones) }}"
                   method="POST"
@@ -102,6 +114,15 @@
                 <i class="fas fa-check"></i> Restaurar
               </button>
             </form>
+          </div>
+          @endif
+
+          @if ($e->estaFinalizado())
+          <div class="col-12 col-md-4 text-md-right">
+            <a href="{{ route('crud.voto.ver_resultados', $e->getKey()) }}"
+               class="btn btn-outline-info btn-sm mb-1">
+              <i class="fas fa-check"></i> Ver Resultados
+            </a>
           </div>
           @endif
 
