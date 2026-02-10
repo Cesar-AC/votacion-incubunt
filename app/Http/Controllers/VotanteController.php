@@ -22,6 +22,7 @@ use App\Interfaces\Services\IUserService;
 use App\Interfaces\Services\IVotoService;
 use App\Models\CandidatoEleccion;
 use App\Models\PartidoEleccion;
+use App\Models\Area;
 
 class VotanteController extends Controller
 {
@@ -56,7 +57,7 @@ class VotanteController extends Controller
         $permiso = $this->permisoService->permisoDesdeEnum(PermisoEnum::PERFIL_EDITAR);
 
         if (!$permiso || !$this->permisoService->comprobarUsuario(Auth::user(), $permiso)) {
-            abort(403, 'No tienes permiso para editar tu perfil.');
+            return redirect()->route('profile.show')->withErrors(['permiso' => 'No tienes permiso para editar tu perfil.']);
         }
 
         $user = Auth::user()->load(['perfil.carrera', 'perfil.area']);
@@ -77,7 +78,7 @@ class VotanteController extends Controller
         $permiso = $this->permisoService->permisoDesdeEnum(PermisoEnum::PERFIL_EDITAR);
 
         if (!$permiso || !$this->permisoService->comprobarUsuario(Auth::user(), $permiso)) {
-            abort(403, 'No tienes permiso para editar tu perfil.');
+            return redirect()->route('profile.show')->withErrors(['permiso' => 'No tienes permiso para editar tu perfil.']);
         }
 
         $user = Auth::user();
@@ -102,12 +103,24 @@ class VotanteController extends Controller
             'idArea.exists' => 'El area no es valida.',
         ]);
 
+        $request->validate([
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ], [
+            'foto.image' => 'La foto debe ser una imagen.',
+            'foto.mimes' => 'La foto debe ser de tipo: jpeg, png, jpg, gif.',
+            'foto.max' => 'La foto no puede exceder los 5MB.',
+        ]);
+
         try {
             if ($user->perfil) {
                 $userService->editarPerfilUsuario($perfilData, $user);
             } else {
                 $perfilData['idUser'] = $user->getKey();
                 \App\Models\PerfilUsuario::create($perfilData);
+            }
+
+            if ($request->hasFile('foto')) {
+                $userService->cambiarFoto($user, $request->file('foto'));
             }
 
             $candidato = Candidato::where('idUsuario', Auth::id())->first();
@@ -281,33 +294,26 @@ class VotanteController extends Controller
     public function vistaVotar(IAreaService $areaService)
     {
         $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
-        $areas = $areaService->obtenerAreas();
-
-        $candidatosPorArea = CandidatoEleccion::query()
-            ->where('idElecciones', '=', $eleccionActiva->getKey())
-            ->whereNull('idPartido')
-            ->with([
-                'candidato.usuario.perfil',
-                'candidato.propuestas' => function ($q) use ($eleccionActiva) {
-                    $q->where('idElecciones', '=', $eleccionActiva->getKey());
-                },
-                'cargo.area',
-            ])
+        $areas = Area::where('idArea', '!=', Area::PRESIDENCIA)
+            ->where('idArea', '!=', Area::SIN_AREA_ASIGNADA)
+            ->with('cargos.candidatoElecciones.candidato.usuario.perfil')
             ->get();
 
         $partidos = PartidoEleccion::query()
             ->where('idElecciones', $eleccionActiva->getKey())
             ->with([
-                'partido.propuestas' => function ($q) use ($eleccionActiva) {
-                    $q->where('idElecciones', $eleccionActiva->getKey());
-                },
-                'partido.candidatos.propuestas' => function ($q) use ($eleccionActiva) {
-                    $q->where('idElecciones', $eleccionActiva->getKey());
-                },
+                'partido' => function ($q) {
+                    $q->with([
+                        'candidatos.usuario.perfil',
+                        'propuestas' => function ($pq) {
+                            $pq->whereNull('idElecciones')->orWhere('idElecciones', request()->route('eleccionId'));
+                        }
+                    ]);
+                }
             ])
             ->get();
 
-        return view('votante.votar.lista', compact('eleccionActiva', 'candidatosPorArea', 'partidos', 'areas'));
+        return view('votante.votar.lista', compact('eleccionActiva', 'areas', 'partidos'));
     }
 
     /**
@@ -368,7 +374,7 @@ class VotanteController extends Controller
             $this->votoService->votar(Auth::user(), collect($entidades));
         } catch (\Exception $e) {
             return redirect()->route('votante.votar.lista', $eleccion->idElecciones)
-                ->with('error', 'Error al emitir el voto: ' . $e->getMessage());
+                ->withErrors('Error al emitir el voto: ' . $e->getMessage());
         }
 
         return redirect()->route('votante.votar.exito', $eleccion->idElecciones);
@@ -379,7 +385,19 @@ class VotanteController extends Controller
      */
     public function votoExitoso($eleccionId)
     {
-        return view('votante.votar.exito', compact('eleccion'));
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccionId);
+        $user = Auth::user();
+        // Obtener votos a partido
+        $votosPartido = \App\Models\VotoPartido::where('idUsuario', $user->id)
+            ->where('idElecciones', $eleccionId)
+            ->with(['partido'])
+            ->get();
+        // Obtener votos a candidato
+        $votosCandidato = \App\Models\VotoCandidato::where('idUsuario', $user->id)
+            ->where('idElecciones', $eleccionId)
+            ->with(['candidato.cargo'])
+            ->get();
+        return view('votante.votar.exito', compact('eleccion', 'votosPartido', 'votosCandidato'));
     }
 
     // =============================================
@@ -812,5 +830,116 @@ class VotanteController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Error al eliminar la propuesta: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Obtener candidatos presidenciales de un partido (API JSON)
+     */
+    public function obtenerCandidatosPartido($partidoId)
+    {
+        $partido = Partido::findOrFail($partidoId);
+        $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+
+        $candidatos = CandidatoEleccion::query()
+            ->where('idPartido', $partidoId)
+            ->where('idElecciones', $eleccionActiva->getKey())
+            ->with(['candidato.usuario.perfil', 'cargo'])
+            ->get()
+            ->map(function ($candidatoEleccion) {
+                $perfil = $candidatoEleccion->candidato->usuario->perfil;
+                $nombre = trim("{$perfil->nombre} {$perfil->otrosNombres} {$perfil->apellidoPaterno} {$perfil->apellidoMaterno}");
+                $initials = strtoupper(substr($perfil->nombre, 0, 1) . substr($perfil->apellidoPaterno ?? '', 0, 1));
+
+                return [
+                    'id' => $candidatoEleccion->candidato->getKey(),
+                    'nombre' => $nombre,
+                    'initials' => $initials,
+                    'cargo' => $candidatoEleccion->cargo->cargo,
+                    'foto' => $perfil->obtenerFotoURL(),
+                ];
+            });
+
+        return response()->json($candidatos);
+    }
+
+    /**
+     * Obtener propuestas de un partido (API JSON)
+     */
+    public function obtenerPropuestasPartido($partidoId)
+    {
+        $partido = Partido::findOrFail($partidoId);
+        $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+
+        $propuestas = PropuestaPartido::query()
+            ->where('idPartido', $partidoId)
+            ->where('idElecciones', $eleccionActiva->getKey())
+            ->get()
+            ->map(function ($propuesta) {
+                return [
+                    'id' => $propuesta->getKey(),
+                    'propuesta' => $propuesta->propuesta,
+                    'descripcion' => $propuesta->descripcion ?? '',
+                ];
+            });
+
+        return response()->json($propuestas);
+    }
+
+    /**
+     * Obtener propuestas de un candidato (API JSON)
+     */
+    public function obtenerPropuestasCandidato($candidatoId)
+    {
+        $candidato = Candidato::findOrFail($candidatoId);
+        $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+
+        $propuestas = PropuestaCandidato::query()
+            ->where('idCandidato', $candidatoId)
+            ->where('idElecciones', $eleccionActiva->getKey())
+            ->get()
+            ->map(function ($propuesta) {
+                return [
+                    'id' => $propuesta->getKey(),
+                    'propuesta' => $propuesta->propuesta ?? 'Propuesta',
+                    'descripcion' => $propuesta->descripcion ?? '',
+                ];
+            });
+
+        return response()->json($propuestas);
+    }
+
+    /**
+     * Obtener propuestas del partido del candidato presidencial (API JSON)
+     */
+    public function obtenerPropuestasPartidoCandidato($candidatoId)
+    {
+        $candidato = Candidato::findOrFail($candidatoId);
+        $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+
+        // Obtener el partido del candidato
+        $candidatoEleccion = CandidatoEleccion::query()
+            ->where('idCandidato', $candidatoId)
+            ->where('idElecciones', $eleccionActiva->getKey())
+            ->whereNotNull('idPartido')
+            ->first();
+
+        if (!$candidatoEleccion || !$candidatoEleccion->idPartido) {
+            return response()->json([]);
+        }
+
+        // Obtener propuestas del partido
+        $propuestas = PropuestaPartido::query()
+            ->where('idPartido', $candidatoEleccion->idPartido)
+            ->where('idElecciones', $eleccionActiva->getKey())
+            ->get()
+            ->map(function ($propuesta) {
+                return [
+                    'id' => $propuesta->getKey(),
+                    'propuesta' => $propuesta->propuesta,
+                    'descripcion' => $propuesta->descripcion ?? '',
+                ];
+            });
+
+        return response()->json($propuestas);
     }
 }

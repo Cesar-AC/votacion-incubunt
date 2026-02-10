@@ -218,7 +218,7 @@
                             <div id="" class="">
                                 <div class="flex flex-col sm:flex-row items-center gap-3 pb-2 sm:pb-0" style="min-width: min-content;">
                                         @foreach($candidatosArea as $candidatoEleccion)
-                                            @include('votante.propuestas.components.candidato-card', ['candidato' => $candidatoEleccion->candidato, 'area' => $candidatoEleccion->cargo->area, 'propuestas' => $candidatoEleccion->candidato->propuestas, 'compact' => true])
+                                            @include('votante.propuestas.components.candidato-card', ['candidato' => $candidatoEleccion->candidato, 'area' => $candidatoEleccion->cargo->area->area, 'cargo' => $candidatoEleccion->cargo, 'compact' => true])
                                         @endforeach
                                 </div>
                             </div>
@@ -243,5 +243,23 @@
 
 @endsection
 
+@push('scripts')
+<script>
+    // Listener para abrir modal de candidato desde modal de partido
+    document.addEventListener('abrirCandidatoModal', function(event) {
+        const candidatoId = event.detail.candidatoId;
+        
+        // Cerrar modal de partido
+        const pagina = document.querySelector('#pagina-propuestas');
+        const alpineData = Alpine.$data(pagina);
+        if (alpineData) {
+            alpineData.verPartidoModal = false;
+        }
 
-
+        // Abrir modal de candidato después de un pequeño delay para que no se solapen
+        setTimeout(() => {
+            setCandidatoModal(candidatoId);
+        }, 100);
+    });
+</script>
+@endpush

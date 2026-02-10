@@ -7,10 +7,10 @@
     $permisoPartido = $permisoService->permisoDesdeEnum(\App\Enum\Permiso::PROPUESTA_PARTIDO_CRUD);
     $permisoPerfil = $permisoService->permisoDesdeEnum(\App\Enum\Permiso::PERFIL_EDITAR);
     
-    $tienePropuestaCandidato = Auth::check() && $permisoService->comprobarUsuario(Auth::user(), $permisoCandidato);
-    $tienePropuestaPartido = Auth::check() && $permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+    $tienePropuestaCandidato = Auth::check() && $permisoCandidato && $permisoService->comprobarUsuario(Auth::user(), $permisoCandidato);
+    $tienePropuestaPartido = Auth::check() && $permisoPartido && $permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
     $puedeGestionarPropuestas = $tienePropuestaCandidato || $tienePropuestaPartido;
-    $tienePermisoPerfil = Auth::check() && $permisoService->comprobarUsuario(Auth::user(), $permisoPerfil);
+    $tienePermisoPerfil = Auth::check() && $permisoPerfil && $permisoService->comprobarUsuario(Auth::user(), $permisoPerfil);
     
     // Verificar si es candidato
     $esCandidato = Auth::check() && \App\Models\Candidato::where('idUsuario', Auth::id())->exists();

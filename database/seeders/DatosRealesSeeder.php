@@ -10,6 +10,7 @@ use App\Models\EstadoElecciones;
 use App\Models\EstadoUsuario;
 use App\Models\NivelLog;
 use App\Models\TipoVoto;
+use App\Models\Partido;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -146,6 +147,7 @@ class DatosRealesSeeder extends Seeder
         }
 
         $nivelLog = [
+            'Éxito',
             'Información',
             'Advertencia',
             'Error',
@@ -176,6 +178,18 @@ class DatosRealesSeeder extends Seeder
 
         foreach ($tiposVoto as $tipoVoto) {
             TipoVoto::create($tipoVoto);
+        }
+
+        $partidos = [
+            ['partido' => 'Partido A', 'urlPartido' => 'https://ejemplo.com/partida-a', 'descripcion' => 'Descripción del Partido A'],
+            ['partido' => 'Partido B', 'urlPartido' => 'https://ejemplo.com/partida-b', 'descripcion' => 'Descripción del Partido B'],
+            ['partido' => 'Partido C', 'urlPartido' => 'https://ejemplo.com/partida-c', 'descripcion' => 'Descripción del Partido C'],
+            ['partido' => 'Partido D', 'urlPartido' => 'https://ejemplo.com/partida-d', 'descripcion' => 'Descripción del Partido D'],
+            ['partido' => 'Independiente', 'urlPartido' => 'https://ejemplo.com/independiente', 'descripcion' => 'Lista de candidatos independientes'],
+        ];
+
+        foreach ($partidos as $partido) {
+            Partido::create($partido);
         }
     }
 }

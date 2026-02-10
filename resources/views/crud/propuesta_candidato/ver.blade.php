@@ -10,24 +10,25 @@
         </a>
     </div>
 
-    <div class="accordion" id="accordionElecciones">
+    <div id="accordionElecciones">
 
         @forelse($elecciones as $eleccion)
 
             @php
-                // Todas las propuestas de candidatos de la elección
-                $propuestas = $eleccion->partidos->flatMap->candidatos->flatMap->propuestas;
+                $candidatosEleccion = $eleccion->candidatoElecciones->pluck('candidato')->filter();
+                $propuestas = $candidatosEleccion->flatMap(function ($candidato) use ($eleccion) {
+                    return $candidato->propuestas->where('idElecciones', $eleccion->idElecciones);
+                });
                 $total = $propuestas->count();
             @endphp
 
             <div class="card shadow mb-2">
-                <div class="card-header" id="heading{{ $eleccion->idElecciones }}">
+                <div class="card-header" style="cursor: pointer;" onclick="toggleAccordion({{ $eleccion->idElecciones }})">
                     <h2 class="mb-0 d-flex justify-content-between align-items-center">
-                        <button class="btn btn-link text-left" type="button"
-                                data-toggle="collapse"
-                                data-target="#collapse{{ $eleccion->idElecciones }}">
+                        <div>
+                            <i class="fas fa-chevron-right accordion-icon" id="icon-{{ $eleccion->idElecciones }}"></i>
                             <strong>{{ $eleccion->titulo }}</strong>
-                        </button>
+                        </div>
 
                         <span class="badge badge-primary">
                             {{ $total }} propuestas
@@ -35,22 +36,25 @@
                     </h2>
                 </div>
 
-                <div id="collapse{{ $eleccion->idElecciones }}"
-                     class="collapse"
-                     data-parent="#accordionElecciones">
-
+                <div id="content-{{ $eleccion->idElecciones }}" style="display: none;">
                     <div class="card-body">
 
                         @if($propuestas->count())
-                            @foreach($eleccion->partidos as $partido)
+                            @foreach($candidatosEleccion as $candidato)
                                 @php
-                                    $candidatosConPropuestas = $partido->candidatos->filter(fn($c) => $c->propuestas->count() > 0);
+                                    $candidatoEleccion = $candidato->candidatoElecciones
+                                        ->firstWhere('idElecciones', $eleccion->idElecciones);
+                                    $cargoNombre = optional($candidatoEleccion?->cargo)->cargo ?? 'Sin cargo';
+                                    $partidoNombre = $candidatoEleccion?->idPartido 
+                                        ? (optional($candidatoEleccion?->partido)->partido ?? 'Partido sin nombre')
+                                        : 'Candidato de Área';
+                                    $propuestasCandidato = $candidato->propuestas
+                                        ->where('idElecciones', $eleccion->idElecciones);
                                 @endphp
-                                @if($candidatosConPropuestas->count())
-                                    <h4 class="text-primary mt-2">{{ $partido->partido }}</h4>
 
-                                    @foreach($candidatosConPropuestas as $candidato)
-                                        <h5 class="mt-3">
+                                @if($propuestasCandidato->count() > 0)
+                                    <div class="mb-4">
+                                        <h5 class="text-primary">
                                             {{
                                                 $candidato->usuario->perfil
                                                     ? trim(
@@ -60,11 +64,14 @@
                                                     )
                                                     : $candidato->usuario->correo
                                             }}
-                                            ({{ $candidato->cargo->cargo }})
                                         </h5>
+                                        <p class="text-muted mb-2">
+                                            <strong>Cargo:</strong> {{ $cargoNombre }} | 
+                                            <strong>{{ $candidatoEleccion?->idPartido ? 'Partido' : 'Tipo' }}:</strong> {{ $partidoNombre }}
+                                        </p>
 
                                         <ul class="list-group mb-3">
-                                            @foreach($candidato->propuestas as $propuesta)
+                                            @foreach($propuestasCandidato as $propuesta)
                                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                                     <div>
                                                         <strong>{{ $propuesta->propuesta }}</strong>
@@ -72,27 +79,27 @@
                                                         <small class="text-muted">{{ $propuesta->descripcion }}</small>
                                                     </div>
 
-                                                    <div>
+                                                    <div class="d-flex gap-2 align-items-center">
                                                         <a href="{{ route('crud.propuesta_candidato.editar', $propuesta->idPropuesta) }}"
-                                                           class="btn btn-sm btn-warning">
-                                                            <i class="fas fa-edit"></i>
+                                                           class="btn btn-sm btn-warning btn-action">
+                                                            <i class="fas fa-edit"></i>Editar
                                                         </a>
 
                                                         <form action="{{ route('crud.propuesta_candidato.eliminar', $propuesta->idPropuesta) }}"
                                                               method="POST"
-                                                              class="d-inline"
+                                                              style="display: inline-block;"
                                                               onsubmit="return confirm('¿Desea eliminar esta propuesta?')">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button class="btn btn-sm btn-danger">
-                                                                <i class="fas fa-trash"></i>
+                                                            <button type="submit" class="btn btn-sm btn-danger btn-action">
+                                                                <i class="fas fa-trash"></i>Eliminar
                                                             </button>
                                                         </form>
                                                     </div>
                                                 </li>
                                             @endforeach
                                         </ul>
-                                    @endforeach
+                                    </div>
                                 @endif
                             @endforeach
                         @else
@@ -111,4 +118,65 @@
 
     </div>
 </div>
+
+@push('scripts')
+<script>
+function toggleAccordion(id) {
+    const content = document.getElementById('content-' + id);
+    const icon = document.getElementById('icon-' + id);
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.classList.remove('fa-chevron-right');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        content.style.display = 'none';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-right');
+    }
+}
+</script>
+@endpush
+
+@push('styles')
+<style>
+.accordion-icon {
+    transition: transform 0.3s ease;
+    margin-right: 10px;
+}
+
+.btn-action {
+    white-space: nowrap;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-action i {
+    font-size: 0.875rem;
+}
+
+.btn-danger.btn-action {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+}
+
+.btn-danger.btn-action:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+}
+
+.btn-warning.btn-action {
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.btn-warning.btn-action:hover {
+    background-color: #e0a800 !important;
+    border-color: #d39e00 !important;
+}
+</style>
+@endpush
 @endsection

@@ -14,6 +14,9 @@ use App\Models\Carrera;
 use App\Models\Cargo;
 use App\Models\Area;
 use App\Models\EstadoUsuario;
+use App\Models\EstadoElecciones;
+use App\Models\PadronElectoral;
+use App\Models\CandidatoEleccion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -21,6 +24,14 @@ class PropuestasSeeder extends Seeder
 {
     public function run(): void
     {
+        // ==================== CREAR DATOS BASE ====================
+        
+        // Crear o obtener estado de elecciones
+        $estadoEleccion = EstadoElecciones::firstOrCreate(
+            ['idEstado' => 1],
+            ['estado' => 'Activo']
+        );
+        
         // Obtener o crear una elección activa
         $eleccion = Elecciones::first();
         if (!$eleccion) {
@@ -29,7 +40,7 @@ class PropuestasSeeder extends Seeder
                 'descripcion' => 'Elección de nueva directiva para el periodo 2026',
                 'fechaInicio' => now(),
                 'fechaCierre' => now()->addMonths(1),
-                'idEstado' => 1,
+                'idEstado' => $estadoEleccion->idEstado,
             ]);
         }
 
@@ -109,6 +120,7 @@ class PropuestasSeeder extends Seeder
                     'propuesta' => substr($propuesta, 0, 100),
                     'descripcion' => $propuesta,
                     'idPartido' => $partido->idPartido,
+                    'idElecciones' => $eleccion->idElecciones,
                 ]);
             }
 
@@ -258,10 +270,16 @@ class PropuestasSeeder extends Seeder
             ]);
 
             $candidatoPresidente = Candidato::create([
-                'idPartido' => $partido->idPartido,
-                'idCargo' => $cargoPresidente->idCargo,
                 'idUsuario' => $userPresidente->idUser,
                 'planTrabajo' => 'https://google.com/',
+            ]);
+
+            // Asociar candidato con elección, partido y cargo
+            CandidatoEleccion::create([
+                'idCandidato' => $candidatoPresidente->idCandidato,
+                'idElecciones' => $eleccion->idElecciones,
+                'idPartido' => $partido->idPartido,
+                'idCargo' => $cargoPresidente->idCargo,
             ]);
 
             // Candidatos grupales se asocian via PartidoEleccion (ya creado arriba)
@@ -271,6 +289,7 @@ class PropuestasSeeder extends Seeder
                     'propuesta' => substr($propuesta, 0, 100),
                     'descripcion' => $propuesta,
                     'idCandidato' => $candidatoPresidente->idCandidato,
+                    'idElecciones' => $eleccion->idElecciones,
                 ]);
             }
 
@@ -294,10 +313,16 @@ class PropuestasSeeder extends Seeder
             ]);
 
             $candidatoVice = Candidato::create([
-                'idPartido' => $partido->idPartido,
-                'idCargo' => $cargoVicepresidente->idCargo,
                 'idUsuario' => $userVice->idUser,
                 'planTrabajo' => 'https://google.com/',
+            ]);
+
+            // Asociar candidato con elección, partido y cargo
+            CandidatoEleccion::create([
+                'idCandidato' => $candidatoVice->idCandidato,
+                'idElecciones' => $eleccion->idElecciones,
+                'idPartido' => $partido->idPartido,
+                'idCargo' => $cargoVicepresidente->idCargo,
             ]);
 
             // Candidatos grupales se asocian via PartidoEleccion (ya creado arriba)
@@ -307,6 +332,7 @@ class PropuestasSeeder extends Seeder
                     'propuesta' => substr($propuesta, 0, 100),
                     'descripcion' => $propuesta,
                     'idCandidato' => $candidatoVice->idCandidato,
+                    'idElecciones' => $eleccion->idElecciones,
                 ]);
             }
         }
@@ -339,6 +365,18 @@ class PropuestasSeeder extends Seeder
                         'Implementar sistema de análisis predictivo de participación',
                     ]
                 ],
+                [
+                    'nombre' => 'Miguel',
+                    'apellidoPaterno' => 'Tech',
+                    'apellidoMaterno' => 'Mendoza',
+                    'dni' => '72345691',
+                    'carrera' => 'Ingeniería de Sistemas',
+                    'propuestas' => [
+                        'Crear API pública para integración con plataformas externas',
+                        'Implementar seguridad con autenticación de dos factores',
+                        'Desarrollar chatbot IA para soporte a miembros',
+                    ]
+                ],
             ],
             'Marketing' => [
                 [
@@ -365,6 +403,18 @@ class PropuestasSeeder extends Seeder
                         'Alianzas con influencers universitarios de la región norte',
                     ]
                 ],
+                [
+                    'nombre' => 'Patricia',
+                    'apellidoPaterno' => 'Social',
+                    'apellidoMaterno' => 'Flores',
+                    'dni' => '72345692',
+                    'carrera' => 'Marketing',
+                    'propuestas' => [
+                        'Crear comunidad online privada en Discord para miembros',
+                        'Implementar estrategia de SEO y posicionamiento digital',
+                        'Organizar concurso de creatividad con premios atractivos',
+                    ]
+                ],
             ],
             'Recursos Humanos' => [
                 [
@@ -377,6 +427,30 @@ class PropuestasSeeder extends Seeder
                         'Programa de Buddies para nuevos ingresos con mentores',
                         'Evaluaciones de clima organizacional trimestrales objetivas',
                         'Línea de escucha activa y apoyo emocional para miembros',
+                    ]
+                ],
+                [
+                    'nombre' => 'Fernando',
+                    'apellidoPaterno' => 'HR',
+                    'apellidoMaterno' => 'López',
+                    'dni' => '72345693',
+                    'carrera' => 'Administración',
+                    'propuestas' => [
+                        'Crear banco de talentos para proyectos especiales',
+                        'Sistema de rotación de funciones para desarrollo profesional',
+                        'Celebración trimestral de logros y reconocimientos',
+                    ]
+                ],
+                [
+                    'nombre' => 'Isabella',
+                    'apellidoPaterno' => 'Talent',
+                    'apellidoMaterno' => 'Díaz',
+                    'dni' => '72345694',
+                    'carrera' => 'Administración',
+                    'propuestas' => [
+                        'Programa de capacitación en inteligencia emocional',
+                        'Crear equipo de bienestar con actividades deportivas',
+                        'Manual de convivencia actualizado y participativo',
                     ]
                 ],
             ],
@@ -393,6 +467,30 @@ class PropuestasSeeder extends Seeder
                         'Optimizar gestión de coffee breaks en eventos masivos',
                     ]
                 ],
+                [
+                    'nombre' => 'Alejandro',
+                    'apellidoPaterno' => 'Supply',
+                    'apellidoMaterno' => 'García',
+                    'dni' => '72345695',
+                    'carrera' => 'Ingeniería Industrial',
+                    'propuestas' => [
+                        'Plan de reubicación de oficinas más eficiente',
+                        'Negociar espacios de coworking para miembros',
+                        'Sistema de requisición online en tiempo real',
+                    ]
+                ],
+                [
+                    'nombre' => 'Valentina',
+                    'apellidoPaterno' => 'Logist',
+                    'apellidoMaterno' => 'Ruiz',
+                    'dni' => '72345696',
+                    'carrera' => 'Ingeniería Industrial',
+                    'propuestas' => [
+                        'Implementar metodología Lean en procesos operativos',
+                        'Crear calendario de eventos con fechas límite anticipadas',
+                        'Programa de sostenibilidad en uso de materiales',
+                    ]
+                ],
             ],
             'PMO (Proyectos)' => [
                 [
@@ -405,6 +503,30 @@ class PropuestasSeeder extends Seeder
                         'Estandarizar tableros Trello/Notion para todas las áreas',
                         'Ofrecer capacitación en PMI para miembros interesados',
                         'Crear banco de proyectos sociales con impacto medible',
+                    ]
+                ],
+                [
+                    'nombre' => 'Eduardo',
+                    'apellidoPaterno' => 'Manager',
+                    'apellidoMaterno' => 'Castro',
+                    'dni' => '72345697',
+                    'carrera' => 'Ingeniería Industrial',
+                    'propuestas' => [
+                        'Gestión visual con mapas mental y diagramas de Gantt',
+                        'Matriz de riesgos y planes de contingencia para proyectos',
+                        'Reuniones de retrospectiva mensuales con mejora continua',
+                    ]
+                ],
+                [
+                    'nombre' => 'Natalia',
+                    'apellidoPaterno' => 'Project',
+                    'apellidoMaterno' => 'Soto',
+                    'dni' => '72345698',
+                    'carrera' => 'Ingeniería Industrial',
+                    'propuestas' => [
+                        'Menteoría de proyectos para emprendedores novatos',
+                        'Fondo de riesgo compartido para proyectos ambiciosos',
+                        'Acelerador de startups interno con 3 meses de incubación',
                     ]
                 ],
             ],
@@ -434,15 +556,16 @@ class PropuestasSeeder extends Seeder
 
                 // Candidatos de área son INDIVIDUALES (sin partido)
                 $candidato = Candidato::create([
-                    'idPartido' => null,
-                    'idCargo' => $cargo->idCargo,
                     'idUsuario' => $user->idUser,
                     'planTrabajo' => 'https://google.com/',
                 ]);
 
-                DB::table('CandidatoEleccion')->insert([
+                // Asociar candidato con elección y cargo
+                CandidatoEleccion::create([
                     'idCandidato' => $candidato->idCandidato,
                     'idElecciones' => $eleccion->idElecciones,
+                    'idPartido' => null,
+                    'idCargo' => $cargo->idCargo,
                 ]);
 
                 foreach ($candidatoData['propuestas'] as $propuesta) {
@@ -450,14 +573,80 @@ class PropuestasSeeder extends Seeder
                         'propuesta' => substr($propuesta, 0, 100),
                         'descripcion' => $propuesta,
                         'idCandidato' => $candidato->idCandidato,
+                        'idElecciones' => $eleccion->idElecciones,
                     ]);
                 }
             }
         }
 
+        // ==================== CREAR PADRÓN ELECTORAL (VOTANTES) ====================
+        
+        $this->command->info('🗳️ Creando padrón electoral...');
+        
+        // Crear votantes de prueba (estudiantes)
+        $votantesData = [
+            ['nombre' => 'Juan', 'apellidoPaterno' => 'Pérez', 'apellidoMaterno' => 'García', 'dni' => '75123456', 'carrera' => 0],
+            ['nombre' => 'María', 'apellidoPaterno' => 'González', 'apellidoMaterno' => 'López', 'dni' => '75123457', 'carrera' => 1],
+            ['nombre' => 'Carlos', 'apellidoPaterno' => 'Rodríguez', 'apellidoMaterno' => 'Martínez', 'dni' => '75123458', 'carrera' => 2],
+            ['nombre' => 'Ana', 'apellidoPaterno' => 'Hernández', 'apellidoMaterno' => 'Sánchez', 'dni' => '75123459', 'carrera' => 3],
+            ['nombre' => 'Pedro', 'apellidoPaterno' => 'López', 'apellidoMaterno' => 'Gómez', 'dni' => '75123460', 'carrera' => 4],
+            ['nombre' => 'Laura', 'apellidoPaterno' => 'Martínez', 'apellidoMaterno' => 'Rodríguez', 'dni' => '75123461', 'carrera' => 5],
+            ['nombre' => 'Miguel', 'apellidoPaterno' => 'García', 'apellidoMaterno' => 'Pérez', 'dni' => '75123462', 'carrera' => 6],
+            ['nombre' => 'Sofia', 'apellidoPaterno' => 'Sánchez', 'apellidoMaterno' => 'González', 'dni' => '75123463', 'carrera' => 0],
+            ['nombre' => 'Roberto', 'apellidoPaterno' => 'Gómez', 'apellidoMaterno' => 'Hernández', 'dni' => '75123464', 'carrera' => 1],
+            ['nombre' => 'Gabriela', 'apellidoPaterno' => 'Flores', 'apellidoMaterno' => 'Castro', 'dni' => '75123465', 'carrera' => 2],
+        ];
+
+        $carrerasArray = $carreras->toArray();
+        $votantesCreados = [];
+
+        foreach ($votantesData as $votanteData) {
+            $user = User::create([
+                'correo' => strtolower($votanteData['nombre']) . '.' . strtolower($votanteData['apellidoPaterno']) . '@estudiante.unitru.edu.pe',
+                'contraseña' => Hash::make('password123'),
+                'idEstadoUsuario' => $estadoActivo->idEstadoUsuario,
+            ]);
+
+            $perfil = PerfilUsuario::create([
+                'idUser' => $user->idUser,
+                'nombre' => $votanteData['nombre'],
+                'apellidoPaterno' => $votanteData['apellidoPaterno'],
+                'apellidoMaterno' => $votanteData['apellidoMaterno'],
+                'dni' => $votanteData['dni'],
+                'telefono' => '9' . rand(10000000, 99999999),
+                'idCarrera' => $carrerasArray[$votanteData['carrera']]['idCarrera'],
+                'idArea' => 1,
+            ]);
+
+            // Agregar al padrón electoral
+            PadronElectoral::create([
+                'idUsuario' => $user->idUser,
+                'idElecciones' => $eleccion->idElecciones,
+            ]);
+
+            $votantesCreados[] = $user;
+        }
+
+
+
         $this->command->info('✅ Seeder de propuestas completado exitosamente!');
-        $this->command->info('📊 Partidos creados: ' . count($partidosCreados));
-        $this->command->info('👥 Total de candidatos creados: ' . Candidato::count());
-        $this->command->info('📝 Total de propuestas creadas: ' . (PropuestaCandidato::count() + PropuestaPartido::count()));
+        $this->command->info('');
+        $this->command->info('📊 RESUMEN DE DATOS CREADOS:');
+        $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        $this->command->info('🔷 Elecciones: 1 (' . $eleccion->titulo . ')');
+        $this->command->info('📋 Partidos: ' . count($partidosCreados));
+        $this->command->info('👥 Candidatos: ' . Candidato::count());
+        $this->command->info('   └─ Presidenciales: ' . CandidatoEleccion::whereIn('idCargo', [$cargoPresidente->idCargo, $cargoVicepresidente->idCargo])->count());
+        $this->command->info('   └─ Por Áreas: ' . CandidatoEleccion::whereNull('idPartido')->count());
+        $this->command->info('📝 Propuestas: ' . (PropuestaCandidato::count() + PropuestaPartido::count()));
+        $this->command->info('   └─ De Partidos: ' . PropuestaPartido::count());
+        $this->command->info('   └─ De Candidatos: ' . PropuestaCandidato::count());
+        $this->command->info('🗳️ Votantes (Padrón): ' . count($votantesCreados));
+        $this->command->info('');
+        $this->command->info('🔑 CREDENCIALES DE PRUEBA:');
+        $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        $this->command->info('Votante: maria.gonzalez@estudiante.unitru.edu.pe | contraseña: password123');
+        $this->command->info('Candidato: carlos.mendez@unitru.edu.pe | contraseña: password');
+        $this->command->info('');
     }
 }

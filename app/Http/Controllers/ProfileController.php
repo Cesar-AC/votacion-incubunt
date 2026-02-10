@@ -21,7 +21,8 @@ class ProfileController extends Controller
         $user = $request->user();
         $user->load(['perfil.carrera', 'perfil.area', 'perfil.foto', 'roles', 'estadoUsuario']);
 
-        $puedeCambiarFoto = $permisoService->comprobarUsuario(Auth::user(), $permisoService->permisoDesdeEnum(Permiso::USUARIO_CAMBIAR_FOTO));
+        $permiso = $permisoService->permisoDesdeEnum(Permiso::USUARIO_CAMBIAR_FOTO);
+        $puedeCambiarFoto = $permiso && $permisoService->comprobarUsuario(Auth::user(), $permiso);
 
         return view('profile.show', compact('user', 'puedeCambiarFoto'));
     }
