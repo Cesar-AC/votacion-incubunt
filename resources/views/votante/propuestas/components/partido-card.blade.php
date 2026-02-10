@@ -4,36 +4,14 @@
 --}}
 @props(['partido'])
 
-<article @click="verPartidoModal = true; $store.modalPartido.partido = partido"
+@php
+    $partidoFotoURL = $partido->obtenerFotoURL() ?? null;
+@endphp
+
+<article @click="verPartidoModal = true; setPartidoModal({{ $partido->getKey() }})"
         class="partido-card group bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300 flex-shrink-0"
         style="width: 280px;"
-        x-data="{
-            partido: {
-                'id': '{{ $partido->getKey() }}',
-                'foto': '',
-                'nombre': '{{ $partido->partido }}',
-                'url': '{{ $partido->urlPartido }}',
-                'descripcion': '{{ $partido->descripcion }}',
-                'planTrabajo': '{{ $partido->planTrabajo }}',
-                'candidatos': [
-                    @foreach($partido->candidatos as $candidato)
-                        {
-                            'id': '{{ $candidato->getKey() }}',
-                            'foto': '',
-                            'nombre': '{{ $candidato->usuario->perfil->nombre }} {{ $candidato->usuario->perfil->otrosNombres }} {{ $candidato->usuario->perfil->apellidoPaterno }} {{ $candidato->usuario->perfil->apellidoMaterno }}',
-                            'cargo': '{{ $candidatoService->obtenerCargoDeCandidatoEnElecciones($candidato, $eleccionActiva)->cargo }}',
-                        },
-                    @endforeach
-                ],
-                'propuestas': [
-                    @foreach($partido->propuestas as $propuesta)
-                        {
-                            'descripcion': '{{ $propuesta->descripcion }}'
-                        },
-                    @endforeach
-                ],
-            }
-        }">
+        x-data>
 
     {{-- Header con indicador de color --}}
     <div class="relative">
@@ -42,24 +20,45 @@
 
         {{-- Contenido del header --}}
         <div class="p-5 flex flex-col items-center gap-4">
-            {{-- Logo/Icono del partido --}}
+            {{-- Logo/Icono del partido - solo si existe foto --}}
+            @if($partidoFotoURL)
             <div class="max-w-24 rounded-2xl bg-gray-200 flex items-center justify-center shadow-lg shadow-indigo-200">
-                <img src="{{ $partido->foto }}" alt="Foto de partido {{ $partido->partido }}" class="w-full h-full object-cover rounded-2xl">
+                <img src="{{ $partidoFotoURL }}" alt="Foto de partido {{ $partido->partido }}" class="w-full h-full object-cover rounded-2xl">
             </div>
+            @endif
 
             {{-- Nombre del partido --}}
             <h3 class="text-lg font-bold text-gray-900 line-clamp-2 text-center leading-snug">
                 {{ $partido->partido }}
             </h3>
 
-            {{-- Avatares de miembros --}}
+            {{-- Avatares de miembros presidenciales --}}
             <div class="flex items-center">
                 <div class="flex -space-x-2">
-                    @foreach($partido->candidatos->take(4) as $index => $candidato)
+                    @php
+                        $candidatosPresidenciales = $partido->elecciones()
+                            ->first()
+                            ?->candidatoElecciones()
+                            ->where('idPartido', $partido->getKey())
+                            ->whereIn('idCargo', function($q) {
+                                $q->select('idCargo')->from('Cargo')
+                                  ->whereIn('cargo', ['Presidente', 'Vicepresidente']);
+                            })
+                            ->with('candidato.usuario.perfil')
+                            ->limit(4)
+                            ->get() ?? collect();
+                    @endphp
+                    @forelse($candidatosPresidenciales as $candidatoEleccion)
+                        @php
+                            $candidatoFotoURL = $candidatoEleccion->candidato->usuario->perfil->obtenerFotoURL();
+                        @endphp
+                        @if($candidatoFotoURL)
                         <div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                            <img src="{{ $candidato->foto }}" alt="Foto de candidato {{ $candidato->nombre }}" class="w-full h-full object-cover rounded-full">
+                            <img src="{{ $candidatoFotoURL }}" alt="Foto de candidato" class="w-full h-full object-cover rounded-full">
                         </div>
-                    @endforeach
+                        @endif
+                    @empty
+                    @endforelse
                 </div>
             </div>
 
@@ -79,22 +78,14 @@
             </svg>
         </button>
     </div>
-</article>
 
-@push('scripts')
-<script>
-document.addEventListener('alpine:init', () => {
-    Alpine.store('modalPartido', {
-        partido: {
-            nombre: '',
-            url: '',
-            descripcion: '',
-            planTrabajo: '',
-            candidatos: [],
-            propuestas: [],
-        }
-    })
-})
-</script>
-@endpush
+    {{-- Hidden data for modal population --}}
+    <div class="hidden" data-partido-id="{{ $partido->getKey() }}" 
+         data-partido-nombre="{{ $partido->partido }}"
+         data-partido-url="{{ $partido->urlPartido }}"
+         data-partido-descripcion="{{ $partido->descripcion }}"
+         data-partido-plan-trabajo="{{ $partido->planTrabajo }}"
+         data-partido-foto="{{ $partidoFotoURL ?? '' }}">
+    </div>
+</article>
 

@@ -4,14 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\PropuestaCandidato;
 use Illuminate\Http\Request;
+use App\Models\Elecciones;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 class PropuestaCandidatoController extends Controller
 {
-    public function index()
+     public function index()
     {
-        $elecciones = \App\Models\Elecciones::with(['partidos.candidatos.propuestas'])->get();
+        $elecciones = Elecciones::with([
+            'candidatoElecciones.candidato.usuario.perfil',
+            'candidatoElecciones.candidato.propuestas',
+            'candidatoElecciones.cargo',
+            'candidatoElecciones.partido'
+        ])->get();
+        
         return view('crud.propuesta_candidato.ver', compact('elecciones'));
     }
 

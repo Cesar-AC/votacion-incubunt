@@ -64,13 +64,16 @@ class PadronElectoralController extends Controller
 	{
 		$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-		return response()->json([
-			'success' => true,
-			'message' => 'Padrón obtenido',
-			'data' => [
-				'idElecciones' => $eleccion->idElecciones,
-			],
-		]);
+		// Obtener todos los usuarios del padrón con sus perfiles
+		$participantes = PadronElectoral::where('idElecciones', $id)
+			->with(['usuario.perfil'])
+			->get()
+			->map(function ($padron) {
+				return $padron->usuario;
+			})
+			->sortBy('idUser');
+
+		return view('crud.padron_electoral.detalle', compact('eleccion', 'participantes'));
 	}
 
 	public function edit(int $id)

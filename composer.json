@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "aspera/xlsx-reader": "^2.0",
+        "barryvdh/laravel-dompdf": "^3.1",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "league/csv": "9.0",

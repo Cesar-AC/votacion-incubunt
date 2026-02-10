@@ -25,18 +25,6 @@ class Cargo extends Model
 
     public function candidatos()
     {
-        return $this->hasManyThrough(
-            Candidato::class,
-            CandidatoEleccion::class,
-            'idCargo',      // Foreign key on CandidatoEleccion
-            'idCandidato',  // Foreign key on Candidato
-            'idCargo',      // Local key on Cargo
-            'idCandidato'   // Local key on CandidatoEleccion
-        );
-    }
-
-    public function candidatoElecciones()
-    {
-        return $this->hasMany(CandidatoEleccion::class, 'idCargo');
+        return $this->belongsToMany(Candidato::class, 'CandidatoEleccion', 'idCargo', 'idCandidato');
     }
 }

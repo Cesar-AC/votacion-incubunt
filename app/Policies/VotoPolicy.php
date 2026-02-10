@@ -25,12 +25,9 @@ class VotoPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, VotoCandidato|VotoPartido $voto): bool
+    public function view(User $user): bool
     {
-        $votoId = $voto instanceof VotoCandidato ? $voto->idVotoCandidato : $voto->idVotoPartido;
-        
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "voto:crud:ver:{$votoId}",
             'voto:crud:ver:*',
             'voto:crud:*',
             'voto:*'

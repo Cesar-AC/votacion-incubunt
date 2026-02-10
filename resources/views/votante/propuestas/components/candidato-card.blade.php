@@ -1,35 +1,18 @@
-@props(['candidato', 'area' => '', 'compact' => false])
+@props(['candidato', 'area' => '', 'compact' => false, 'cargo' => null])
 
 @php
     $nombre = join(' ', [$candidato->usuario->perfil->nombre, $candidato->usuario->perfil->otrosNombres, $candidato->usuario->perfil->apellidoPaterno, $candidato->usuario->perfil->apellidoMaterno]);
     $apellido = $candidato->usuario->perfil->apellidoPaterno ?? '';
     $initials = strtoupper(substr($nombre, 0, 1) . substr($apellido, 0, 1));
     $carrera = $candidato->usuario->perfil->carrera->carrera ?? 'Sin carrera asignada';
-    $foto = $candidato->usuario->perfil->fotoPerfil ?? null;
+    $fotoURL = $candidato->usuario->perfil->obtenerFotoURL() ?? null;
+    $esPresidencial = $cargo && in_array($cargo->cargo, ['Presidente', 'Vicepresidente']);
 @endphp
 
-<article @click="verCandidatoModal = true; $store.modalCandidato.candidato = candidato"
+<article @click="verCandidatoModal = true; setCandidatoModal({{ $candidato->getKey() }})"
          class="partido-card group bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300 flex-shrink-0"
          style="width: 280px; min-width: 280px;"
-         x-data="{
-            candidato: {
-                'id': '{{ $candidato->getKey() }}',
-                'nombre': '{{ $nombre }}',
-                'fotoURL': '',
-                'carrera': '{{ $candidato->usuario->perfil->carrera->carrera }}',
-                'area': '{{ $area }}',
-                'cargo': '{{ $candidatoService->obtenerCargoDeCandidatoEnElecciones($candidato, $eleccionActiva)->cargo }}',
-                'planTrabajoURL': '',
-                'propuestas': [
-                    @foreach($candidato->propuestas as $propuesta)
-                        {
-                            'titulo': '{{ $propuesta->propuesta }}',
-                            'descripcion': '{{ $propuesta->descripcion }}'
-                        },
-                    @endforeach
-                ],
-            }
-        }">
+         x-data>
 
     {{-- Header con indicador de color --}}
     <div class="relative">
@@ -40,13 +23,19 @@
         <div class="px-5 py-3 flex flex-col items-center gap-4">
             <h3 class="text-lg text-gray-900 line-clamp-2 text-center leading-snug py-2">
                 <span class="text-gray-500 font-normal text-sm">Para el cargo de</span>
-                <span class="font-bold text-lg text-amber-500">{{ $candidatoService->obtenerCargoDeCandidatoEnElecciones($candidato, $eleccionActiva)->cargo }}</span>
+                <span class="font-bold text-lg text-amber-500">{{ $cargo ? $cargo->cargo : 'Candidato' }}</span>
             </h3>
 
-            {{-- Logo/Icono del Candidato --}}
+            {{-- Logo/Icono del Candidato - solo si existe foto --}}
+            @if($fotoURL)
             <div class="max-w-24 rounded-2xl bg-gray-200 flex items-center justify-center shadow-lg shadow-indigo-200">
-                <img src="{{ $candidato->foto }}" alt="Foto de candidato {{ $nombre }}" class="w-full h-full object-cover rounded-2xl">
+                <img src="{{ $fotoURL }}" alt="Foto de candidato {{ $nombre }}" class="w-full h-full object-cover rounded-2xl">
             </div>
+            @else
+            <div class="max-w-24 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg text-white text-3xl font-bold">
+                {{ $initials }}
+            </div>
+            @endif
 
             {{-- Nombre del Candidato --}}
             <h4 class="text-lg font-bold text-gray-900 line-clamp-2 text-center leading-snug">
@@ -64,23 +53,15 @@
             </svg>
         </button>
     </div>
-</article>
 
-@push('scripts')
-<script>
-document.addEventListener('alpine:init', () => {
-    Alpine.store('modalCandidato', {
-        candidato: {
-            id: '',
-            nombre: '',
-            fotoURL: '',
-            carrera: '',
-            area: '',
-            cargo: '',
-            planTrabajoURL: '',
-            propuestas: [],
-        }
-    })
-})
-</script>
-@endpush
+    {{-- Hidden data for modal population --}}
+    <div class="hidden" data-candidato-id="{{ $candidato->getKey() }}"
+         data-candidato-nombre="{{ $nombre }}"
+         data-candidato-carrera="{{ $carrera }}"
+         data-candidato-area="{{ $area }}"
+         data-candidato-cargo="{{ $cargo ? $cargo->cargo : '' }}"
+         data-candidato-foto="{{ $fotoURL ?? '' }}"
+         data-candidato-plan-trabajo="{{ $candidato->planTrabajo ?? '' }}"
+         data-candidato-es-presidencial="{{ $esPresidencial ? 'true' : 'false' }}">
+    </div>
+</article>

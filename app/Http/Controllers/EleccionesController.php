@@ -18,6 +18,8 @@ class EleccionesController extends Controller
 
     public function index()
     {
+        $eleccionesService = $this->eleccionesService;
+
         $elecciones = Elecciones::with(['estadoEleccion'])
             ->withCount('usuarios') // cuenta padrón electoral
             ->orderBy('fechaInicio', 'desc')
@@ -25,12 +27,12 @@ class EleccionesController extends Controller
 
         $eleccionActiva = null;
         try {
-            $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+            $eleccionActiva = $eleccionesService->obtenerEleccionActiva();
         } catch (\Exception $e) {
             // sin elección activa configurada, omitimos
         }
 
-        return view('crud.elecciones.ver', compact('elecciones', 'eleccionActiva'));
+        return view('crud.elecciones.ver', compact('elecciones', 'eleccionActiva', 'eleccionesService'));
     }
 
     public function show(int $id)
@@ -143,7 +145,7 @@ class EleccionesController extends Controller
         }
     }
 
-    public function finalizar(Request $request, int $id)
+    public function finalizar(int $id)
     {
         $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 

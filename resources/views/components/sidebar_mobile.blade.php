@@ -132,19 +132,7 @@
                        class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
                        data-dismiss="modal">
                         <i class="fas fa-box mr-3" style="color: #161349; font-size: 1.1rem;"></i>
-                        <span>Mis Votos</span>
-                    </a>
-                        <a href="{{ route('crud.lista_votante.ver') }}" 
-                           class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
-                           data-dismiss="modal">
-                            <i class="fas fa-list-ol mr-3" style="color: #161349; font-size: 1.1rem;"></i>
-                            <span>Listas Votantes</span>
-                        </a>
-                        <a href="{{ route('crud.voto.ver') }}" 
-                           class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
-                           data-dismiss="modal">
-                            <i class="fas fa-box mr-3" style="color: #161349; font-size: 1.1rem;"></i>
-                            <span>Votos</span>
+                        <span>Resumen de Votos</span>
                         </a>
 
                         <!-- Usuarios -->
@@ -202,13 +190,13 @@
                            class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
                            data-dismiss="modal">
                             <i class="fas fa-file-alt mr-3" style="color: #6c757d; font-size: 1.1rem;"></i>
-                            <span>Propuestas Candidatos</span>
+                            <span>Propuestas de Candidatos</span>
                         </a>
                         <a href="{{ route('crud.propuesta_partido.ver') }}" 
                            class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
                            data-dismiss="modal">
                             <i class="fas fa-file-contract mr-3" style="color: #6c757d; font-size: 1.1rem;"></i>
-                            <span>Propuestas Partidos</span>
+                            <span>Propuestas de Partidos</span>
                         </a>
                         
                         <!-- Configuración -->

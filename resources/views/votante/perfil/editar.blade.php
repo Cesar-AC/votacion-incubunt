@@ -132,6 +132,31 @@
       </div>
     </div>
 
+    <div class="card shadow-sm mb-3" x-data="{inputFoto: null}">
+      <div class="card-body">
+        <h6 class="font-weight-bold mb-3">Foto de Perfil</h6>
+
+        <div class="form-group">
+          <input
+            type="file"
+            x-ref="inputFoto"
+            name="foto"
+            id="inputFoto"
+            class="form-control-file @error('foto') is-invalid @enderror"
+            accept=".png, .jpg, .jpeg, .gif"
+            x-model="inputFoto">
+          @error('foto')
+            <div class="invalid-feedback d-block">{{ $message }}</div>
+          @enderror
+        </div>
+
+        <div id="fotoPreview" class="mt-3" @if (!$user->perfil?->tieneFoto()) x-cloak x-show="inputFoto != null" @endif>
+          <p class="text-muted mb-2">Previsualización:</p>
+          <img id="visualizacionFoto" src="{{ $user->perfil?->obtenerFotoURL() }}" alt="Previsualización de foto" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+        </div>
+      </div>
+    </div>
+
     @if($candidato)
       <div class="card shadow-sm mb-3">
         <div class="card-body">
@@ -216,4 +241,9 @@
   </form>
 
 </div>
+
+@push('scripts')
+@include('components.preview-upload-photo-script')
+@endpush
+
 @endsection

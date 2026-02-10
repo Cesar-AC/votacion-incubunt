@@ -83,7 +83,7 @@ class PermisoService implements IPermisoService
         $usuario->roles()->detach($rol->getKey());
     }
 
-    public function permisoDesdeEnum(\App\Enum\Permiso $permisoEnum): Permiso
+    public function permisoDesdeEnum(\App\Enum\Permiso $permisoEnum): ?Permiso
     {
         return Permiso::desdeEnum($permisoEnum);
     }
