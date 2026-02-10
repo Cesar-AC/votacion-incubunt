@@ -18,6 +18,13 @@ class CandidatoService implements ICandidatoService
         return Candidato::get();
     }
 
+    public function obtenerCandidatosInscritosEnEleccion(Elecciones $eleccion): Collection
+    {
+        return Candidato::whereHas('elecciones', function ($query) use ($eleccion) {
+            $query->where('Elecciones.idElecciones', '=', $eleccion->getKey());
+        })->get();
+    }
+
     public function obtenerCandidatoPorId(int $id): Candidato
     {
         return Candidato::findOrFail($id);
@@ -150,5 +157,13 @@ class CandidatoService implements ICandidatoService
     {
         PropuestaCandidato::where('idPropuestaCandidato', $idPropuestaCandidato)
             ->delete();
+    }
+
+    public function obtenerCandidatosPorCargoEnEleccion(Cargo $cargo, Elecciones $elecciones): Collection
+    {
+        return Candidato::whereHas('candidatoElecciones', function ($query) use ($cargo, $elecciones) {
+            $query->where('idCargo', '=', $cargo->getKey())
+                ->where('idElecciones', '=', $elecciones->getKey());
+        })->get();
     }
 }

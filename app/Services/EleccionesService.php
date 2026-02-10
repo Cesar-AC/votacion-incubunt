@@ -241,6 +241,14 @@ class EleccionesService implements IEleccionesService
         return $fechaActual->between($eleccion->fechaInicio, $eleccion->fechaCierre);
     }
 
+    public function votacionPosteriorAFechaCierre(?Elecciones $eleccion = null): bool
+    {
+        $eleccion = $this->obtenerEleccionOFalla($eleccion);
+
+        $fechaActual = Carbon::now();
+        return $fechaActual->greaterThanOrEqualTo($eleccion->fechaCierre);
+    }
+
     public function obtenerCandidatoEleccion(Candidato $candidato, ?Elecciones $eleccion = null): CandidatoEleccion
     {
         $eleccion = $this->obtenerEleccionOFalla($eleccion);

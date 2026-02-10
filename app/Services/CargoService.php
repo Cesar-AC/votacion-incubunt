@@ -45,8 +45,9 @@ class CargoService implements ICargoService
 
     public function obtenerCargoDePostulacionDeCandidatoEnElecciones(Candidato $candidato, Elecciones $elecciones): Cargo
     {
-        return CandidatoEleccion::where('idCandidato', '=', $candidato->getKey())
-            ->where('idElecciones', '=', $elecciones->getKey())
-            ->first();
+        return Cargo::whereHas('candidatos', function ($query) use ($candidato, $elecciones) {
+            $query->where('CandidatoEleccion.idCandidato', '=', $candidato->getKey())
+                ->where('CandidatoEleccion.idElecciones', '=', $elecciones->getKey());
+        })->first();
     }
 }
