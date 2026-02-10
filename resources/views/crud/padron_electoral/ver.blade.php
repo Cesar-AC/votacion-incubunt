@@ -80,6 +80,11 @@
         </div>
 
         <div class="text-right">
+          <a href="{{ route('crud.padron_electoral.ver_datos', $eleccion->idElecciones) }}"
+            class="btn btn-outline-info btn-sm mb-1">
+            <i class="fas fa-users"></i> Ver Participantes
+          </a>
+
           <a href="{{ route('crud.padron_electoral.editar', $eleccion->idElecciones) }}"
             class="btn btn-outline-primary btn-sm mb-1">
             <i class="fas fa-edit"></i> Editar

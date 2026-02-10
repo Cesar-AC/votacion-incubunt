@@ -65,6 +65,14 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{eleccionId}/exito', [VotanteController::class, 'votoExitoso'])->name('exito');
         });
 
+        // APIs para obtener datos de propuestas
+        Route::prefix('propuestas')->name('propuestas.')->group(function () {
+            Route::get('/candidatos/{partidoId}', [VotanteController::class, 'obtenerCandidatosPartido'])->name('candidatos');
+            Route::get('/partido/{partidoId}/propuestas', [VotanteController::class, 'obtenerPropuestasPartido'])->name('partido.propuestas');
+            Route::get('/candidato/{candidatoId}/propuestas', [VotanteController::class, 'obtenerPropuestasCandidato'])->name('candidato.propuestas');
+            Route::get('/candidato/{candidatoId}/propuestas-partido', [VotanteController::class, 'obtenerPropuestasPartidoCandidato'])->name('candidato.propuestas-partido');
+        });
+
         // Gestión de Propuestas de Partido
         Route::prefix('mis-propuestas-partido')->name('propuestas_partido.')->group(function () {
             Route::get('/', [VotanteController::class, 'misPropuestasPartido'])->name('index');

@@ -228,9 +228,11 @@
                         <h2>Elecciones</h2>
                         <span class="brand-text-sm">{{$eleccionActiva->titulo ?? 'Cerrado actualmente'}}</span>
 
-                        @if(isset($eleccionActiva) && $esPeriodoDeVotar)
+                        @if(isset($eleccionActiva) && $eleccionActiva && $eleccionActiva->idElecciones)
                             <p>Ejerce tu derecho y elige a los líderes que guiarán nuestra organización.</p>
-                            <a href="{{ route('votante.votar.lista', $eleccionActiva->getKey()) }}" class="btn btn-voter btn-voter-light">
+                            {{-- CORREGIDO: Usar el campo correcto de ID --}}
+                            <a href="{{ route('votante.votar.lista', $eleccionActiva->idElecciones) }}" 
+                               class="btn btn-voter btn-voter-light">
                                 Votar Ahora
                             </a>
                             <div class="mt-3 text-sm" style="color: #c4b5fd; font-size: 0.9rem;">
@@ -285,7 +287,3 @@
     </div>
 </div>
 @endsection
-
-@push('styles')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-@endpush
