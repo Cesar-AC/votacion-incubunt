@@ -29,7 +29,6 @@ class CandidatoController extends Controller
 
     public function create(IPartidoService $partidoService, IUserService $userService, IAreaService $areaService)
     {
-        $partidos   = $partidoService->obtenerPartidos();
         $areas = $areaService->obtenerAreas();
         $usuarios   = $userService->obtenerUsuarios();
         $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
@@ -40,14 +39,18 @@ class CandidatoController extends Controller
         $eleccionesService = $this->eleccionesService;
         $cargosPorArea = $areas->pluck('cargos', 'idArea');
 
+        $partidosPorEleccion = $elecciones->mapWithKeys(function ($eleccion) use ($partidoService) {
+            return [$eleccion->getKey() => $partidoService->obtenerPartidosInscritosEnEleccion($eleccion)->pluck('partido', 'idPartido')];
+        });
+
         return view('crud.candidato.crear', compact(
             'eleccionesService',
-            'partidos',
             'areas',
             'usuarios',
             'elecciones',
             'cargosPorArea',
-            'cargosPresidencia'
+            'cargosPresidencia',
+            'partidosPorEleccion'
         ));
     }
 
