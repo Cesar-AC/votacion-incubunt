@@ -14,7 +14,7 @@
                     @endif
                 @endforeach
             },
-            partidos: {{json_encode($partidos->pluck('partido', 'idPartido'))}},
+            partidos: {{json_encode($partidosPorEleccion)}},
             cargosPorArea: {{json_encode($cargosPorArea)}},
             cargosPresidencia: {{json_encode($cargosPresidencia->pluck('cargo', 'idCargo'))}},
         }">
@@ -114,7 +114,7 @@
                         <label for="partido">Partido</label>
                         <select class="form-control" id="partido" x-model="candidato.idPartido">
                             <option value="">Seleccione partido</option>
-                            <template x-for="(partido, idPartido) in partidos" :key="idPartido">
+                            <template x-for="(partido, idPartido) in partidos[$store.candidatos.idEleccion]" :key="idPartido">
                                 <option :value="idPartido" x-text="partido"></option>
                             </template>
                         </select>
@@ -196,7 +196,7 @@
         </div>
     </div>
 
-    <form action="{{ route('crud.candidato.crear', [$eleccion->getKey(), $candidato->getKey()]) }}" method="post" x-ref="formCandidatos">
+    <form action="{{ route('crud.candidato.crear') }}" method="post" x-ref="formCandidatos">
         @csrf
         <input type="hidden" name="idEleccion" x-model="$store.candidatos.idEleccion">
         <template x-for="(candidato, index) in $store.candidatos.candidatos" :key="index">
