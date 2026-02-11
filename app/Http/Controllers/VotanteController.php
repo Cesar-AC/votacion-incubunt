@@ -387,17 +387,88 @@ class VotanteController extends Controller
     {
         $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccionId);
         $user = Auth::user();
+        
         // Obtener votos a partido
-        $votosPartido = \App\Models\VotoPartido::where('idUsuario', $user->id)
-            ->where('idElecciones', $eleccionId)
+        $votosPartido = \App\Models\VotoPartido::where('idElecciones', $eleccionId)
+            ->whereExists(function($query) use ($user, $eleccionId) {
+                $query->select(DB::raw(1))
+                    ->from('PadronElectoral')
+                    ->where('idUsuario', $user->id)
+                    ->where('idElecciones', $eleccionId)
+                    ->whereNotNull('fechaVoto');
+            })
             ->with(['partido'])
             ->get();
-        // Obtener votos a candidato
-        $votosCandidato = \App\Models\VotoCandidato::where('idUsuario', $user->id)
-            ->where('idElecciones', $eleccionId)
-            ->with(['candidato.cargo'])
+            
+        // Obtener votos a candidato con sus relaciones
+        $votosCandidato = \App\Models\VotoCandidato::where('idElecciones', $eleccionId)
+            ->whereExists(function($query) use ($user, $eleccionId) {
+                $query->select(DB::raw(1))
+                    ->from('PadronElectoral')
+                    ->where('idUsuario', $user->id)
+                    ->where('idElecciones', $eleccionId)
+                    ->whereNotNull('fechaVoto');
+            })
+            ->with([
+                'candidato.usuario.perfil.carrera',
+                'candidato.candidatoElecciones' => function($query) use ($eleccionId) {
+                    $query->where('idElecciones', $eleccionId)
+                        ->with('cargo', 'partido');
+                }
+            ])
             ->get();
+            
         return view('votante.votar.exito', compact('eleccion', 'votosPartido', 'votosCandidato'));
+    }
+
+    /**
+     * Generar comprobante de voto en PDF
+     */
+    public function generarComprobantePDF($eleccionId)
+    {
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccionId);
+        $user = Auth::user();
+        
+        // Verificar que el usuario ha votado
+        if (!$this->votoService->haVotado($user, $eleccion)) {
+            return redirect()->route('votante.home')->withErrors('No has votado en esta elección.');
+        }
+        
+        // Obtener votos a partido
+        $votosPartido = \App\Models\VotoPartido::where('idElecciones', $eleccionId)
+            ->whereExists(function($query) use ($user, $eleccionId) {
+                $query->select(DB::raw(1))
+                    ->from('PadronElectoral')
+                    ->where('idUsuario', $user->id)
+                    ->where('idElecciones', $eleccionId)
+                    ->whereNotNull('fechaVoto');
+            })
+            ->with(['partido'])
+            ->get();
+            
+        // Obtener votos a candidato con sus relaciones
+        $votosCandidato = \App\Models\VotoCandidato::where('idElecciones', $eleccionId)
+            ->whereExists(function($query) use ($user, $eleccionId) {
+                $query->select(DB::raw(1))
+                    ->from('PadronElectoral')
+                    ->where('idUsuario', $user->id)
+                    ->where('idElecciones', $eleccionId)
+                    ->whereNotNull('fechaVoto');
+            })
+            ->with([
+                'candidato.usuario.perfil.carrera',
+                'candidato.candidatoElecciones' => function($query) use ($eleccionId) {
+                    $query->where('idElecciones', $eleccionId)
+                        ->with('cargo', 'partido');
+                }
+            ])
+            ->get();
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('votante.votar.comprobante-pdf', compact('eleccion', 'votosPartido', 'votosCandidato', 'user'));
+        
+        $pdf->setPaper('a4', 'portrait');
+        
+        return $pdf->download('comprobante_voto_' . $eleccionId . '_' . $user->id . '.pdf');
     }
 
     // =============================================

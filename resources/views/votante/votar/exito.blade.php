@@ -72,10 +72,19 @@
                     <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-5 border border-gray-200">
                         <div class="flex items-start justify-between mb-3">
                             <div>
-                                @if($voto->candidato && $voto->candidato->cargo)
-                                <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
-                                    {{ $voto->candidato->cargo->nombreCargo ?? 'Sin cargo' }}
-                                </p>
+                                @if($voto->candidato)
+                                    @php
+                                        $candidatoEleccion = $voto->candidato->candidatoElecciones()->where('idElecciones', $eleccion->idElecciones)->first();
+                                    @endphp
+                                    @if($candidatoEleccion && $candidatoEleccion->cargo)
+                                        <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                                            {{ $candidatoEleccion->cargo->cargo ??'Sin cargo' }}
+                                        </p>
+                                    @else
+                                        <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                                            Cargo desconocido
+                                        </p>
+                                    @endif
                                 @else
                                 <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
                                     Cargo desconocido
@@ -150,14 +159,14 @@
                             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
                         </svg>
                         <span class="font-medium">Fecha:</span>
-                        <span>{{ $votos->isNotEmpty() ? $votos->first()->fechaVoto->format('d/m/Y H:i:s') : now()->format('d/m/Y H:i:s') }}</span>
+                        <span>{{ now()->format('d/m/Y H:i:s') }}</span>
                     </div>
                     <div class="flex items-center space-x-2">
                         <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                         </svg>
                         <span class="font-medium">Total de votos:</span>
-                        <span class="font-bold text-blue-600">{{ $votos->count() }}</span>
+                        <span class="font-bold text-blue-600">{{ $votosPartido->count() + $votosCandidato->count() }}</span>
                     </div>
                 </div>
             </div>
@@ -217,13 +226,13 @@
 
         {{-- Download Certificate Button --}}
         <div class="text-center">
-            <button onclick="window.print()"
-                    class="inline-flex items-center space-x-2 text-gray-700 hover:text-gray-900 font-semibold transition-colors duration-300 px-6 py-3 border-2 border-gray-400 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-300">
+            <a href="{{ route('votante.votar.comprobante.pdf', $eleccion->idElecciones) }}"
+                    class="inline-flex items-center space-x-2 text-white bg-blue-600 hover:bg-blue-700 font-semibold transition-colors duration-300 px-6 py-3 border-2 border-blue-600 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-300">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd"/>
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
                 </svg>
-                <span>Imprimir Comprobante</span>
-            </button>
+                <span>Descargar Comprobante (PDF)</span>
+            </a>
         </div>
 
         {{-- Confetti Animation --}}

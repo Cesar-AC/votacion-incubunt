@@ -63,6 +63,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
             Route::post('/{eleccionId}/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
             Route::get('/{eleccionId}/exito', [VotanteController::class, 'votoExitoso'])->name('exito');
+            Route::get('/{eleccionId}/comprobante-pdf', [VotanteController::class, 'generarComprobantePDF'])->name('comprobante.pdf');
         });
 
         // APIs para obtener datos de propuestas
