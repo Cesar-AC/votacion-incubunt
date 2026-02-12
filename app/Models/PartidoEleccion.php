@@ -3,30 +3,31 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Thiagoprz\CompositeKey\HasCompositeKey;
 
 class PartidoEleccion extends Model
 {
-    use HasCompositeKey;
-
-    protected $primaryKey = ['idPartido', 'idElecciones'];
-
-    public $incrementing = false;
-
     protected $table = 'PartidoEleccion';
+    protected $primaryKey = 'idPartidoEleccion';
     public $timestamps = false;
+
     protected $fillable = [
         'idPartido',
-        'idElecciones'
+        'idElecciones',
     ];
 
+    /**
+     * Relación con Partido
+     */
     public function partido()
     {
-        return $this->belongsTo(Partido::class, 'idPartido');
+        return $this->belongsTo(Partido::class, 'idPartido', 'idPartido');
     }
 
-    public function elecciones()
+    /**
+     * Relación con Elecciones
+     */
+    public function eleccion()
     {
-        return $this->belongsTo(Elecciones::class, 'idElecciones');
+        return $this->belongsTo(Elecciones::class, 'idElecciones', 'idElecciones');
     }
 }

@@ -215,10 +215,19 @@
 
 <script>
 document.addEventListener('alpine:init', function () {
+    @php $eleccion = $eleccionesService->obtenerEleccionActiva(); @endphp
+    @if($eleccion)
     Alpine.store('candidatos', {
-        idEleccion: {{ $eleccionesService->obtenerEleccionActiva()->getKey() }},
+        idEleccion: {{ $eleccion->getKey() }},
         candidatos: [],
     })
+    @else
+    console.warn('No hay elección activa');
+    Alpha.store('candidatos', {
+        idEleccion: null,
+        candidatos: [],
+    })
+    @endif
 });
 </script>
 

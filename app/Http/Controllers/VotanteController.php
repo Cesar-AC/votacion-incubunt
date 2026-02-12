@@ -294,24 +294,32 @@ class VotanteController extends Controller
     public function vistaVotar(IAreaService $areaService)
     {
         $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
+        
+        if (!$eleccionActiva) {
+            return redirect()->route('votante.home')->with('error', 'No hay elección activa');
+        }
+
         $areas = Area::where('idArea', '!=', Area::PRESIDENCIA)
             ->where('idArea', '!=', Area::SIN_AREA_ASIGNADA)
             ->with('cargos.candidatoElecciones.candidato.usuario.perfil')
             ->get();
 
         $partidos = PartidoEleccion::query()
-            ->where('idElecciones', $eleccionActiva->getKey())
+            ->where('idElecciones', $eleccionActiva->idElecciones)
             ->with([
                 'partido' => function ($q) {
                     $q->with([
-                        'candidatos.usuario.perfil',
+                        'candidatos' => function ($cq) {
+                            $cq->with('usuario.perfil');
+                        },
                         'propuestas' => function ($pq) {
-                            $pq->whereNull('idElecciones')->orWhere('idElecciones', request()->route('eleccionId'));
+                            $pq->whereNull('idElecciones')->orWhere('idElecciones', $pq->getQuery()->getConnection()->getPdo()->lastInsertId());
                         }
                     ]);
                 }
             ])
-            ->get();
+            ->get()
+            ->pluck('partido');
 
         return view('votante.votar.lista', compact('eleccionActiva', 'areas', 'partidos'));
     }

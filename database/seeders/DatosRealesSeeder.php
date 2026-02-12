@@ -22,9 +22,10 @@ class DatosRealesSeeder extends Seeder
     public function run(): void
     {
 
-        $areaPresidencia = Area::create([
-            'area' => 'Presidencia',
-        ]);
+        $areaPresidencia = Area::firstOrCreate(
+            ['area' => 'Presidencia'],
+            ['area' => 'Presidencia']
+        );
 
         $cargosPresidencia = [
             'Presidente',
@@ -33,10 +34,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($cargosPresidencia as $cargo) {
-            Cargo::create([
-                'cargo' => $cargo,
-                'idArea' => $areaPresidencia->getKey(),
-            ]);
+            Cargo::firstOrCreate(
+                ['cargo' => $cargo, 'idArea' => $areaPresidencia->getKey()],
+                ['cargo' => $cargo, 'idArea' => $areaPresidencia->getKey()]
+            );
         }
 
         $areas = [
@@ -54,15 +55,16 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($areas as $area) {
-            $areaModelo = Area::create([
-                'area' => $area,
-            ]);
+            $areaModelo = Area::firstOrCreate(
+                ['area' => $area],
+                ['area' => $area]
+            );
 
             foreach ($cargos as $cargo) {
-                Cargo::create([
-                    'cargo' => $cargo,
-                    'idArea' => $areaModelo->getKey(),
-                ]);
+                Cargo::firstOrCreate(
+                    ['cargo' => $cargo, 'idArea' => $areaModelo->getKey()],
+                    ['cargo' => $cargo, 'idArea' => $areaModelo->getKey()]
+                );
             }
         }
 
@@ -116,9 +118,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($carreras as $carrera) {
-            Carrera::create([
-                'carrera' => $carrera,
-            ]);
+            Carrera::firstOrCreate(
+                ['carrera' => $carrera],
+                ['carrera' => $carrera]
+            );
         }
 
         $estadosElecciones = [
@@ -128,9 +131,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($estadosElecciones as $estado) {
-            EstadoElecciones::create([
-                'estado' => $estado,
-            ]);
+            EstadoElecciones::firstOrCreate(
+                ['estado' => $estado],
+                ['estado' => $estado]
+            );
         }
 
         $estadosUsuario = [
@@ -141,9 +145,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($estadosUsuario as $estado) {
-            EstadoUsuario::create([
-                'nombre' => $estado,
-            ]);
+            EstadoUsuario::firstOrCreate(
+                ['nombre' => $estado],
+                ['nombre' => $estado]
+            );
         }
 
         $nivelLog = [
@@ -155,9 +160,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($nivelLog as $nivel) {
-            NivelLog::create([
-                'nombre' => $nivel,
-            ]);
+            NivelLog::firstOrCreate(
+                ['nombre' => $nivel],
+                ['nombre' => $nivel]
+            );
         }
 
         $categoriaLog = [
@@ -165,9 +171,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($categoriaLog as $categoria) {
-            CategoriaLog::create([
-                'nombre' => $categoria,
-            ]);
+            CategoriaLog::firstOrCreate(
+                ['nombre' => $categoria],
+                ['nombre' => $categoria]
+            );
         }
 
         $tiposVoto = [
@@ -177,7 +184,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($tiposVoto as $tipoVoto) {
-            TipoVoto::create($tipoVoto);
+            TipoVoto::firstOrCreate(
+                ['idTipoVoto' => $tipoVoto['idTipoVoto']],
+                $tipoVoto
+            );
         }
 
         $partidos = [
@@ -189,7 +199,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($partidos as $partido) {
-            Partido::create($partido);
+            Partido::firstOrCreate(
+                ['partido' => $partido['partido']],
+                $partido
+            );
         }
     }
 }
