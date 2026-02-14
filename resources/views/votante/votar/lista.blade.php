@@ -10,7 +10,7 @@
                 Sistema de Votación
             </h1>
             <p class="text-base sm:text-lg text-blue-700">
-                Elecciones INCUBUNT 2026
+                {{ $eleccionActiva->titulo }}
             </p>
             <p class="text-sm text-gray-500 mt-2">
                 Selecciona tus candidatos preferidos para cada cargo
@@ -38,9 +38,14 @@
             </div>
         </div>
 
-        <form id="votingForm" action="{{ route('votante.votar.emitir', $eleccionActiva->idElecciones) }}" method="POST" x-data="votingForm()" data-eleccion-id="{{ $eleccionActiva->idElecciones }}">
+        @include('components.error-message')
+
+        <form id="votingForm" x-ref="voto" action="{{ route('votante.votar.emitir') }}" method="POST"
+                x-data="{
+                    idPartido: null,
+                    candidatos: {},
+                }">
             @csrf
-            <input type="hidden" name="idPartido" :value="selectedParty">
 
             {{-- Instructions --}}
             <div class="mb-8 animate-fade-in">
@@ -74,25 +79,10 @@
                 </h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach($partidos as $partidoEleccion)
-                    @if(is_object($partidoEleccion->partido))
-                        @php 
-                            $partido = $partidoEleccion->partido;
-                            // Obtener candidatos del partido para esta elección
-                            $candidatosPartido = $partido->candidatos()
-                                ->whereHas('candidatoElecciones', function($q) use ($eleccionActiva) {
-                                    $q->where('idElecciones', $eleccionActiva->idElecciones);
-                                })
-                                ->with(['usuario.perfil', 'candidatoElecciones' => function($q) use ($eleccionActiva) {
-                                    $q->where('idElecciones', $eleccionActiva->idElecciones)
-                                      ->with('cargo');
-                                }])
-                                ->take(3)
-                                ->get();
-                        @endphp
+                    @foreach($partidos as $partido)
                         <div class="bg-white rounded-3xl shadow-lg p-6 cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-2xl relative border-4 border-blue-600"
-                             :class="selectedParty === {{ $partido->idPartido }} ? 'ring-4 ring-blue-600 scale-105 shadow-2xl' : ''"
-                             @click="selectParty({{ $partido->idPartido }})">
+                             :class="idPartido === {{ $partido->getKey() }} ? 'ring-4 ring-blue-600 scale-105 shadow-2xl' : ''"
+                             @click="idPartido = {{ $partido->getKey() }}">
                             <div class="text-center mb-4">
                                 <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-3">
                                     <i class="fas fa-certificate text-blue-600 text-3xl"></i>
@@ -102,6 +92,10 @@
                                 </h3>
                                 <p class="text-sm text-gray-600 italic">{{ $partido->descripcion ?? 'Partido político' }}</p>
                             </div>
+
+                            @php
+                                $candidatosPartido = $eleccionesService->obtenerCandidatosDePartido($partido);
+                            @endphp
                             
                             @if($candidatosPartido->isNotEmpty())
                             <div class="space-y-3 mb-4">
@@ -111,8 +105,8 @@
                                             $candidatoEleccion = $candidato->candidatoElecciones->first();
                                         @endphp
                                         <div class="flex items-center space-x-3 bg-gray-50 rounded-lg p-3">
-                                            @if($candidato->usuario->perfil->fotoPerfil)
-                                            <img src="{{ asset('storage/' . $candidato->usuario->perfil->fotoPerfil) }}" 
+                                            @if($candidato->usuario->perfil?->obtenerFotoURL())
+                                            <img src="{{ $candidato->usuario->perfil->obtenerFotoURL() }}" 
                                                  alt="{{ $candidato->usuario->perfil->nombre }}"
                                                  class="w-10 h-10 rounded-full object-cover border-2 border-blue-600">
                                             @else
@@ -139,7 +133,7 @@
                             </div>
                             @endif
                             
-                            <template x-if="selectedParty === {{ $partido->idPartido }}">
+                            <template x-if="idPartido === {{ $partido->getKey() }}">
                                 <div class="absolute top-4 right-4 bg-white rounded-full p-2 shadow-lg animate-bounce">
                                     <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
@@ -147,7 +141,6 @@
                                 </div>
                             </template>
                         </div>
-                    @endif
                     @endforeach
                 </div>
             </div>
@@ -163,54 +156,41 @@
                     {{ $area->area }}
                 </h2>
 
-                @forelse($area->cargos as $cargo)
+                @forelse($cargoService->obtenerCargosPorArea($area) as $cargo)
                 <div class="mb-8">
                     <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                         <span class="bg-purple-100 rounded-full p-2 mr-2">
                             <i class="fas fa-user-tie text-purple-700"></i>
                         </span>
-                        {{ $cargo->nombreCargo ?? $cargo->cargo }}
+                        {{ $cargo->cargo }}
                     </h3>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        @forelse($cargo->candidatoElecciones as $candidatoEleccion)
-                        @php 
-                            $candidato = $candidatoEleccion->candidato; 
-                        @endphp
+                        @forelse($candidatoService->obtenerCandidatosPorCargoEnEleccion($cargo, $eleccionActiva) as $candidato)
                         @if($candidato && $candidato->usuario && $candidato->usuario->perfil)
                         <div class="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all duration-300 hover:shadow-xl border-2"
-                             :class="selectedCandidates[{{ $cargo->idCargo }}] === {{ $candidato->idCandidato }} ? 'border-purple-600 bg-purple-50' : 'border-gray-200'"
-                             @click="selectCandidate({{ $cargo->idCargo }}, {{ $candidato->idCandidato }})"
-                             data-candidato-id="{{ $candidato->idCandidato }}">
+                             :class="candidatos[{{ $cargo->getKey() }}] == {{ $candidato->getKey() }} ? 'border-purple-600 bg-purple-50' : 'border-gray-200'"
+                             @click="candidatos[{{ $cargo->getKey() }}] = {{ $candidato->getKey() }}"
+                             data-candidato-id="{{ $candidato->getKey() }}">
                             <div class="flex flex-col items-center text-center">
-                                @if($candidato->usuario->perfil->fotoPerfil)
-                                <img src="{{ asset('storage/' . $candidato->usuario->perfil->fotoPerfil) }}" 
+                                @if($candidato->usuario->perfil->obtenerFotoURL())
+                                <img src="{{ $candidato->usuario->perfil->obtenerFotoURL() }}" 
                                      alt="{{ $candidato->usuario->perfil->nombre }}"
                                      class="w-16 h-16 rounded-full object-cover border-4 mb-3"
-                                     :class="selectedCandidates[{{ $cargo->idCargo }}] === {{ $candidato->idCandidato }} ? 'border-purple-600' : 'border-gray-300'">
+                                     :class="candidatos[{{ $cargo->getKey() }}] == {{ $candidato->getKey() }} ? 'border-purple-600' : 'border-gray-300'">
                                 @else
                                 <div class="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mb-3"
-                                     :class="selectedCandidates[{{ $cargo->idCargo }}] === {{ $candidato->idCandidato }} ? 'bg-purple-600' : 'bg-gray-400'">
-                                    {{ substr($candidato->usuario->perfil->nombre ?? 'NC', 0, 1) }}
+                                     :class="candidatos[{{ $cargo->getKey() }}] == {{ $candidato->getKey() }} ? 'bg-purple-600' : 'bg-gray-400'">
+                                    {{ substr($candidato->usuario->perfil?->nombre ?? 'NC', 0, 1) }}
                                 </div>
                                 @endif
                                 
                                 <h4 class="font-bold text-sm mb-1 text-gray-900">
-                                    {{ $candidato->usuario->perfil->nombre ?? 'Sin nombre' }} 
-                                    {{ $candidato->usuario->perfil->apellidoPaterno ?? '' }}
+                                    {{ $candidato->usuario->perfil?->nombre ?? 'Sin nombre' }} 
+                                    {{ $candidato->usuario->perfil?->apellidoPaterno ?? '' }}
                                 </h4>
                                 
-                                @if($candidatoEleccion->partido)
-                                <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-semibold">
-                                    {{ $candidatoEleccion->partido->partido }}
-                                </span>
-                                @else
-                                <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold">
-                                    Independiente
-                                </span>
-                                @endif
-                                
-                                <template x-if="selectedCandidates[{{ $cargo->idCargo }}] === {{ $candidato->idCandidato }}">
+                                <template x-if="candidatos[{{ $cargo->getKey() }}] == {{ $candidato->getKey() }}">
                                     <div class="mt-2">
                                         <svg class="w-6 h-6 text-purple-600 mx-auto" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -240,16 +220,16 @@
             {{-- Submit Button --}}
             <div class="sticky bottom-0 bg-white border-t-4 border-blue-600 p-4 sm:p-6 shadow-2xl rounded-t-3xl">
                 <button type="button"
-                        @click="confirmVote()"
+                        @click="$refs.voto.submit(); console.log(candidatos);"
                         class="w-full bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-800 hover:to-blue-950 text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
                     <i class="fas fa-check-circle mr-2"></i>
                     Confirmar y Emitir Voto
                 </button>
             </div>
 
-            {{-- Hidden inputs for selected candidates --}}
-            <template x-for="(candidatoId, cargoId) in selectedCandidates" :key="cargoId">
-                <input type="hidden" :name="'candidatos[' + cargoId + ']'" :value="candidatoId">
+            <input type="hidden" name="idPartido" :value="idPartido">
+            <template x-for="idCandidato in Object.values(candidatos)">
+                <input type="hidden" name="candidatos[]" :value="idCandidato">
             </template>
         </form>
 
@@ -334,6 +314,7 @@
 
 @push('scripts')
 <script>
+    /**
 function votingForm() {
     return {
         selectedCandidates: {},
@@ -395,14 +376,12 @@ function votingForm() {
         }
     }
 }
+**/
 </script>
 @endpush
 
 @push('styles')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-[x-cloak] { display: none !important; }
-
 @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }

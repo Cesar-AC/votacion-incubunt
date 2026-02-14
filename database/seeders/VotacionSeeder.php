@@ -18,17 +18,23 @@ use App\Models\User;
 use App\Models\VotoCandidato;
 use App\Models\VotoPartido;
 use App\Models\Area;
+use App\Models\RolUser;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Faker\Factory as Faker;
 
 class VotacionSeeder extends Seeder
 {
+    protected \Faker\Generator $faker;
     /**
      * Run the database seeds.
      * Simula un flujo de votación realista con votantes y candidatos de diferentes áreas
      */
     public function run(): void
     {
+        $faker = Faker::create();
+        $this->faker = $faker;
+
         // ==================== CREAR ELECCIÓN ====================
         $estadoProgramada = EstadoElecciones::where('estado', 'Programada')->first();
         if (!$estadoProgramada) {
@@ -54,7 +60,7 @@ class VotacionSeeder extends Seeder
             ->get();
         $carreras = Carrera::all();
         $partidos = Partido::all();
-        
+
         if ($areasDirectores->isEmpty() || $carreras->isEmpty() || $partidos->isEmpty()) {
             $this->command->error('Faltan datos base: áreas, carreras o partidos.');
             return;
@@ -118,7 +124,7 @@ class VotacionSeeder extends Seeder
 
         // ==================== CREAR CANDIDATOS PARA DIRECTORES DE ÁREA ====================
         $candidatosDirectores = [];
-        
+
         foreach ($areasDirectores as $area) {
             $cargoDirector = Cargo::where('idArea', $area->idArea)
                 ->where('cargo', 'LIKE', '%Director%')
@@ -138,29 +144,29 @@ class VotacionSeeder extends Seeder
                 ]);
 
                 $perfil = PerfilUsuario::create([
-                    'idUser' => $usuario->idUser,
-                    'nombre' => "Director {$i}",
-                    'apellidoPaterno' => $area->area,
-                    'apellidoMaterno' => "Candidato",
-                    'dni' => (string) $dniCounter++,
-                    'telefono' => '9' . rand(10000000, 99999999),
-                    'idCarrera' => $carreras->random()->idCarrera,
-                    'idArea' => $area->idArea,
+                    'idUser' => $usuario->getKey(),
+                    'nombre' => substr($this->faker->firstName, 0, 20),
+                    'apellidoPaterno' => substr($this->faker->lastName, 0, 20),
+                    'apellidoMaterno' => substr($this->faker->lastName, 0, 20),
+                    'dni' => $this->faker->unique()->numerify("########"),
+                    'telefono' => '9' . $this->faker->unique()->numerify("########"),
+                    'idCarrera' => $carreras->random()->getKey(),
+                    'idArea' => $area->getKey(),
                 ]);
 
                 $candidato = Candidato::create([
-                    'idUsuario' => $usuario->idUser,
+                    'idUsuario' => $usuario->getKey(),
                     'planTrabajo' => "Plan de trabajo para Director de {$area->area}",
                 ]);
 
                 // 60% tienen partido, 40% son independientes
-                $partidoId = (rand(1, 100) <= 60) ? $partidos->random()->idPartido : null;
+                $partidoId = (rand(1, 100) <= 60) ? $partidos->random()->getKey() : null;
 
                 CandidatoEleccion::create([
-                    'idCandidato' => $candidato->idCandidato,
-                    'idElecciones' => $eleccion->idElecciones,
+                    'idCandidato' => $candidato->getKey(),
+                    'idElecciones' => $eleccion->getKey(),
                     'idPartido' => $partidoId,
-                    'idCargo' => $cargoDirector->idCargo,
+                    'idCargo' => $cargoDirector->getKey(),
                 ]);
 
                 $candidatosDirectores[] = $candidato;
@@ -184,7 +190,7 @@ class VotacionSeeder extends Seeder
             ]);
 
             $perfil = PerfilUsuario::create([
-                'idUser' => $usuario->idUser,
+                'idUser' => $usuario->getKey(),
                 'nombre' => "Votante {$i}",
                 'apellidoPaterno' => "Simulado",
                 'apellidoMaterno' => "Número {$i}",
@@ -192,6 +198,11 @@ class VotacionSeeder extends Seeder
                 'telefono' => '9' . rand(10000000, 99999999),
                 'idArea' => $area->idArea,
                 'idCarrera' => $carrera->idCarrera,
+            ]);
+
+            RolUser::create([
+                'idRol' => 2, // ID Votante
+                'idUser' => $usuario->getKey(),
             ]);
 
             $votantes[] = $usuario;
@@ -227,12 +238,12 @@ class VotacionSeeder extends Seeder
                 // Voto a candidato
                 $candidato = collect($todosLosCandidatos)->random();
                 $candidato->load('usuario.perfil.area');
-                
+
                 if ($candidato->usuario && $candidato->usuario->perfil) {
                     // Determinar tipo de voto según el área
                     $areaVotante = $votante->perfil->area->idArea ?? null;
                     $areaCandidato = $candidato->usuario->perfil->area->idArea ?? null;
-                    
+
                     $tipoVotoId = ($areaVotante && $areaCandidato && $areaVotante === $areaCandidato)
                         ? TipoVoto::ID_MISMA_AREA
                         : TipoVoto::ID_OTRA_AREA;

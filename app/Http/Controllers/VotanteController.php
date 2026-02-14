@@ -16,6 +16,7 @@ use App\Enum\Permiso as PermisoEnum;
 use App\Interfaces\Services\IAreaService;
 use App\Interfaces\Services\ICarreraService;
 use App\Interfaces\Services\ICandidatoService;
+use App\Interfaces\Services\ICargoService;
 use App\Interfaces\Services\IEleccionesService;
 use App\Interfaces\Services\IPartidoService;
 use App\Interfaces\Services\IUserService;
@@ -28,6 +29,7 @@ class VotanteController extends Controller
 {
     public function __construct(
         protected IEleccionesService $eleccionesService,
+        protected IPartidoService $partidoService,
         protected IPermisoService $permisoService,
         protected IVotoService $votoService
     ) {}
@@ -291,37 +293,20 @@ class VotanteController extends Controller
     /**
      * Listar candidatos para votar
      */
-    public function vistaVotar(IAreaService $areaService)
+    public function vistaVotar(IAreaService $areaService, ICargoService $cargoService, ICandidatoService $candidatoService)
     {
         $eleccionActiva = $this->eleccionesService->obtenerEleccionActiva();
-        
+        $eleccionesService = $this->eleccionesService;
+
         if (!$eleccionActiva) {
             return redirect()->route('votante.home')->with('error', 'No hay elección activa');
         }
 
-        $areas = Area::where('idArea', '!=', Area::PRESIDENCIA)
-            ->where('idArea', '!=', Area::SIN_AREA_ASIGNADA)
-            ->with('cargos.candidatoElecciones.candidato.usuario.perfil')
-            ->get();
+        $areas = $areaService->obtenerAreas();
 
-        $partidos = PartidoEleccion::query()
-            ->where('idElecciones', $eleccionActiva->idElecciones)
-            ->with([
-                'partido' => function ($q) {
-                    $q->with([
-                        'candidatos' => function ($cq) {
-                            $cq->with('usuario.perfil');
-                        },
-                        'propuestas' => function ($pq) {
-                            $pq->whereNull('idElecciones')->orWhere('idElecciones', $pq->getQuery()->getConnection()->getPdo()->lastInsertId());
-                        }
-                    ]);
-                }
-            ])
-            ->get()
-            ->pluck('partido');
+        $partidos = $this->partidoService->obtenerPartidosInscritosEnEleccion($eleccionActiva);
 
-        return view('votante.votar.lista', compact('eleccionActiva', 'areas', 'partidos'));
+        return view('votante.votar.lista', compact('eleccionActiva', 'areas', 'partidos', 'cargoService', 'candidatoService', 'eleccionesService'));
     }
 
     /**
@@ -395,10 +380,10 @@ class VotanteController extends Controller
     {
         $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccionId);
         $user = Auth::user();
-        
+
         // Obtener votos a partido
         $votosPartido = \App\Models\VotoPartido::where('idElecciones', $eleccionId)
-            ->whereExists(function($query) use ($user, $eleccionId) {
+            ->whereExists(function ($query) use ($user, $eleccionId) {
                 $query->select(DB::raw(1))
                     ->from('PadronElectoral')
                     ->where('idUsuario', $user->id)
@@ -407,10 +392,10 @@ class VotanteController extends Controller
             })
             ->with(['partido'])
             ->get();
-            
+
         // Obtener votos a candidato con sus relaciones
         $votosCandidato = \App\Models\VotoCandidato::where('idElecciones', $eleccionId)
-            ->whereExists(function($query) use ($user, $eleccionId) {
+            ->whereExists(function ($query) use ($user, $eleccionId) {
                 $query->select(DB::raw(1))
                     ->from('PadronElectoral')
                     ->where('idUsuario', $user->id)
@@ -419,13 +404,13 @@ class VotanteController extends Controller
             })
             ->with([
                 'candidato.usuario.perfil.carrera',
-                'candidato.candidatoElecciones' => function($query) use ($eleccionId) {
+                'candidato.candidatoElecciones' => function ($query) use ($eleccionId) {
                     $query->where('idElecciones', $eleccionId)
                         ->with('cargo', 'partido');
                 }
             ])
             ->get();
-            
+
         return view('votante.votar.exito', compact('eleccion', 'votosPartido', 'votosCandidato'));
     }
 
@@ -436,15 +421,15 @@ class VotanteController extends Controller
     {
         $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccionId);
         $user = Auth::user();
-        
+
         // Verificar que el usuario ha votado
         if (!$this->votoService->haVotado($user, $eleccion)) {
             return redirect()->route('votante.home')->withErrors('No has votado en esta elección.');
         }
-        
+
         // Obtener votos a partido
         $votosPartido = \App\Models\VotoPartido::where('idElecciones', $eleccionId)
-            ->whereExists(function($query) use ($user, $eleccionId) {
+            ->whereExists(function ($query) use ($user, $eleccionId) {
                 $query->select(DB::raw(1))
                     ->from('PadronElectoral')
                     ->where('idUsuario', $user->id)
@@ -453,10 +438,10 @@ class VotanteController extends Controller
             })
             ->with(['partido'])
             ->get();
-            
+
         // Obtener votos a candidato con sus relaciones
         $votosCandidato = \App\Models\VotoCandidato::where('idElecciones', $eleccionId)
-            ->whereExists(function($query) use ($user, $eleccionId) {
+            ->whereExists(function ($query) use ($user, $eleccionId) {
                 $query->select(DB::raw(1))
                     ->from('PadronElectoral')
                     ->where('idUsuario', $user->id)
@@ -465,17 +450,17 @@ class VotanteController extends Controller
             })
             ->with([
                 'candidato.usuario.perfil.carrera',
-                'candidato.candidatoElecciones' => function($query) use ($eleccionId) {
+                'candidato.candidatoElecciones' => function ($query) use ($eleccionId) {
                     $query->where('idElecciones', $eleccionId)
                         ->with('cargo', 'partido');
                 }
             ])
             ->get();
-        
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('votante.votar.comprobante-pdf', compact('eleccion', 'votosPartido', 'votosCandidato', 'user'));
-        
+
         $pdf->setPaper('a4', 'portrait');
-        
+
         return $pdf->download('comprobante_voto_' . $eleccionId . '_' . $user->id . '.pdf');
     }
 

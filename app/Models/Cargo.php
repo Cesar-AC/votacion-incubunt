@@ -27,9 +27,4 @@ class Cargo extends Model
     {
         return $this->belongsToMany(Candidato::class, 'CandidatoEleccion', 'idCargo', 'idCandidato');
     }
-
-    public function candidatoElecciones()
-    {
-        return $this->hasMany(CandidatoEleccion::class, 'idCargo', 'idCargo');
-    }
 }
