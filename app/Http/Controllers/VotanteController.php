@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\Voto;
@@ -337,40 +338,100 @@ class VotanteController extends Controller
     {
         $eleccion = $this->eleccionesService->obtenerEleccionActiva();
 
-        $request->validate(
-            [
-                'idPartido' => 'required|integer|exists:Partido,idPartido',
-                'candidatos' => 'required|array',
-                'candidatos.*' => 'required|integer|exists:Candidato,idCandidato',
-            ],
-            [
-                'idPartido.required' => 'Se debe ingresar exactamente un partido.',
-                'idPartido.integer' => 'El id del partido debe ser un número.',
-                'idPartido.exists' => 'El partido no existe.',
-                'candidatos.required' => 'Se debe ingresar al menos un candidato.',
-                'candidatos.array' => 'Los candidatos deben ser una lista.',
-                'candidatos.*.required' => 'Se debe ingresar al menos un candidato.',
-                'candidatos.*.integer' => 'El id del candidato debe ser un número.',
-                'candidatos.*.exists' => 'El candidato no existe.',
-            ]
-        );
+        // Validación estricta: tanto partido como candidatos son obligatorios
+        try {
+            $validated = $request->validate(
+                [
+                    'idPartido' => 'required|integer|exists:Partido,idPartido',
+                    'candidatos' => 'required|array|min:1',
+                    'candidatos.*' => 'required|integer|exists:Candidato,idCandidato',
+                ],
+                [
+                    'idPartido.required' => '❌ DEBE seleccionar un PARTIDO POLÍTICO',
+                    'idPartido.integer' => 'El partido debe ser un número válido',
+                    'idPartido.exists' => 'El partido seleccionado no existe',
+                    'candidatos.required' => '❌ DEBE seleccionar al menos UN CANDIDATO',
+                    'candidatos.array' => 'Los candidatos deben ser una lista válida',
+                    'candidatos.min' => '❌ DEBE seleccionar al menos UN CANDIDATO',
+                    'candidatos.*.required' => 'Todos los candidatos deben ser válidos',
+                    'candidatos.*.integer' => 'Los IDs de candidatos deben ser números',
+                    'candidatos.*.exists' => 'Uno o más candidatos no existen',
+                ]
+            );
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->route('votante.votar.lista', $eleccion->idElecciones)
+                ->withErrors($e->errors())
+                ->withInput();
+        }
 
         $entidades = [];
-
-        $entidades[] = $partidoService->obtenerPartidoPorId($request->idPartido);
-
-        foreach ($request->candidatos as $candidatoId) {
-            $entidades[] = $candidatoService->obtenerCandidatoPorId($candidatoId);
-        }
+        $votosData = [];
 
         try {
-            $this->votoService->votar(Auth::user(), collect($entidades));
-        } catch (\Exception $e) {
-            return redirect()->route('votante.votar.lista', $eleccion->idElecciones)
-                ->withErrors('Error al emitir el voto: ' . $e->getMessage());
-        }
+            // Obtener y validar partido
+            if (!$validated['idPartido']) {
+                throw new \Exception('Debe seleccionar un partido político');
+            }
 
-        return redirect()->route('votante.votar.exito', $eleccion->idElecciones);
+            $partido = $partidoService->obtenerPartidoPorId($validated['idPartido']);
+            if (!$partido) {
+                throw new \Exception('El partido seleccionado no existe');
+            }
+
+            $entidades[] = $partido;
+            $votosData['partido'] = [
+                'id' => $partido->idPartido,
+                'nombre' => $partido->partido,
+                'color1' => $partido->color1 ?? '#3b82f6',
+                'color2' => $partido->color2 ?? null,
+            ];
+
+            // Obtener y validar candidatos
+            if (empty($validated['candidatos'])) {
+                throw new \Exception('Debe seleccionar al menos un candidato');
+            }
+
+            $votosData['candidatos'] = [];
+            foreach ($validated['candidatos'] as $candidatoId) {
+                $candidato = $candidatoService->obtenerCandidatoPorId($candidatoId);
+                if (!$candidato) {
+                    throw new \Exception("El candidato con ID {$candidatoId} no existe");
+                }
+
+                $entidades[] = $candidato;
+                
+                $candidatoEleccion = $candidato->candidatoElecciones()
+                    ->where('idElecciones', $eleccion->idElecciones)
+                    ->with('cargo', 'partido')
+                    ->first();
+
+                $votosData['candidatos'][] = [
+                    'id' => $candidato->idCandidato,
+                    'nombre' => $candidato->usuario ? ($candidato->usuario->nombre . ' ' . $candidato->usuario->apellidoPaterno) : 'Candidato',
+                    'cargo' => $candidatoEleccion?->cargo?->cargo ?? 'Sin cargo',
+                    'partido' => $candidatoEleccion?->partido?->partido ?? 'Independiente',
+                ];
+            }
+
+            // Emitir voto
+            $this->votoService->votar(Auth::user(), collect($entidades));
+
+            // Guardar datos en la sesión para la vista de éxito
+            session(['votos_emitidos' => $votosData]);
+
+            return redirect()->route('votante.votar.exito', $eleccion->idElecciones);
+
+        } catch (\Exception $e) {
+            \Log::error('Error al emitir voto: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'eleccion_id' => $eleccion->idElecciones,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('votante.votar.lista', $eleccion->idElecciones)
+                ->withErrors(['vote_error' => '❌ Error al procesar tu voto: ' . $e->getMessage()])
+                ->withInput();
+        }
     }
 
     /**
@@ -381,35 +442,28 @@ class VotanteController extends Controller
         $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccionId);
         $user = Auth::user();
 
-        // Obtener votos a partido
-        $votosPartido = \App\Models\VotoPartido::where('idElecciones', $eleccionId)
-            ->whereExists(function ($query) use ($user, $eleccionId) {
-                $query->select(DB::raw(1))
-                    ->from('PadronElectoral')
-                    ->where('idUsuario', $user->id)
-                    ->where('idElecciones', $eleccionId)
-                    ->whereNotNull('fechaVoto');
-            })
-            ->with(['partido'])
-            ->get();
+        // Verificar que el usuario ha votado en esta elección
+        if (!$this->votoService->haVotado($user, $eleccion)) {
+            return redirect()->route('votante.home')
+                ->withErrors('No hay registro de voto para esta elección.');
+        }
 
-        // Obtener votos a candidato con sus relaciones
-        $votosCandidato = \App\Models\VotoCandidato::where('idElecciones', $eleccionId)
-            ->whereExists(function ($query) use ($user, $eleccionId) {
-                $query->select(DB::raw(1))
-                    ->from('PadronElectoral')
-                    ->where('idUsuario', $user->id)
-                    ->where('idElecciones', $eleccionId)
-                    ->whereNotNull('fechaVoto');
-            })
-            ->with([
-                'candidato.usuario.perfil.carrera',
-                'candidato.candidatoElecciones' => function ($query) use ($eleccionId) {
-                    $query->where('idElecciones', $eleccionId)
-                        ->with('cargo', 'partido');
-                }
-            ])
-            ->get();
+        // Obtener datos de votos de la sesión
+        $votosData = session('votos_emitidos', [
+            'partido' => null,
+            'candidatos' => []
+        ]);
+
+        // Preparar datos para la vista
+        $votosPartido = [];
+        if ($votosData['partido'] ?? null) {
+            $votosPartido[] = (object)$votosData['partido'];
+        }
+
+        $votosCandidato = [];
+        foreach ($votosData['candidatos'] ?? [] as $candidatoData) {
+            $votosCandidato[] = (object)$candidatoData;
+        }
 
         return view('votante.votar.exito', compact('eleccion', 'votosPartido', 'votosCandidato'));
     }
@@ -427,35 +481,22 @@ class VotanteController extends Controller
             return redirect()->route('votante.home')->withErrors('No has votado en esta elección.');
         }
 
-        // Obtener votos a partido
-        $votosPartido = \App\Models\VotoPartido::where('idElecciones', $eleccionId)
-            ->whereExists(function ($query) use ($user, $eleccionId) {
-                $query->select(DB::raw(1))
-                    ->from('PadronElectoral')
-                    ->where('idUsuario', $user->id)
-                    ->where('idElecciones', $eleccionId)
-                    ->whereNotNull('fechaVoto');
-            })
-            ->with(['partido'])
-            ->get();
+        // Obtener datos de votos de la sesión
+        $votosData = session('votos_emitidos', [
+            'partido' => null,
+            'candidatos' => []
+        ]);
 
-        // Obtener votos a candidato con sus relaciones
-        $votosCandidato = \App\Models\VotoCandidato::where('idElecciones', $eleccionId)
-            ->whereExists(function ($query) use ($user, $eleccionId) {
-                $query->select(DB::raw(1))
-                    ->from('PadronElectoral')
-                    ->where('idUsuario', $user->id)
-                    ->where('idElecciones', $eleccionId)
-                    ->whereNotNull('fechaVoto');
-            })
-            ->with([
-                'candidato.usuario.perfil.carrera',
-                'candidato.candidatoElecciones' => function ($query) use ($eleccionId) {
-                    $query->where('idElecciones', $eleccionId)
-                        ->with('cargo', 'partido');
-                }
-            ])
-            ->get();
+        // Preparar datos para el PDF
+        $votosPartido = [];
+        if ($votosData['partido'] ?? null) {
+            $votosPartido[] = (object)$votosData['partido'];
+        }
+
+        $votosCandidato = [];
+        foreach ($votosData['candidatos'] ?? [] as $candidatoData) {
+            $votosCandidato[] = (object)$candidatoData;
+        }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('votante.votar.comprobante-pdf', compact('eleccion', 'votosPartido', 'votosCandidato', 'user'));
 

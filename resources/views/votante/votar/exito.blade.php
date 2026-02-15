@@ -50,46 +50,37 @@
                     Tus Votos Registrados
                 </h3>
 
-
                 <div class="space-y-4">
                     {{-- Voto a Partido --}}
                     @foreach($votosPartido as $voto)
-                    <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-5 border border-gray-200">
+                    <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-5 border border-gray-200"
+                         @if($voto->color1)
+                         style="background: linear-gradient(135deg, {{ $voto->color1 }}20 0%, {{ ($voto->color2 ?? $voto->color1) }}20 100%);"
+                         @endif>
                         <div class="flex items-start justify-between mb-3">
                             <div>
                                 <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
-                                    Partido
+                                    Partido Político
                                 </p>
                                 <p class="font-bold text-lg text-blue-900">
-                                    {{ $voto->partido->partido ?? 'Partido' }}
+                                    {{ $voto->nombre ?? 'Partido' }}
                                 </p>
                             </div>
+                            <span class="bg-green-100 text-green-900 text-xs font-bold px-3 py-1 rounded-full border border-green-600">
+                                Registrado
+                            </span>
                         </div>
                     </div>
                     @endforeach
+
                     {{-- Votos a Candidatos --}}
-                    @foreach($votosCandidato as $voto)
+                    @forelse($votosCandidato as $voto)
                     <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-5 border border-gray-200">
                         <div class="flex items-start justify-between mb-3">
                             <div>
-                                @if($voto->candidato)
-                                    @php
-                                        $candidatoEleccion = $voto->candidato->candidatoElecciones()->where('idElecciones', $eleccion->idElecciones)->first();
-                                    @endphp
-                                    @if($candidatoEleccion && $candidatoEleccion->cargo)
-                                        <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
-                                            {{ $candidatoEleccion->cargo->cargo ??'Sin cargo' }}
-                                        </p>
-                                    @else
-                                        <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
-                                            Cargo desconocido
-                                        </p>
-                                    @endif
-                                @else
                                 <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">
-                                    Cargo desconocido
+                                    {{ $voto->cargo ?? 'Cargo desconocido' }}
                                 </p>
-                                @endif
                             </div>
                             <span class="bg-green-100 text-green-900 text-xs font-bold px-3 py-1 rounded-full border border-green-600">
                                 Registrado
@@ -97,55 +88,24 @@
                         </div>
 
                         <div class="flex items-center space-x-4">
-                            @if($voto->candidato && $voto->candidato->usuario && $voto->candidato->usuario->perfil)
-                            <img src="{{ $voto->candidato->usuario->perfil->fotoPerfil ? asset('storage/' . $voto->candidato->usuario->perfil->fotoPerfil) : asset('images/default-avatar.png') }}" 
-                                 alt="{{ $voto->candidato->usuario->perfil->nombres }}"
-                                 class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg">
+                            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg border-4 border-white">
+                                {{ substr($voto->nombre ?? 'C', 0, 1) }}
+                            </div>
                             
                             <div class="flex-1">
                                 <h4 class="text-lg sm:text-xl font-bold text-gray-900 mb-1">
-                                    {{ $voto->candidato->usuario->perfil->nombres ?? 'Sin nombre' }} 
-                                    {{ $voto->candidato->usuario->perfil->apellidoPaterno ?? '' }}
+                                    {{ $voto->nombre ?? 'Sin nombre' }}
                                 </h4>
                                 
-                                @if($voto->candidato->partido)
-                                <div class="flex items-center space-x-2 mb-2">
-                                    @if($voto->candidato->partido->logo)
-                                    <img src="{{ asset('storage/' . $voto->candidato->partido->logo) }}" 
-                                         alt="{{ $voto->candidato->partido->nombrePartido }}"
-                                         class="w-6 h-6 object-contain">
-                                    @endif
-                                    <p class="text-sm font-medium text-gray-700">
-                                        {{ $voto->candidato->partido->nombrePartido }}
-                                    </p>
-                                </div>
-                                @else
-                                <p class="text-sm font-medium text-gray-600 mb-2">Candidato Independiente</p>
-                                @endif
-
-                                @if($voto->candidato->usuario->perfil->carrera)
-                                <p class="text-xs text-gray-600">
-                                    {{ $voto->candidato->usuario->perfil->carrera->nombreCarrera }}
+                                <p class="text-sm text-gray-600 mb-2">
+                                    Partido: <span class="font-semibold text-blue-700">{{ $voto->partido ?? 'Independiente' }}</span>
                                 </p>
-                                @endif
                             </div>
-                            @else
-                            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shadow-lg">
-                                <i class="fas fa-user text-gray-400 text-2xl"></i>
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="text-lg sm:text-xl font-bold text-gray-900 mb-1">
-                                    Candidato ID: {{ $voto->idCandidato }}
-                                </h4>
-                                <p class="text-sm font-medium text-gray-600">Información no disponible</p>
-                            </div>
-                            @endif
                         </div>
                     </div>
                     @empty
                     <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 text-center">
-                        <i class="fas fa-info-circle text-yellow-600 mr-2"></i>
-                        <p class="text-yellow-800 font-medium">No se registraron votos. Intenta nuevamente.</p>
+                        <p class="text-sm text-yellow-800">No se registraron votos a candidatos.</p>
                     </div>
                     @endforelse
                 </div>
@@ -166,7 +126,7 @@
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                         </svg>
                         <span class="font-medium">Total de votos:</span>
-                        <span class="font-bold text-blue-600">{{ $votosPartido->count() + $votosCandidato->count() }}</span>
+                        <span class="font-bold text-blue-600">{{ count($votosPartido) + count($votosCandidato) }}</span>
                     </div>
                 </div>
             </div>

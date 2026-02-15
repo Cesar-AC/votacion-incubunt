@@ -99,9 +99,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/areas', [AreaController::class, 'index'])->name('crud.area.ver')->middleware('can:viewAny,App\Models\Area');
     Route::get('/areas/crear', [AreaController::class, 'create'])->name('crud.area.crear')->middleware('can:create,App\Models\Area');
-    Route::post('/areas/crear', [AreaController::class, 'store'])->name('crud.area.crear')->middleware('can:create,App\Models\Area');
+    Route::post('/areas/crear', [AreaController::class, 'store'])->name('crud.area.guardar')->middleware('can:create,App\Models\Area');
     Route::get('/areas/{id}/editar', [AreaController::class, 'edit'])->name('crud.area.editar')->middleware('can:update,App\Models\Area');
-    Route::post('/areas/{id}/editar', [AreaController::class, 'update'])->name('crud.area.editar')->middleware('can:update,App\Models\Area');
+    Route::put('/areas/{id}/editar', [AreaController::class, 'update'])->name('crud.area.actualizar')->middleware('can:update,App\Models\Area');
     Route::delete('/areas/{id}', [AreaController::class, 'destroy'])->name('crud.area.eliminar')->middleware('can:delete,App\Models\Area');
     Route::get('/areas/{id}', [AreaController::class, 'show'])->name('crud.area.ver_datos')->middleware('can:view,App\Models\Area');
 });
@@ -110,9 +110,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/carreras', [CarreraController::class, 'index'])->name('crud.carrera.ver')->middleware('can:viewAny,App\Models\Carrera');
     Route::get('/carreras/crear', [CarreraController::class, 'create'])->name('crud.carrera.crear')->middleware('can:create,App\Models\Carrera');
-    Route::post('/carreras/crear', [CarreraController::class, 'store'])->name('crud.carrera.crear')->middleware('can:create,App\Models\Carrera');
+    Route::post('/carreras/crear', [CarreraController::class, 'store'])->name('crud.carrera.guardar')->middleware('can:create,App\Models\Carrera');
     Route::get('/carreras/{id}/editar', [CarreraController::class, 'edit'])->name('crud.carrera.editar')->middleware('can:update,App\Models\Carrera');
-    Route::post('/carreras/{id}/editar', [CarreraController::class, 'update'])->name('crud.carrera.editar')->middleware('can:update,App\Models\Carrera');
+    Route::put('/carreras/{id}/editar', [CarreraController::class, 'update'])->name('crud.carrera.actualizar')->middleware('can:update,App\Models\Carrera');
     Route::delete('/carreras/{id}', [CarreraController::class, 'destroy'])->name('crud.carrera.eliminar')->middleware('can:delete,App\Models\Carrera');
     Route::get('/carreras/{id}', [CarreraController::class, 'show'])->name('crud.carrera.ver_datos')->middleware('can:view,App\Models\Carrera');
 });
@@ -121,9 +121,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/elecciones', [EleccionesController::class, 'index'])->name('crud.elecciones.ver')->middleware('can:viewAny,App\Models\Elecciones');
     Route::get('/elecciones/crear', [EleccionesController::class, 'create'])->name('crud.elecciones.crear')->middleware('can:create,App\Models\Elecciones');
-    Route::post('/elecciones/crear', [EleccionesController::class, 'store'])->name('crud.elecciones.crear')->middleware('can:create,App\Models\Elecciones');
+    Route::post('/elecciones/crear', [EleccionesController::class, 'store'])->name('crud.elecciones.guardar')->middleware('can:create,App\Models\Elecciones');
     Route::get('/elecciones/{id}/editar', [EleccionesController::class, 'edit'])->name('crud.elecciones.editar')->middleware('can:update,App\Models\Elecciones');
-    Route::put('/elecciones/{id}/editar', [EleccionesController::class, 'update'])->name('crud.elecciones.editar')->middleware('can:update,App\Models\Elecciones');
+    Route::put('/elecciones/{id}/editar', [EleccionesController::class, 'update'])->name('crud.elecciones.actualizar')->middleware('can:update,App\Models\Elecciones');
     Route::delete('/elecciones/{id}', [EleccionesController::class, 'destroy'])->name('crud.elecciones.eliminar')->middleware('can:delete,App\Models\Elecciones');
     Route::get('/elecciones/{id}', [EleccionesController::class, 'show'])->name('crud.elecciones.ver_datos')->middleware('can:view,App\Models\Elecciones');
     Route::post('/elecciones/{id}/activar', [EleccionesController::class, 'activar'])->name('crud.elecciones.activar')->middleware('can:update,App\Models\Elecciones');

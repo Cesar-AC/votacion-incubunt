@@ -53,8 +53,38 @@ class Candidato extends Model implements IElegibleAVoto
 
     public function obtenerTipoVoto(User $votante): TipoVoto
     {
-        return $this->usuario->perfil->area->getKey() == $votante->perfil->area->getKey()
-            ? TipoVoto::mismaArea()
-            : TipoVoto::otraArea();
+        // Cargar relaciones si no están cargadas
+        if (!$this->relationLoaded('usuario')) {
+            $this->load('usuario.perfil.area');
+        }
+        if (!$votante->relationLoaded('perfil')) {
+            $votante->load('perfil.area');
+        }
+
+        // Validar que las relaciones existan
+        if (!$this->usuario) {
+            return TipoVoto::otraArea();
+        }
+
+        if (!$this->usuario->perfil) {
+            return TipoVoto::otraArea();
+        }
+
+        if (!$this->usuario->perfil->area) {
+            return TipoVoto::otraArea();
+        }
+
+        if (!$votante->perfil) {
+            return TipoVoto::otraArea();
+        }
+
+        if (!$votante->perfil->area) {
+            return TipoVoto::otraArea();
+        }
+
+        // Comparar áreas
+        $mismaArea = $this->usuario->perfil->area->getKey() == $votante->perfil->area->getKey();
+
+        return $mismaArea ? TipoVoto::mismaArea() : TipoVoto::otraArea();
     }
 }

@@ -67,7 +67,7 @@ class VotoService implements IVotoService
 
     protected function hayUnCandidatoPorArea(Collection $entidades, Elecciones $eleccion): bool
     {
-        $candidatos = $entidades->filter(function (IElegibleAVoto $entidad) use ($eleccion) {
+        $candidatos = $entidades->filter(function (IElegibleAVoto $entidad) {
             return $entidad instanceof Candidato;
         });
 
@@ -76,6 +76,10 @@ class VotoService implements IVotoService
             $candidatoEleccion = CandidatoEleccion::where('idElecciones', '=', $eleccion->getKey())
                 ->where('idCandidato', '=', $entidad->obtenerPK())
                 ->first();
+
+            if (!$candidatoEleccion) {
+                return;
+            }
 
             if (isset($cargos[$candidatoEleccion->idCargo])) {
                 $cargos[$candidatoEleccion->idCargo] += 1;
@@ -98,6 +102,11 @@ class VotoService implements IVotoService
         }
 
         $eleccion = $this->eleccionesService->obtenerEleccionActiva();
+
+        // Asegurar que el votante tiene sus relaciones cargadas
+        if (!$votante->relationLoaded('perfil')) {
+            $votante->load('perfil.area');
+        }
 
         if (!$this->tienePermisoVotar($votante)) {
             throw new \Exception('No tienes permiso para votar.');
@@ -132,6 +141,11 @@ class VotoService implements IVotoService
                     ]);
 
                 foreach ($entidades as $entidad) {
+                    // Asegurar que los candidatos tienen relaciones cargadas
+                    if ($entidad instanceof Candidato && !$entidad->relationLoaded('usuario')) {
+                        $entidad->load('usuario.perfil.area');
+                    }
+
                     $data = [
                         $entidad->obtenerNombrePK() => $entidad->obtenerPK(),
                         'idElecciones' => $eleccion->getKey(),
@@ -142,7 +156,7 @@ class VotoService implements IVotoService
                 }
             });
         } catch (\Exception $e) {
-            throw new \Exception('Un error ha ocurrido al votar. Por favor, intenta de nuevo.');
+            throw new \Exception('Un error ha ocurrido al votar. Por favor, intenta de nuevo. Detalles: ' . $e->getMessage());
         }
     }
 

@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8" x-data="votingForm()">
     <div class="max-w-7xl mx-auto">
         
         {{-- Header --}}
@@ -22,7 +22,7 @@
             <div class="flex items-center justify-center space-x-2 sm:space-x-4">
                 <div class="flex items-center">
                     <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300"
-                         :class="Object.keys(selectedCandidates).length > 0 ? 'bg-green-600 text-white' : 'bg-blue-700 text-white'">
+                         :class="Object.keys(candidatos).length > 0 ? 'bg-green-600 text-white' : 'bg-blue-700 text-white'">
                         <span class="text-sm sm:text-base font-semibold">1</span>
                     </div>
                     <span class="ml-2 text-xs sm:text-sm font-medium text-gray-700">Selección</span>
@@ -30,7 +30,7 @@
                 <div class="h-0.5 w-12 sm:w-20 bg-gray-300"></div>
                 <div class="flex items-center">
                     <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300"
-                         :class="Object.keys(selectedCandidates).length === 6 ? 'bg-green-600 text-white' : 'bg-gray-400 text-gray-700'">
+                         :class="Object.keys(candidatos).length === 6 ? 'bg-green-600 text-white' : 'bg-gray-400 text-gray-700'">
                         <span class="text-sm sm:text-base font-semibold">2</span>
                     </div>
                     <span class="ml-2 text-xs sm:text-sm font-medium text-gray-700">Confirmación</span>
@@ -40,11 +40,7 @@
 
         @include('components.error-message')
 
-        <form id="votingForm" x-ref="voto" action="{{ route('votante.votar.emitir') }}" method="POST"
-                x-data="{
-                    idPartido: null,
-                    candidatos: {},
-                }">
+        <form id="votingForm" action="{{ route('votante.votar.emitir') }}" method="POST">
             @csrf
 
             {{-- Instructions --}}
@@ -82,7 +78,7 @@
                     @foreach($partidos as $partido)
                         <div class="bg-white rounded-3xl shadow-lg p-6 cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-2xl relative border-4 border-blue-600"
                              :class="idPartido === {{ $partido->getKey() }} ? 'ring-4 ring-blue-600 scale-105 shadow-2xl' : ''"
-                             @click="idPartido = {{ $partido->getKey() }}">
+                             @click="selectParty({{ $partido->getKey() }})">
                             <div class="text-center mb-4">
                                 <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-3">
                                     <i class="fas fa-certificate text-blue-600 text-3xl"></i>
@@ -219,14 +215,32 @@
 
             {{-- Submit Button --}}
             <div class="sticky bottom-0 bg-white border-t-4 border-blue-600 p-4 sm:p-6 shadow-2xl rounded-t-3xl">
+                <div class="mb-4 flex items-center justify-center space-x-6 text-sm font-semibold">
+                    <div :class="idPartido ? 'text-green-600' : 'text-red-600'" class="flex items-center">
+                        <span class="mr-2" x-text="idPartido ? '✓' : '✗'"></span>
+                        <span>Partido seleccionado</span>
+                    </div>
+                    <div :class="Object.keys(candidatos).length > 0 ? 'text-green-600' : 'text-red-600'" class="flex items-center">
+                        <span class="mr-2" x-text="Object.keys(candidatos).length > 0 ? '✓' : '✗'"></span>
+                        <span x-text="`Candidatos (${Object.keys(candidatos).length})`"></span>
+                    </div>
+                </div>
+                
                 <button type="button"
-                        @click="$refs.voto.submit(); console.log(candidatos);"
-                        class="w-full bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-800 hover:to-blue-950 text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                        @click="confirmVote()"
+                        :disabled="!idPartido || Object.keys(candidatos).length === 0"
+                        :class="(!idPartido || Object.keys(candidatos).length === 0) ? 'opacity-50 cursor-not-allowed' : 'hover:from-blue-800 hover:to-blue-950'"
+                        class="w-full bg-gradient-to-r from-blue-700 to-blue-900 text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
                     <i class="fas fa-check-circle mr-2"></i>
                     Confirmar y Emitir Voto
                 </button>
+                
+                <p class="text-xs text-gray-500 mt-3 text-center">
+                    Ambos campos son obligatorios: Selecciona un partido y al menos un candidato
+                </p>
             </div>
-
+            
+            <!-- Hidden inputs for form submission -->
             <input type="hidden" name="idPartido" :value="idPartido">
             <template x-for="idCandidato in Object.values(candidatos)">
                 <input type="hidden" name="candidatos[]" :value="idCandidato">
@@ -251,13 +265,32 @@
                         Por favor revisa tu selección antes de confirmar. Una vez emitido, <strong>no podrás cambiar tu voto</strong>.
                     </p>
                     
-                    <div id="selectedCandidatesList" class="space-y-3 mb-6">
-                        {{-- Populated by JavaScript --}}
+                    <div class="space-y-4 mb-6">
+                        {{-- Partido seleccionado --}}
+                        <template x-if="idPartido">
+                            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
+                                <h3 class="font-bold text-blue-900 mb-2">✓ Partido Seleccionado:</h3>
+                                <p class="text-blue-700 font-semibold" x-text="`Partido ID: ${idPartido}`"></p>
+                            </div>
+                        </template>
+                        
+                        {{-- Candidatos seleccionados --}}
+                        <template x-if="Object.keys(candidatos).length > 0">
+                            <div class="bg-purple-50 border-l-4 border-purple-600 p-4 rounded-lg">
+                                <h3 class="font-bold text-purple-900 mb-3">✓ Candidatos Seleccionados:</h3>
+                                <template x-for="(candidatoId, cargoId) in candidatos">
+                                    <div class="bg-white p-2 mb-2 rounded border-l-4 border-purple-600 text-sm">
+                                        <p class="font-semibold text-gray-900" x-text="`Cargo ID: ${cargoId}`"></p>
+                                        <p class="text-gray-600" x-text="`Candidato ID: ${candidatoId}`"></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
                     </div>
 
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded">
                         <div class="flex">
-                            <i class="fas fa-exclamation-triangle text-yellow-400 mr-2"></i>
+                            <i class="fas fa-exclamation-triangle text-yellow-400 mr-2 flex-shrink-0 mt-0.5"></i>
                             <p class="text-sm text-yellow-800">
                                 <strong>Importante:</strong> Tu voto es secreto y no podrá ser modificado después de confirmar.
                             </p>
@@ -312,71 +345,69 @@
     </div>
 </div>
 
+@push('styles')
+<style>
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.6s ease-out;
+}
+</style>
+@endpush
+
 @push('scripts')
 <script>
-    /**
 function votingForm() {
     return {
-        selectedCandidates: {},
-        selectedParty: null,
+        idPartido: null,
+        candidatos: {},
         showConfirmModal: false,
         showSuccessModal: false,
-
+        
         selectParty(partidoId) {
-            this.selectedParty = partidoId;
+            console.log('Partido seleccionado:', partidoId);
+            this.idPartido = partidoId;
         },
-
+        
         selectCandidate(cargoId, candidatoId) {
-            this.selectedCandidates[cargoId] = candidatoId;
+            console.log('Candidato seleccionado:', cargoId, candidatoId);
+            this.candidatos[cargoId] = candidatoId;
         },
-
+        
         confirmVote() {
-            if (Object.keys(this.selectedCandidates).length === 0 && !this.selectedParty) {
-                alert('Por favor selecciona un partido o al menos un candidato.');
+            console.log('Confirmando voto...');
+            console.log('Partido:', this.idPartido);
+            console.log('Candidatos:', this.candidatos);
+            
+            if (!this.idPartido) {
+                alert('❌ DEBE seleccionar un PARTIDO POLÍTICO');
                 return;
             }
-            this.showConfirmModal = true;
-            this.updateConfirmationList();
-        },
-
-        updateConfirmationList() {
-            const container = document.getElementById('selectedCandidatesList');
-            container.innerHTML = '';
             
-            // Mostrar partido seleccionado
-            if (this.selectedParty) {
-                const partidoDiv = document.createElement('div');
-                partidoDiv.className = 'bg-blue-50 border-l-4 border-blue-600 p-3 rounded';
-                partidoDiv.innerHTML = `
-                    <p class="font-bold text-blue-900">Partido Seleccionado</p>
-                    <p class="text-sm text-blue-700">ID: ${this.selectedParty}</p>
-                `;
-                container.appendChild(partidoDiv);
+            const candidatosCount = Object.keys(this.candidatos).length;
+            if (candidatosCount === 0) {
+                alert('❌ DEBE seleccionar al menos UN CANDIDATO');
+                return;
             }
             
-            // Mostrar candidatos seleccionados
-            document.querySelectorAll('[data-candidato-id]').forEach(el => {
-                const candidatoId = el.getAttribute('data-candidato-id');
-                if (Object.values(this.selectedCandidates).includes(parseInt(candidatoId))) {
-                    const clone = el.cloneNode(true);
-                    clone.classList.remove('cursor-pointer', 'hover:shadow-xl');
-                    clone.removeAttribute('@click');
-                    container.appendChild(clone);
-                }
-            });
+            this.showConfirmModal = true;
         },
-
+        
         submitVote() {
-            const form = document.getElementById('votingForm');
+            console.log('Enviando voto...');
             this.showSuccessModal = true;
             this.showConfirmModal = false;
+            
             setTimeout(() => {
-                form.submit();
+                console.log('Enviando formulario...');
+                document.getElementById('votingForm').submit();
             }, 1000);
         }
     }
 }
-**/
 </script>
 @endpush
 

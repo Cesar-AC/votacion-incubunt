@@ -178,48 +178,29 @@
         CÓDIGO DE VERIFICACIÓN: {{ strtoupper(substr(md5($user->id . $eleccion->idElecciones . now()->timestamp), 0, 16)) }}
     </div>
     
-    @if($votosPartido->isNotEmpty())
+    @if(!empty($votosPartido) && count($votosPartido) > 0)
     <div class="section-title">VOTO A PARTIDO POLÍTICO</div>
     @foreach($votosPartido as $voto)
     <div class="party-box">
-        <div class="party-name">{{ $voto->partido->partido ?? 'Partido' }}</div>
-        @if($voto->partido->descripcion)
-        <div style="margin-top: 8px; font-size: 12px; font-weight: normal;">
-            {{ $voto->partido->descripcion }}
-        </div>
-        @endif
+        <div class="party-name">{{ $voto->nombre ?? ($voto->partido->partido ?? 'Partido') }}</div>
     </div>
     @endforeach
     @endif
     
-    @if($votosCandidato->isNotEmpty())
+    @if(!empty($votosCandidato) && count($votosCandidato) > 0)
     <div class="section-title">VOTOS A CANDIDATOS</div>
     @foreach($votosCandidato as $voto)
-    @if($voto->candidato)
-        @php
-            $candidatoEleccion = $voto->candidato->candidatoElecciones()->where('idElecciones', $eleccion->idElecciones)->first();
-        @endphp
         <div class="vote-item">
             <div class="vote-item-header">
-                {{ $candidatoEleccion && $candidatoEleccion->cargo ? $candidatoEleccion->cargo->cargo : 'Cargo desconocido' }}
+                {{ $voto->cargo ?? 'Cargo desconocido' }}
             </div>
             <div class="candidate-name">
-                {{ $voto->candidato->usuario->perfil->nombre ?? 'Sin nombre' }}
-                {{ $voto->candidato->usuario->perfil->apellidoPaterno ?? '' }}
-                {{ $voto->candidato->usuario->perfil->apellidoMaterno ?? '' }}
+                {{ $voto->nombre ?? 'Sin nombre' }}
             </div>
             <div class="candidate-info">
-                @if($candidatoEleccion && $candidatoEleccion->partido)
-                    Partido: {{ $candidatoEleccion->partido->partido }}
-                @else
-                    Candidato Independiente
-                @endif
-                @if($voto->candidato->usuario->perfil->carrera)
-                    | Carrera: {{ $voto->candidato->usuario->perfil->carrera->carrera }}
-                @endif
+                Partido: {{ $voto->partido ?? 'Independiente' }}
             </div>
         </div>
-    @endif
     @endforeach
     @endif
     
