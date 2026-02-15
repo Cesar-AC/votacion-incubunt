@@ -52,18 +52,27 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::prefix('votante')->name('votante.')->group(function () {
         Route::get('/home', [VotanteController::class, 'home'])->name('home');
-        Route::get('/propuestas', [VotanteController::class, 'propuestas'])->name('propuestas');
-        Route::get('/perfil/editar', [VotanteController::class, 'editarPerfil'])->name('perfil.editar');
-        Route::put('/perfil', [VotanteController::class, 'actualizarPerfil'])->name('perfil.actualizar');
-        Route::get('/elecciones', [VotanteController::class, 'listarElecciones'])->name('elecciones');
-        Route::get('/elecciones/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
+
+        Route::middleware('can:esta-en-padron-electoral')->group(function () {
+            Route::get('/propuestas', [VotanteController::class, 'propuestas'])->name('propuestas');
+        });
+
+        // Route::get('/perfil/editar', [VotanteController::class, 'editarPerfil'])->name('perfil.editar');
+        // Route::put('/perfil', [VotanteController::class, 'actualizarPerfil'])->name('perfil.actualizar');
+        // Route::get('/elecciones', [VotanteController::class, 'listarElecciones'])->name('elecciones');
+        // Route::get('/elecciones/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
 
         Route::prefix('votar')->name('votar.')->group(function () {
-            Route::get('/', [VotanteController::class, 'vistaVotar'])->name('lista');
-            Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
-            Route::post('/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
-            Route::get('/{eleccionId}/exito', [VotanteController::class, 'votoExitoso'])->name('exito');
-            Route::get('/{eleccionId}/comprobante-pdf', [VotanteController::class, 'generarComprobantePDF'])->name('comprobante.pdf');
+            Route::middleware('can:puede-votar')->group(function () {
+                Route::get('/', [VotanteController::class, 'vistaVotar'])->name('lista');
+                Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
+                Route::post('/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
+            });
+
+            Route::middleware('can:ya-voto')->group(function () {
+                Route::get('/{eleccionId}/exito', [VotanteController::class, 'votoExitoso'])->name('exito');
+                Route::get('/{eleccionId}/comprobante-pdf', [VotanteController::class, 'generarComprobantePDF'])->name('comprobante.pdf');
+            });
         });
 
         // APIs para obtener datos de propuestas

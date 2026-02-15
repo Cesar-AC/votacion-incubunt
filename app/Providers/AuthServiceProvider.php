@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Interfaces\Services\IEleccionesService;
+use App\Interfaces\Services\IVotoService;
 use App\Models\Area;
 use App\Models\Candidato;
 use App\Models\Cargo;
@@ -44,6 +46,7 @@ use App\Policies\UserPolicy;
 use App\Policies\UserPermisoPolicy;
 use App\Policies\VotoPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -85,5 +88,24 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
+        Gate::define('puede-votar', function (User $usuario) {
+            $votoService = app(IVotoService::class);
+            $eleccion = app(IEleccionesService::class)->obtenerEleccionActiva();
+            return $votoService->puedeVotar($usuario, $eleccion);
+        });
+
+        Gate::define('ya-voto', function (User $usuario) {
+            $votoService = app(IVotoService::class);
+            $eleccion = app(IEleccionesService::class)->obtenerEleccionActiva();
+            return $votoService->haVotado($usuario, $eleccion);
+        });
+
+        Gate::define('esta-en-padron-electoral', function (User $usuario) {
+            $eleccionesService = app(IEleccionesService::class);
+            $eleccion = $eleccionesService->obtenerEleccionActiva();
+
+            return $eleccionesService->estaEnPadronElectoral($usuario, $eleccion);
+        });
     }
 }

@@ -54,4 +54,17 @@ interface IVotoService
      *      Retorna true si el usuario ha votado en la elección, false en caso contrario.
      */
     public function haVotado(User $usuario, ?Elecciones $eleccion = null): bool;
+
+    /**
+     * @param User $votante
+     *      Obligatorio.
+     *      Usuario que realiza el voto.
+     * @param Elecciones $eleccion
+     *      Opcional.
+     *      Elección en la que se desea verificar si el usuario puede votar.
+     *      Si no se especifica, se utilizará la elección activa.
+     * @return bool
+     *      Retorna true si el usuario puede votar en la elección, false en caso contrario.
+     */
+    public function puedeVotar(User $votante, ?Elecciones $eleccion = null): bool;
 }
