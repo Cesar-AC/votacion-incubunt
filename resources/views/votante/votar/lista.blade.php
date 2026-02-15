@@ -78,7 +78,9 @@
                     @foreach($partidos as $partido)
                         <div class="bg-white rounded-3xl shadow-lg p-6 cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-2xl relative border-4 border-blue-600"
                              :class="idPartido === {{ $partido->getKey() }} ? 'ring-4 ring-blue-600 scale-105 shadow-2xl' : ''"
-                             @click="selectParty({{ $partido->getKey() }})">
+                             @click="selectParty({{ $partido->getKey() }}, '{{ $partido->partido }}')"
+                             data-partido-id="{{ $partido->getKey() }}"
+                             data-partido-nombre="{{ $partido->partido }}">
                             <div class="text-center mb-4">
                                 <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-3">
                                     <i class="fas fa-certificate text-blue-600 text-3xl"></i>
@@ -165,18 +167,20 @@
                         @forelse($candidatoService->obtenerCandidatosPorCargoEnEleccion($cargo, $eleccionActiva) as $candidato)
                         @if($candidato && $candidato->usuario && $candidato->usuario->perfil)
                         <div class="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all duration-300 hover:shadow-xl border-2"
-                             :class="candidatos[{{ $cargo->getKey() }}] == {{ $candidato->getKey() }} ? 'border-purple-600 bg-purple-50' : 'border-gray-200'"
-                             @click="candidatos[{{ $cargo->getKey() }}] = {{ $candidato->getKey() }}"
-                             data-candidato-id="{{ $candidato->getKey() }}">
+                             :class="candidatos[{{ $cargo->getKey() }}]?.id == {{ $candidato->getKey() }} ? 'border-purple-600 bg-purple-50' : 'border-gray-200'"
+                             @click="selectCandidate({{ $cargo->getKey() }}, {{ $candidato->getKey() }}, '{{ $cargo->cargo }}', '{{ $candidato->usuario->perfil->nombre }} {{ $candidato->usuario->perfil->apellidoPaterno }}')"
+                             data-candidato-id="{{ $candidato->getKey() }}"
+                             data-candidato-nombre="{{ $candidato->usuario->perfil->nombre }} {{ $candidato->usuario->perfil->apellidoPaterno }}"
+                             data-cargo-nombre="{{ $cargo->cargo }}">
                             <div class="flex flex-col items-center text-center">
                                 @if($candidato->usuario->perfil->obtenerFotoURL())
                                 <img src="{{ $candidato->usuario->perfil->obtenerFotoURL() }}" 
                                      alt="{{ $candidato->usuario->perfil->nombre }}"
                                      class="w-16 h-16 rounded-full object-cover border-4 mb-3"
-                                     :class="candidatos[{{ $cargo->getKey() }}] == {{ $candidato->getKey() }} ? 'border-purple-600' : 'border-gray-300'">
+                                     :class="candidatos[{{ $cargo->getKey() }}]?.id == {{ $candidato->getKey() }} ? 'border-purple-600' : 'border-gray-300'">
                                 @else
                                 <div class="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mb-3"
-                                     :class="candidatos[{{ $cargo->getKey() }}] == {{ $candidato->getKey() }} ? 'bg-purple-600' : 'bg-gray-400'">
+                                     :class="candidatos[{{ $cargo->getKey() }}]?.id == {{ $candidato->getKey() }} ? 'bg-purple-600' : 'bg-gray-400'">
                                     {{ substr($candidato->usuario->perfil?->nombre ?? 'NC', 0, 1) }}
                                 </div>
                                 @endif
@@ -186,7 +190,7 @@
                                     {{ $candidato->usuario->perfil?->apellidoPaterno ?? '' }}
                                 </h4>
                                 
-                                <template x-if="candidatos[{{ $cargo->getKey() }}] == {{ $candidato->getKey() }}">
+                                <template x-if="candidatos[{{ $cargo->getKey() }}]?.id == {{ $candidato->getKey() }}">
                                     <div class="mt-2">
                                         <svg class="w-6 h-6 text-purple-600 mx-auto" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
@@ -242,8 +246,8 @@
             
             <!-- Hidden inputs for form submission -->
             <input type="hidden" name="idPartido" :value="idPartido">
-            <template x-for="idCandidato in Object.values(candidatos)">
-                <input type="hidden" name="candidatos[]" :value="idCandidato">
+            <template x-for="(candidatoInfo, cargoId) in candidatos">
+                <input type="hidden" name="candidatos[]" :value="candidatoInfo.id">
             </template>
         </form>
 
@@ -267,21 +271,27 @@
                     
                     <div class="space-y-4 mb-6">
                         {{-- Partido seleccionado --}}
-                        <template x-if="idPartido">
+                        <template x-if="partidoInfo">
                             <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
-                                <h3 class="font-bold text-blue-900 mb-2">✓ Partido Seleccionado:</h3>
-                                <p class="text-blue-700 font-semibold" x-text="`Partido ID: ${idPartido}`"></p>
+                                <h3 class="font-bold text-blue-900 mb-2 flex items-center">
+                                    <i class="fas fa-users mr-2"></i>
+                                    Partido Seleccionado:
+                                </h3>
+                                <p class="text-blue-700 font-semibold text-lg ml-6" x-text="partidoInfo.nombre"></p>
                             </div>
                         </template>
                         
                         {{-- Candidatos seleccionados --}}
                         <template x-if="Object.keys(candidatos).length > 0">
                             <div class="bg-purple-50 border-l-4 border-purple-600 p-4 rounded-lg">
-                                <h3 class="font-bold text-purple-900 mb-3">✓ Candidatos Seleccionados:</h3>
-                                <template x-for="(candidatoId, cargoId) in candidatos">
-                                    <div class="bg-white p-2 mb-2 rounded border-l-4 border-purple-600 text-sm">
-                                        <p class="font-semibold text-gray-900" x-text="`Cargo ID: ${cargoId}`"></p>
-                                        <p class="text-gray-600" x-text="`Candidato ID: ${candidatoId}`"></p>
+                                <h3 class="font-bold text-purple-900 mb-3 flex items-center">
+                                    <i class="fas fa-user-check mr-2"></i>
+                                    Candidatos Seleccionados:
+                                </h3>
+                                <template x-for="(candidatoInfo, cargoId) in candidatos">
+                                    <div class="bg-white p-3 mb-2 rounded-lg shadow-sm">
+                                        <p class="font-bold text-purple-700 text-sm mb-1" x-text="candidatoInfo.cargo"></p>
+                                        <p class="text-gray-800 font-semibold" x-text="candidatoInfo.nombre"></p>
                                     </div>
                                 </template>
                             </div>
@@ -363,18 +373,27 @@
 function votingForm() {
     return {
         idPartido: null,
+        partidoInfo: null,
         candidatos: {},
         showConfirmModal: false,
         showSuccessModal: false,
         
-        selectParty(partidoId) {
-            console.log('Partido seleccionado:', partidoId);
+        selectParty(partidoId, partidoNombre) {
+            console.log('Partido seleccionado:', partidoId, partidoNombre);
             this.idPartido = partidoId;
+            this.partidoInfo = {
+                id: partidoId,
+                nombre: partidoNombre
+            };
         },
         
-        selectCandidate(cargoId, candidatoId) {
-            console.log('Candidato seleccionado:', cargoId, candidatoId);
-            this.candidatos[cargoId] = candidatoId;
+        selectCandidate(cargoId, candidatoId, cargoNombre, candidatoNombre) {
+            console.log('Candidato seleccionado:', cargoId, candidatoId, cargoNombre, candidatoNombre);
+            this.candidatos[cargoId] = {
+                id: candidatoId,
+                nombre: candidatoNombre,
+                cargo: cargoNombre
+            };
         },
         
         confirmVote() {
