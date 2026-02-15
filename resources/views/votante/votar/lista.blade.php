@@ -219,7 +219,7 @@
 
             {{-- Submit Button --}}
             <div class="sticky bottom-0 bg-white border-t-4 border-blue-600 p-4 sm:p-6 shadow-2xl rounded-t-3xl">
-                <div class="mb-4 flex items-center justify-center space-x-6 text-sm font-semibold">
+                <div class="mb-4 flex items-center justify-center space-x-6 text-sm font-semibold flex-column flex-sm-row">
                     <div :class="idPartido ? 'text-green-600' : 'text-red-600'" class="flex items-center">
                         <span class="mr-2" x-text="idPartido ? '✓' : '✗'"></span>
                         <span>Partido seleccionado</span>
@@ -397,10 +397,6 @@ function votingForm() {
         },
         
         confirmVote() {
-            console.log('Confirmando voto...');
-            console.log('Partido:', this.idPartido);
-            console.log('Candidatos:', this.candidatos);
-            
             if (!this.idPartido) {
                 alert('❌ DEBE seleccionar un PARTIDO POLÍTICO');
                 return;
@@ -416,12 +412,10 @@ function votingForm() {
         },
         
         submitVote() {
-            console.log('Enviando voto...');
             this.showSuccessModal = true;
             this.showConfirmModal = false;
             
             setTimeout(() => {
-                console.log('Enviando formulario...');
                 document.getElementById('votingForm').submit();
             }, 1000);
         }
