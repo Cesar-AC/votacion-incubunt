@@ -2,46 +2,15 @@
 
 namespace App\Http\Requests;
 
-use App\Enum\Permiso;
-use App\Interfaces\Services\IEleccionesService;
-use App\Interfaces\Services\IPermisoService;
 use App\Interfaces\Services\IVotoService;
-use App\Models\Candidato;
-use App\Models\CandidatoEleccion;
-use App\Models\Elecciones;
-use App\Models\Interfaces\IElegibleAVoto;
-use App\Models\Partido;
-use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class VotarRequest extends FormRequest
 {
     public function __construct(
-        protected IEleccionesService $eleccionesService,
-        protected IPermisoService $permisoService,
         protected IVotoService $votoService,
     ) {}
-
-    protected function tienePermisoVotar(User $usuario): bool
-    {
-        return $this->permisoService->comprobarUsuario($usuario, $this->permisoService->permisoDesdeEnum(Permiso::VOTO_VOTAR));
-    }
-
-    protected function estaUsuarioEnPadron(User $usuario, Elecciones $eleccion): bool
-    {
-        return $this->eleccionesService->estaEnPadronElectoral($usuario, $eleccion);
-    }
-
-    protected function perteneceEntidadAEleccion(IElegibleAVoto $entidad, Elecciones $eleccion): bool
-    {
-        return DB::table($entidad->obtenerTabla() . 'Eleccion')
-            ->where('idElecciones', '=', $eleccion->getKey())
-            ->where($entidad->obtenerNombrePK(), '=', $entidad->obtenerPK())
-            ->exists();
-    }
 
     /**
      * Determine if the user is authorized to make this request.
@@ -49,9 +18,7 @@ class VotarRequest extends FormRequest
     public function authorize(): bool
     {
         $votante = Auth::user();
-        $eleccion = $this->eleccionesService->obtenerEleccionActiva();
-
-        return $this->votoService->puedeVotar($votante, $eleccion);
+        return $this->votoService->puedeVotar($votante);
     }
 
     /**
