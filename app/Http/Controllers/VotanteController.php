@@ -221,9 +221,9 @@ class VotanteController extends Controller
         $partidos = $eleccionActiva->partidos;
         $areas = $areaService->obtenerAreas();
 
+        // Obtener TODOS los candidatos de la elección (similar a la página de votación)
         $candidatosPorArea = CandidatoEleccion::query()
             ->where('idElecciones', '=', $eleccionActiva->getKey())
-            ->whereNull('idPartido')
             ->with([
                 'candidato.usuario.perfil',
                 'candidato.propuestas' => function ($q) use ($eleccionActiva) {
