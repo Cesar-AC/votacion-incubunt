@@ -14,6 +14,7 @@ use App\Models\PropuestaPartido;
 use App\Models\PropuestaCandidato;
 use App\Interfaces\Services\IPermisoService;
 use App\Enum\Permiso as PermisoEnum;
+use App\Http\Requests\VotarRequest;
 use App\Interfaces\Services\IAreaService;
 use App\Interfaces\Services\ICarreraService;
 use App\Interfaces\Services\ICandidatoService;
@@ -44,12 +45,14 @@ class VotanteController extends Controller
         try {
             $eleccionActiva = $this->eleccionesService->estaEnPadronElectoral(Auth::user()) ? $eleccionActiva : null;
             $esPeriodoDeVotar = $this->eleccionesService->votacionHabilitada($eleccionActiva);
+            $yaVotoUsuario = $this->votoService->haVotado(Auth::user(), $eleccionActiva);
         } catch (\Exception $e) {
             $eleccionActiva = null;
             $esPeriodoDeVotar = false;
+            $yaVotoUsuario = false;
         }
 
-        return view('votante.home', compact('eleccionActiva', 'esPeriodoDeVotar'));
+        return view('votante.home', compact('eleccionActiva', 'esPeriodoDeVotar', 'yaVotoUsuario'));
     }
 
     /**
@@ -334,35 +337,11 @@ class VotanteController extends Controller
     /**
      * Procesa y emite el voto
      */
-    public function emitirVoto(Request $request, IPartidoService $partidoService, ICandidatoService $candidatoService)
+    public function emitirVoto(VotarRequest $request, IPartidoService $partidoService, ICandidatoService $candidatoService)
     {
         $eleccion = $this->eleccionesService->obtenerEleccionActiva();
 
-        // Validación estricta: tanto partido como candidatos son obligatorios
-        try {
-            $validated = $request->validate(
-                [
-                    'idPartido' => 'required|integer|exists:Partido,idPartido',
-                    'candidatos' => 'required|array|min:1',
-                    'candidatos.*' => 'required|integer|exists:Candidato,idCandidato',
-                ],
-                [
-                    'idPartido.required' => '❌ DEBE seleccionar un PARTIDO POLÍTICO',
-                    'idPartido.integer' => 'El partido debe ser un número válido',
-                    'idPartido.exists' => 'El partido seleccionado no existe',
-                    'candidatos.required' => '❌ DEBE seleccionar al menos UN CANDIDATO',
-                    'candidatos.array' => 'Los candidatos deben ser una lista válida',
-                    'candidatos.min' => '❌ DEBE seleccionar al menos UN CANDIDATO',
-                    'candidatos.*.required' => 'Todos los candidatos deben ser válidos',
-                    'candidatos.*.integer' => 'Los IDs de candidatos deben ser números',
-                    'candidatos.*.exists' => 'Uno o más candidatos no existen',
-                ]
-            );
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return redirect()->route('votante.votar.lista', $eleccion->idElecciones)
-                ->withErrors($e->errors())
-                ->withInput();
-        }
+        $validated = $request->safe();
 
         $entidades = [];
         $votosData = [];
@@ -399,7 +378,7 @@ class VotanteController extends Controller
                 }
 
                 $entidades[] = $candidato;
-                
+
                 $candidatoEleccion = $candidato->candidatoElecciones()
                     ->where('idElecciones', $eleccion->idElecciones)
                     ->with('cargo', 'partido')
@@ -420,7 +399,6 @@ class VotanteController extends Controller
             session(['votos_emitidos' => $votosData]);
 
             return redirect()->route('votante.votar.exito', $eleccion->idElecciones);
-
         } catch (\Exception $e) {
             \Log::error('Error al emitir voto: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
