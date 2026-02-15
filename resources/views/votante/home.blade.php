@@ -146,6 +146,35 @@
         transform: scale(1.05);
     }
 
+    .btn-voter:disabled {
+        opacity: 0.6;
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+
+    .btn-voter-light:disabled {
+        background-color: #d1d5db;
+        color: #6b7280;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .btn-voter-light:disabled:hover {
+        transform: none;
+        background-color: #d1d5db;
+    }
+
+    .btn-voter-outline:disabled {
+        background-color: transparent;
+        color: #9ca3af;
+        border-color: #d1d5db;
+    }
+
+    .btn-voter-outline:disabled:hover {
+        transform: none;
+        background-color: transparent;
+        color: #9ca3af;
+    }
+
     .status-badge {
         position: absolute;
         top: 20px;
@@ -242,23 +271,23 @@
                         @elseif (isset($eleccionActiva) && !$esPeriodoDeVotar && !$yaVotoUsuario)
                             <p>Estás dentro del padrón electoral, pero la votación está cerrada.</p>
                             <p>Revisa las propuestas de los candidatos para estar informado al momento de votar.</p>
-                            <a href="#" 
-                               class="btn btn-voter btn-voter-light">
+                            <button type="button" disabled
+                                   class="btn btn-voter btn-voter-light">
                                 Votación Cerrada
-                            </a>
+                            </button>
                         @elseif (isset($eleccionActiva) && $yaVotoUsuario)
                             <p>Gracias por ejercer tu derecho en estas elecciones.</p>
                             <p>Próximamente las autoridades competentes informarán sobre los resultados de la elección.</p>
-                            <a href="#" 
-                               class="btn btn-voter btn-voter-light">
-                                Ya has votado
-                            </a>
+                            <button type="button" disabled
+                                   class="btn btn-voter btn-voter-light">
+                                <i class="fas fa-check-circle mr-2"></i>Ya has votado
+                            </button>
                         @else
                             <p>No hay una elección programada ahora mismo.</p>
-                            <a href="#" 
-                               class="btn btn-voter btn-voter-light">
+                            <button type="button" disabled
+                                   class="btn btn-voter btn-voter-light">
                                 Sin Elecciones
-                            </a>
+                            </button>
                         @endif
                     </div>
                 </div>
