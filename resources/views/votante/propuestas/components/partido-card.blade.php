@@ -22,8 +22,14 @@
         <div class="p-5 flex flex-col items-center gap-4">
             {{-- Logo/Icono del partido - solo si existe foto --}}
             @if($partidoFotoURL)
-            <div class="max-w-24 rounded-2xl bg-gray-200 flex items-center justify-center shadow-lg shadow-indigo-200">
+            <div class="w-24 h-24 rounded-2xl bg-gray-200 flex items-center justify-center shadow-lg shadow-indigo-200 flex-shrink-0 overflow-hidden">
                 <img src="{{ $partidoFotoURL }}" alt="Foto de partido {{ $partido->partido }}" class="w-full h-full object-cover rounded-2xl">
+            </div>
+            @else
+            <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200 flex-shrink-0">
+                <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"/>
+                </svg>
             </div>
             @endif
 
@@ -31,36 +37,6 @@
             <h3 class="text-lg font-bold text-gray-900 line-clamp-2 text-center leading-snug">
                 {{ $partido->partido }}
             </h3>
-
-            {{-- Avatares de miembros presidenciales --}}
-            <div class="flex items-center">
-                <div class="flex -space-x-2">
-                    @php
-                        $candidatosPresidenciales = $partido->elecciones()
-                            ->first()
-                            ?->candidatoElecciones()
-                            ->where('idPartido', $partido->getKey())
-                            ->whereIn('idCargo', function($q) {
-                                $q->select('idCargo')->from('Cargo')
-                                  ->whereIn('cargo', ['Presidente', 'Vicepresidente']);
-                            })
-                            ->with('candidato.usuario.perfil')
-                            ->limit(4)
-                            ->get() ?? collect();
-                    @endphp
-                    @forelse($candidatosPresidenciales as $candidatoEleccion)
-                        @php
-                            $candidatoFotoURL = $candidatoEleccion->candidato->usuario->perfil->obtenerFotoURL();
-                        @endphp
-                        @if($candidatoFotoURL)
-                        <div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                            <img src="{{ $candidatoFotoURL }}" alt="Foto de candidato" class="w-full h-full object-cover rounded-full">
-                        </div>
-                        @endif
-                    @empty
-                    @endforelse
-                </div>
-            </div>
 
             {{-- Descripción breve --}}
             <p class="text-sm text-gray-500 line-clamp-2 mb-4 min-h-[2.5rem]">

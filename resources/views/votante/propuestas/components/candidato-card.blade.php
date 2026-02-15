@@ -28,12 +28,12 @@
 
             {{-- Logo/Icono del Candidato - solo si existe foto --}}
             @if($fotoURL)
-            <div class="max-w-24 rounded-2xl bg-gray-200 flex items-center justify-center shadow-lg shadow-indigo-200">
+            <div class="w-24 h-24 rounded-2xl bg-gray-200 flex items-center justify-center shadow-lg shadow-amber-200 flex-shrink-0 overflow-hidden">
                 <img src="{{ $fotoURL }}" alt="Foto de candidato {{ $nombre }}" class="w-full h-full object-cover rounded-2xl">
             </div>
             @else
-            <div class="max-w-24 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg text-white text-3xl font-bold">
-                {{ $initials }}
+            <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-200 flex-shrink-0">
+                <span class="text-white text-3xl font-bold">{{ $initials }}</span>
             </div>
             @endif
 
