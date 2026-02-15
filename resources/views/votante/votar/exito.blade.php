@@ -300,7 +300,7 @@ window.addEventListener('load', () => {
     createConfetti();
     
     // Contador regresivo
-    let countdown = 5;
+    let countdown = 60;
     const countdownElement = document.getElementById('countdown');
     
     const countdownInterval = setInterval(() => {
@@ -313,10 +313,10 @@ window.addEventListener('load', () => {
         }
     }, 1000);
     
-    // Redirigir automáticamente al home después de 5 segundos
+    // Redirigir automáticamente al home después de 60 segundos (1 minuto)
     setTimeout(() => {
         window.location.href = '{{ route("votante.home") }}';
-    }, 5000);
+    }, 60000);
 });
 </script>
 @endpush
