@@ -54,7 +54,7 @@
                     </div>
 
                     <!-- Candidates Grid -->
-                    <div id="partido-modal-candidatos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 px-4 max-w-5xl mx-auto">
+                    <div id="partido-modal-candidatos-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 max-w-4xl mx-auto">
                     </div>
                 </div>
 
@@ -153,28 +153,29 @@
 
                     data.forEach(candidato => {
                         const candidatoHTML = document.createElement('div');
-                        candidatoHTML.className = 'w-full bg-white rounded-[2.5rem] p-6 lg:p-8 flex flex-col items-center relative overflow-hidden h-full border border-gray-100';
+                        candidatoHTML.className = 'flex items-center gap-4 bg-white rounded-2xl p-4 border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all cursor-pointer';
+                        candidatoHTML.onclick = function() {
+                            document.dispatchEvent(new CustomEvent('abrirCandidatoModal', {detail: {candidatoId: candidato.id}}));
+                        };
                         
                         let fotoHTML = '';
                         if (candidato.foto) {
-                            fotoHTML = `<img src="${candidato.foto}" class="w-full h-full object-cover" alt="Candidato foto">`;
+                            fotoHTML = `<img src="${candidato.foto}" class="w-full h-full object-cover rounded-full" alt="Candidato foto">`;
                         } else {
-                            fotoHTML = `<div class="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-5xl font-bold">${candidato.initials}</div>`;
+                            fotoHTML = `<div class="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xl font-bold rounded-full">${candidato.initials}</div>`;
                         }
 
                         candidatoHTML.innerHTML = `
-                            <div class="w-32 h-24 mb-5 overflow-hidden bg-gray-100 rounded-lg">
-                                ${fotoHTML}
+                            <div class="flex-shrink-0">
+                                <div class="w-16 h-16 overflow-hidden">
+                                    ${fotoHTML}
+                                </div>
                             </div>
 
-                            <div class="flex flex-col items-center gap-4 flex-1 justify-center">
-                                <h3 class="text-xl font-black text-indigo-600 uppercase tracking-widest text-center">${candidato.cargo}</h3>
-                                <h4 class="text-xl text-gray-900 text-center uppercase leading-tight">${candidato.nombre}</h4>
-
-                                <button onclick="document.dispatchEvent(new CustomEvent('abrirCandidatoModal', {detail: {candidatoId: ${candidato.id}}}));" 
-                                        class="w-full py-3 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-indigo-600 transition-colors rounded-lg">
-                                    Ver Detalles
-                                </button>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-1">${candidato.cargo}</p>
+                                <h4 class="text-base font-bold text-gray-900 truncate mb-1">${candidato.nombre}</h4>
+                                <p class="text-xs text-gray-500">${candidato.carrera || ''}</p>
                             </div>
                         `;
                         grid.appendChild(candidatoHTML);
