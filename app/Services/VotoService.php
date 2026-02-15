@@ -175,4 +175,27 @@ class VotoService implements IVotoService
 
         return $votosPonderados;
     }
+
+    public function puedeVotar(User $votante, ?Elecciones $eleccion = null): bool
+    {
+        $eleccion = $eleccion ?? $this->eleccionesService->obtenerEleccionActiva();
+
+        if (!$eleccion) {
+            return false;
+        }
+
+        if (!$this->tienePermisoVotar($votante)) {
+            return false;
+        }
+
+        if (!$this->estaUsuarioEnPadron($votante, $eleccion)) {
+            return false;
+        }
+
+        if ($this->haVotado($votante)) {
+            return false;
+        }
+
+        return true;
+    }
 }
