@@ -71,24 +71,26 @@
         .vote-item {
             background-color: #f9fafb;
             border-left: 4px solid #3b82f6;
-            padding: 12px;
+            padding: 15px;
             margin-bottom: 12px;
             page-break-inside: avoid;
+            border-radius: 4px;
         }
         
         .vote-item-header {
             font-weight: bold;
             color: #1e40af;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
         }
         
         .candidate-name {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
             color: #111827;
-            margin-bottom: 4px;
+            margin-bottom: 0;
         }
         
         .candidate-info {
@@ -108,6 +110,17 @@
         .party-name {
             font-size: 18px;
             font-weight: bold;
+            margin-bottom: 4px;
+            color: #141a25;
+        }
+        
+        .party-status {
+            font-size: 11px;
+            background-color: rgba(255, 255, 255, 0.3);
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-top: 5px;
         }
         
         .footer {
@@ -148,7 +161,10 @@
 <body>
     <div class="header">
         <h1>COMPROBANTE DE VOTO</h1>
-        <h2>{{ $eleccion->titulo }}</h2>
+        <h2>{{ $eleccion->titulo ?? 'Elección' }}</h2>
+        @if($eleccion->descripcion)
+        <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">{{ $eleccion->descripcion }}</p>
+        @endif
     </div>
     
     <div class="info-box">
@@ -170,7 +186,7 @@
         </div>
         <div class="info-row">
             <span class="info-label">Elección:</span>
-            <span>{{ $eleccion->titulo }}</span>
+            <span>{{ $eleccion->titulo ?? 'Elección' }}</span>
         </div>
     </div>
     
@@ -178,11 +194,17 @@
         CÓDIGO DE VERIFICACIÓN: {{ strtoupper(substr(md5($user->id . $eleccion->idElecciones . now()->timestamp), 0, 16)) }}
     </div>
     
+    <p style="text-align: center; color: #6b7280; font-size: 10px; margin-top: 5px;">
+        Guarde este código para futuras consultas
+    </p>
+    
     @if(!empty($votosPartido) && count($votosPartido) > 0)
     <div class="section-title">VOTO A PARTIDO POLÍTICO</div>
     @foreach($votosPartido as $voto)
-    <div class="party-box">
-        <div class="party-name">{{ $voto->nombre ?? ($voto->partido->partido ?? 'Partido') }}</div>
+    <div class="party-box" style="background: linear-gradient(135deg, {{ $voto->color1 ?? '#1e40af' }} 0%, {{ $voto->color2 ?? ($voto->color1 ?? '#3b82f6') }} 100%);">
+        <p style="font-size: 10px; text-transform: uppercase; opacity: 0.9; margin-bottom: 5px; letter-spacing: 1px;">Partido Seleccionado</p>
+        <div class="party-name">{{ $voto->nombre ?? 'N/A' }}</div>
+        <span class="party-status">✓ Voto Registrado</span>
     </div>
     @endforeach
     @endif
@@ -191,14 +213,16 @@
     <div class="section-title">VOTOS A CANDIDATOS</div>
     @foreach($votosCandidato as $voto)
         <div class="vote-item">
-            <div class="vote-item-header">
-                {{ $voto->cargo ?? 'Cargo desconocido' }}
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                <div class="vote-item-header">
+                    {{ $voto->cargo ?? 'Cargo desconocido' }}
+                </div>
+                <span style="background-color: #d1fae5; color: #065f46; font-size: 9px; font-weight: bold; padding: 4px 8px; border-radius: 10px; border: 1px solid #10b981;">
+                    ✓ Registrado
+                </span>
             </div>
             <div class="candidate-name">
                 {{ $voto->nombre ?? 'Sin nombre' }}
-            </div>
-            <div class="candidate-info">
-                Partido: {{ $voto->partido ?? 'Independiente' }}
             </div>
         </div>
     @endforeach
@@ -208,6 +232,24 @@
         <strong>IMPORTANTE:</strong> Este comprobante es un documento personal que certifica tu participación en el proceso electoral. 
         Tu voto ha sido registrado de forma segura y anónima. No podrás modificar tu voto una vez emitido. 
         Los resultados estarán disponibles una vez finalice el proceso electoral.
+    </div>
+    
+    <div style="background-color: #f3f4f6; border: 2px solid #9ca3af; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center;">
+        <p style="font-weight: bold; color: #1f2937; margin-bottom: 8px; font-size: 14px;">Resumen de Votación</p>
+        <div style="display: flex; justify-content: space-around; align-items: center;">
+            <div style="text-align: center;">
+                <p style="font-size: 10px; color: #6b7280; margin-bottom: 3px;">Votos a Partido</p>
+                <p style="font-size: 20px; font-weight: bold; color: #2563eb;">{{ count($votosPartido) }}</p>
+            </div>
+            <div style="text-align: center;">
+                <p style="font-size: 10px; color: #6b7280; margin-bottom: 3px;">Votos a Candidatos</p>
+                <p style="font-size: 20px; font-weight: bold; color: #2563eb;">{{ count($votosCandidato) }}</p>
+            </div>
+            <div style="text-align: center;">
+                <p style="font-size: 10px; color: #6b7280; margin-bottom: 3px;">Total</p>
+                <p style="font-size: 20px; font-weight: bold; color: #059669;">{{ count($votosPartido) + count($votosCandidato) }}</p>
+            </div>
+        </div>
     </div>
     
     <div class="footer">

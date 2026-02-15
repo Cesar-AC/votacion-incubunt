@@ -33,7 +33,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h2 class="text-2xl sm:text-3xl font-bold text-white">{{ $eleccion->nombreEleccion }}</h2>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-white">{{ $eleccion->titulo ?? 'Elección' }}</h2>
                         <p class="text-white text-opacity-90 mt-1">{{ $eleccion->descripcion }}</p>
                     </div>
                 </div>
@@ -93,13 +93,9 @@
                             </div>
                             
                             <div class="flex-1">
-                                <h4 class="text-lg sm:text-xl font-bold text-gray-900 mb-1">
+                                <h4 class="text-lg sm:text-xl font-bold text-gray-900">
                                     {{ $voto->nombre ?? 'Sin nombre' }}
                                 </h4>
-                                
-                                <p class="text-sm text-gray-600 mb-2">
-                                    Partido: <span class="font-semibold text-blue-700">{{ $voto->partido ?? 'Independiente' }}</span>
-                                </p>
                             </div>
                         </div>
                     </div>

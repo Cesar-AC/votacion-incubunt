@@ -377,6 +377,9 @@ class VotanteController extends Controller
                     throw new \Exception("El candidato con ID {$candidatoId} no existe");
                 }
 
+                // Cargar relación perfil del usuario
+                $candidato->load('usuario.perfil');
+
                 $entidades[] = $candidato;
 
                 $candidatoEleccion = $candidato->candidatoElecciones()
@@ -384,9 +387,22 @@ class VotanteController extends Controller
                     ->with('cargo', 'partido')
                     ->first();
 
+                // Obtener nombre completo del perfil del usuario
+                $nombreCompleto = 'Candidato';
+                if ($candidato->usuario?->perfil) {
+                    $nombreCompleto = trim(
+                        ($candidato->usuario->perfil->nombre ?? '') . ' ' . 
+                        ($candidato->usuario->perfil->apellidoPaterno ?? '') . ' ' .
+                        ($candidato->usuario->perfil->apellidoMaterno ?? '')
+                    );
+                    if (empty($nombreCompleto)) {
+                        $nombreCompleto = 'Candidato';
+                    }
+                }
+
                 $votosData['candidatos'][] = [
                     'id' => $candidato->idCandidato,
-                    'nombre' => $candidato->usuario ? ($candidato->usuario->nombre . ' ' . $candidato->usuario->apellidoPaterno) : 'Candidato',
+                    'nombre' => $nombreCompleto,
                     'cargo' => $candidatoEleccion?->cargo?->cargo ?? 'Sin cargo',
                     'partido' => $candidatoEleccion?->partido?->partido ?? 'Independiente',
                 ];
