@@ -1,7 +1,7 @@
 <div id="partido-modal-container" x-cloak x-show="verPartidoModal">
-    <div id="info-partido-modal-container" class="fixed top-0 left-0 h-screen w-screen flex items-center justify-center bg-gray-900/60 z-[60] backdrop-blur-sm overflow-hidden">
+    <div id="info-partido-modal-container" class="fixed top-0 left-0 h-screen w-screen flex items-center justify-center bg-gray-900/60 z-[60] backdrop-blur-sm overflow-hidden p-4">
         <!-- Modal Card -->
-        <div class="relative bg-white w-full max-w-6xl mx-4 my-auto max-h-[90vh] flex flex-col rounded-3xl shadow-2xl overflow-hidden" @click.outside="verPartidoModal = false">
+        <div class="relative bg-white w-full max-w-6xl my-auto max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden" @click.outside="verPartidoModal = false">
             
             <!-- Close Button -->
             <button @click="verPartidoModal = false" id="partido-modal-close" class="absolute top-5 right-5 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900 transition-all focus:outline-none">
@@ -11,57 +11,56 @@
             </button>
 
             <!-- Scrollable Content -->
-            <div class="overflow-y-auto p-8 sm:p-10 custom-scrollbar">
+            <div class="overflow-y-auto p-4 sm:p-8 lg:p-10 custom-scrollbar">
                 <!-- HEADER SECTION -->
-                <div class="flex flex-col lg:flex-row justify-between items-start gap-8 mb-12 border-b border-gray-100 pb-10">
+                <div class="flex flex-col lg:flex-row justify-between items-center text-center gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-10 lg:mb-12 border-b border-gray-100 pb-6 sm:pb-8 lg:pb-10 ">
                     <!-- Left: Logo & Info -->
-                    <div class="flex flex-col sm:flex-row gap-6 md:gap-8 flex-1 items-center text-center">
+                    <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8 flex-1 items-center sm:px-4">
                         <!-- Logo Box - solo si existe foto -->
                         <div class="flex-shrink-0" id="partido-modal-logo-container">
-                            <div class="w-32 h-32 sm:w-40 sm:h-40 rounded-none flex items-center justify-center bg-white p-2 border border-gray-100">
+                            <div class="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-none flex items-center justify-center bg-white p-2 border border-gray-100">
                                 <img id="partido-modal-logo" src="" alt="Partido Logo" class="w-full h-full object-contain">
                             </div>
                         </div>
 
                         <!-- Text Info -->
-                        <div class="flex-1 space-y-3 pt-2">
-                            <h2 id="partido-modal-nombre" class="text-3xl font-black text-gray-900 uppercase tracking-tight leading-none">Nombre Partido</h2>
-                            <div class="h-1 w-20 bg-indigo-600 my-2"></div>
-                            <p id="partido-modal-descripcion" class="text-gray-600 leading-relaxed text-sm md:text-base max-w-2xl text-justify">Descripción</p>
+                        <div class="flex-1 space-y-2 sm:space-y-3 pt-2 items-center lg:text-start lg:items-start">
+                            <h2 id="partido-modal-nombre" class="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 uppercase tracking-tight leading-tight break-words">Nombre Partido</h2>
+                            <div class="h-1 w-16 sm:w-20 bg-indigo-600 my-2 inline-block"></div>
+                            <p id="partido-modal-descripcion" class="text-gray-600 leading-relaxed text-sm md:text-base max-w-2xl break-words">Descripción</p>
                             <div class="pt-2">
-                                <a id="partido-modal-enlace" href="#" target="_blank" class="inline-flex items-center gap-2 text-indigo-600 font-bold hover:text-indigo-800 hover:underline transition-colors group">
-                                    <span class="group-hover:translate-x-1 transition-transform" id="partido-modal-enlace-text">www.ejemplo.com</span>
+                                <a id="partido-modal-enlace" href="#" target="_blank" class="inline-flex items-center gap-2 text-indigo-600 font-bold hover:text-indigo-800 hover:underline transition-colors group text-sm sm:text-base">
+                                    <span class="group-hover:translate-x-1 transition-transform break-all" id="partido-modal-enlace-text">www.ejemplo.com</span>
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex-shrink-0 w-full lg:w-auto mt-4 lg:mt-0">
-                        <a target="_blank" id="partido-modal-btn-descarga" href="#" class="block w-full lg:w-64 text-black p-6 text-center text-md bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" style="text-decoration: none;">
-                            <span class="fas fa-file-pdf"></span>
-                            <span class="block font-bold leading-tight">Ver plan de trabajo</span>
+                    <div class="flex-shrink-0 w-full lg:w-auto mt-2 lg:mt-0">
+                        <a target="_blank" id="partido-modal-btn-descarga" href="#" class="block w-full lg:w-64 text-black p-4 sm:p-6 text-center text-sm sm:text-md bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" style="text-decoration: none;">
+                            <span class="fas fa-file-pdf text-lg"></span>
+                            <span class="block font-bold leading-tight mt-1">Ver plan de trabajo</span>
                         </a>
                     </div>
                 </div>
 
                 <!-- CANDIDATES SECTION -->
-                <div class="mb-8">
-                    <div class="flex items-center justify-center mb-10">
-                        <h3 class="text-center text-sm font-black text-gray-900 uppercase tracking-[0.2em] relative px-4">
-                            <span class="bg-white relative z-10 px-4">Candidatos por este partido</span>
-                            <div class="absolute inset-0 top-1/2 h-px bg-gray-200 -z-0"></div>
+                <div class="mb-6 sm:mb-8">
+                    <div class="flex items-center justify-center text-center mb-6 sm:mb-8 lg:mb-10">
+                        <h3 class="text-xs sm:text-sm font-black text-gray-900 uppercase tracking-wider sm:tracking-[0.2em] relative px-2 sm:px-4">
+                            Candidatos por este partido
                         </h3>
                     </div>
 
                     <!-- Candidates Grid -->
-                    <div id="partido-modal-candidatos-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 px-4 max-w-5xl mx-auto">
+                    <div id="partido-modal-candidatos-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto">
                     </div>
                 </div>
 
-                <!-- PROPOSTAS SECTION -->
-                <div class="mb-8">
-                    <div class="flex items-center justify-center mb-10">
-                        <h3 class="text-center text-sm font-black text-gray-900 uppercase tracking-[0.2em] relative px-4">
+                <!-- PROPUESTAS SECTION -->
+                <div class="mb-6 sm:mb-8">
+                    <div class="flex items-center justify-center mb-6 sm:mb-8 lg:mb-10">
+                        <h3 class="text-center text-xs sm:text-sm font-black text-gray-900 uppercase tracking-wider sm:tracking-[0.2em] relative px-2 sm:px-4">
                             <span class="bg-white relative z-10 px-4">Propuestas</span>
                             <div class="absolute inset-0 top-1/2 h-px bg-gray-200 -z-0"></div>
                         </h3>
@@ -153,28 +152,29 @@
 
                     data.forEach(candidato => {
                         const candidatoHTML = document.createElement('div');
-                        candidatoHTML.className = 'w-full bg-white rounded-[2.5rem] p-6 lg:p-8 flex flex-col items-center relative overflow-hidden h-full border border-gray-100';
+                        candidatoHTML.className = 'flex items-center gap-3 sm:gap-4 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all cursor-pointer';
+                        candidatoHTML.onclick = function() {
+                            document.dispatchEvent(new CustomEvent('abrirCandidatoModal', {detail: {candidatoId: candidato.id}}));
+                        };
                         
                         let fotoHTML = '';
                         if (candidato.foto) {
-                            fotoHTML = `<img src="${candidato.foto}" class="w-full h-full object-cover" alt="Candidato foto">`;
+                            fotoHTML = `<img src="${candidato.foto}" class="w-full h-full object-cover rounded-full" alt="Candidato foto">`;
                         } else {
-                            fotoHTML = `<div class="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-5xl font-bold">${candidato.initials}</div>`;
+                            fotoHTML = `<div class="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xl font-bold rounded-full">${candidato.initials}</div>`;
                         }
 
                         candidatoHTML.innerHTML = `
-                            <div class="w-32 h-24 mb-5 overflow-hidden bg-gray-100 rounded-lg">
-                                ${fotoHTML}
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 sm:w-16 sm:h-16 overflow-hidden">
+                                    ${fotoHTML}
+                                </div>
                             </div>
 
-                            <div class="flex flex-col items-center gap-4 flex-1 justify-center">
-                                <h3 class="text-xl font-black text-indigo-600 uppercase tracking-widest text-center">${candidato.cargo}</h3>
-                                <h4 class="text-xl text-gray-900 text-center uppercase leading-tight">${candidato.nombre}</h4>
-
-                                <button onclick="document.dispatchEvent(new CustomEvent('abrirCandidatoModal', {detail: {candidatoId: ${candidato.id}}}));" 
-                                        class="w-full py-3 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-indigo-600 transition-colors rounded-lg">
-                                    Ver Detalles
-                                </button>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-1">${candidato.cargo}</p>
+                                <h4 class="text-sm sm:text-base font-bold text-gray-900 break-words mb-1 leading-tight">${candidato.nombre}</h4>
+                                <p class="text-xs text-gray-500 break-words">${candidato.carrera || ''}</p>
                             </div>
                         `;
                         grid.appendChild(candidatoHTML);

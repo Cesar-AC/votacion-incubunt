@@ -147,16 +147,12 @@ class CandidatoService implements ICandidatoService
 
     public function actualizarPropuestaDeCandidato(array $datos, PropuestaCandidato $propuestaCandidato): void
     {
-        $propuestaCandidato->update([
-            'propuesta' => $datos['propuesta'],
-            'descripcion' => $datos['descripcion'],
-        ]);
+        $propuestaCandidato->update($datos);
     }
 
-    public function eliminarPropuestaDeCandidato(int $idPropuestaCandidato): void
+    public function eliminarPropuestaDeCandidato(PropuestaCandidato $propuestaCandidato): void
     {
-        PropuestaCandidato::where('idPropuestaCandidato', $idPropuestaCandidato)
-            ->delete();
+        $propuestaCandidato->delete();
     }
 
     public function obtenerCandidatosPorCargoEnEleccion(Cargo $cargo, Elecciones $elecciones): Collection

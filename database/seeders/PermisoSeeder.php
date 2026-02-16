@@ -57,15 +57,8 @@ class PermisoSeeder extends Seeder
 
     private function obtenerPermisosVotante()
     {
-        // Permisos que tienen TODOS los votantes por defecto
-        // Solo pueden votar y ver información de elecciones y candidatos
         return [
-            'voto:votar',                           // Permiso principal: emitir voto
-            'elecciones:crud:ver:*',                // Ver elecciones
-            'candidato:crud:ver:*',                 // Ver candidatos
-            'propuesta_candidato:crud:ver:*',       // Ver propuestas de candidatos
-            'propuesta_partido:crud:ver:*',         // Ver propuestas de partidos
-            'partido:crud:ver:*',                   // Ver partidos
+            'voto:votar',
             'usuario:cambiar_foto',
         ];
     }

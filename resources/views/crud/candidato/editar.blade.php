@@ -20,6 +20,8 @@
             }
         }">
 
+    @include('components.error-message')
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 text-gray-800">Editar Candidato</h1>
         <a href="{{ route('crud.candidato.ver') }}" class="btn btn-secondary">

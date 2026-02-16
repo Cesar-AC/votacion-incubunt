@@ -8,7 +8,37 @@
        PROPUESTAS - MODERN MOBILE-FIRST DESIGN
        ======================================== */
 
-    /* Ocultar scrollbar pero mantener funcionalidad */
+    /* Scrollbar visible por defecto en desktop */
+    .custom-scroll::-webkit-scrollbar {
+        height: 8px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    .custom-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+    
+    /* Ocultar scrollbar solo en móvil */
+    @media (max-width: 639px) {
+        .custom-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        .custom-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    }
+    
     .hide-scroll::-webkit-scrollbar { display: none; }
     .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -48,6 +78,13 @@
     }
     .scroll-snap-x > div > * {
         scroll-snap-align: start;
+    }
+    
+    /* Deshabilitar scroll snap en desktop */
+    @media (min-width: 640px) {
+        .scroll-snap-none {
+            scroll-snap-type: none;
+        }
     }
 
     /* Scroll indicators */
@@ -148,37 +185,35 @@
                 SECCIÓN: PARTIDOS POLÍTICOS
                 ============================================= --}}
             @if($partidos->count() > 0)
-            <section class="my-8">
+            <section class="my-8 px-4 sm:px-0">
                 {{-- Header de sección --}}
-                <div class="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-start gap-2 my-4">
+                <div class="flex flex-col sm:flex-row items-center text-center sm:text-start sm:items-start gap-2 my-4">
                     <div class="section-header-icon bg-gradient-to-br from-indigo-500 to-purple-600">
                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"/>
                         </svg>
                     </div>
-                    <div class="mx-1 sm:text-start">
+                    <div class="mx-1">
                         <h2 class="text-lg sm:text-xl font-bold text-gray-900">Presidencia</h2>
                         <p class="text-xs text-gray-500">{{ $partidos->count() }} {{ $partidos->count() == 1 ? 'partido' : 'partidos' }} en contienda</p>
                     </div>
                 </div>
 
                 {{-- Grid/Scroll de partidos --}}
-                <div class="">
-                    <div id="" class="">
-                        <div class="flex flex-col sm:flex-row gap-4 pb-2 items-center" style="min-width: min-content;">
-                            @forelse($partidos as $partido)
-                                @include('votante.propuestas.components.partido-card', ['partido' => $partido])
-                            @empty
-                                <div class="w-full p-8 bg-white rounded-2xl shadow-sm text-center">
-                                    <p class="text-gray-400 text-sm">No hay partidos registrados</p>
-                                </div>
-                            @endforelse
-                        </div>
+                <div class="overflow-x-auto custom-scroll scroll-snap-x sm:scroll-snap-none -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <div id="partidos-scroll" class="inline-flex gap-4 pb-2">
+                        @forelse($partidos as $partido)
+                            @include('votante.propuestas.components.partido-card', ['partido' => $partido])
+                        @empty
+                            <div class="w-full p-8 bg-white rounded-2xl shadow-sm text-center">
+                                <p class="text-gray-400 text-sm">No hay partidos registrados</p>
+                            </div>
+                        @endforelse
                     </div>
-                    @if($partidos->count() > 1)
-                    <div id="partidos-dots" class="scroll-dots sm:hidden"></div>
-                    @endif
                 </div>
+                @if($partidos->count() > 1)
+                <div id="partidos-dots" class="scroll-dots sm:hidden"></div>
+                @endif
             </section>
 
             {{-- Separador sutil --}}
@@ -199,30 +234,29 @@
                     @endphp
 
                     @if($totalCandidatos > 0)
-                    <section class="mb-8 sm:mb-10">
+                    <section class="mb-8 sm:mb-10 px-4 sm:px-0">
                         {{-- Header de área --}}
-                        <div class="section-header flex flex-col sm:flex-row">
+                        <div class="section-header flex flex-col sm:flex-row items-start text-center sm:text-start">
                             <div class="section-header-icon bg-gradient-to-br from-gray-700 to-gray-900">
                                 <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
                                 </svg>
                             </div>
 
-                            <div class="flex flex-col items-center md:items-start">
+                            <div class="flex flex-col items-center sm:items-start">
                                 <h2 class="text-lg sm:text-xl font-bold text-gray-900">{{ $area->area }}</h2>
                                 <p class="text-xs text-gray-500">{{ $totalCandidatos }} {{ $totalCandidatos == 1 ? 'candidato' : 'candidatos' }}</p>
                             </div>
                         </div>
                         
-                        <div class="">
-                            <div id="" class="">
-                                <div class="flex flex-col sm:flex-row items-center gap-3 pb-2 sm:pb-0" style="min-width: min-content;">
-                                        @foreach($candidatosArea as $candidatoEleccion)
-                                            @include('votante.propuestas.components.candidato-card', ['candidato' => $candidatoEleccion->candidato, 'area' => $candidatoEleccion->cargo->area->area, 'cargo' => $candidatoEleccion->cargo, 'compact' => true])
-                                        @endforeach
-                                </div>
+                        <div class="overflow-x-auto custom-scroll scroll-snap-x sm:scroll-snap-none -mx-4 px-4 sm:mx-0 sm:px-0">
+                            <div id="candidatos-area-{{ $area->getKey() }}-scroll" class="inline-flex gap-3 pb-2">
+                                @foreach($candidatosArea as $candidatoEleccion)
+                                    @include('votante.propuestas.components.candidato-card', ['candidato' => $candidatoEleccion->candidato, 'area' => $candidatoEleccion->cargo->area->area, 'cargo' => $candidatoEleccion->cargo, 'compact' => true])
+                                @endforeach
                             </div>
-                            <div id="area-{{ $area->getKey() }}-dots" class="scroll-dots sm:hidden"></div>
+                        </div>
+                        <div id="area-{{ $area->getKey() }}-dots" class="scroll-dots sm:hidden"></div>
                     </section>
                     @endif
                 @endforeach

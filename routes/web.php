@@ -15,7 +15,7 @@ use App\Http\Controllers\VotoController;
 use App\Http\Controllers\CargoController;
 use App\Http\Controllers\EstadoEleccionesController;
 use App\Http\Controllers\PermisoController;
-
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PropuestaCandidatoController;
 use App\Http\Controllers\PropuestaPartidoController;
 use App\Http\Controllers\RolController;
@@ -35,7 +35,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\ProfileController::class, 'show'])->name('show');
+        Route::get('/', [ProfileController::class, 'show'])->name('show');
 
         /** Rutas deshabilitadas ya que no se permite la edición de datos, solo foto
          * Route::get('/edit', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('edit');
@@ -52,17 +52,27 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::prefix('votante')->name('votante.')->group(function () {
         Route::get('/home', [VotanteController::class, 'home'])->name('home');
-        Route::get('/propuestas', [VotanteController::class, 'propuestas'])->name('propuestas');
-        Route::get('/perfil/editar', [VotanteController::class, 'editarPerfil'])->name('perfil.editar');
-        Route::put('/perfil', [VotanteController::class, 'actualizarPerfil'])->name('perfil.actualizar');
-        Route::get('/elecciones', [VotanteController::class, 'listarElecciones'])->name('elecciones');
-        Route::get('/elecciones/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
+
+        Route::middleware('can:esta-en-padron-electoral')->group(function () {
+            Route::get('/propuestas', [VotanteController::class, 'propuestas'])->name('propuestas');
+        });
+
+        // Route::get('/perfil/editar', [VotanteController::class, 'editarPerfil'])->name('perfil.editar');
+        // Route::put('/perfil', [VotanteController::class, 'actualizarPerfil'])->name('perfil.actualizar');
+        // Route::get('/elecciones', [VotanteController::class, 'listarElecciones'])->name('elecciones');
+        // Route::get('/elecciones/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
 
         Route::prefix('votar')->name('votar.')->group(function () {
-            Route::get('/', [VotanteController::class, 'vistaVotar'])->name('lista');
-            Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
-            Route::post('/{eleccionId}/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
-            Route::get('/{eleccionId}/exito', [VotanteController::class, 'votoExitoso'])->name('exito');
+            Route::middleware('can:puede-votar')->group(function () {
+                Route::get('/', [VotanteController::class, 'vistaVotar'])->name('lista');
+                Route::get('/{eleccionId}/candidato/{candidatoId}', [VotanteController::class, 'verDetalleCandidato'])->name('detalle_candidato');
+                Route::post('/emitir', [VotanteController::class, 'emitirVoto'])->name('emitir');
+            });
+
+            Route::middleware('can:ya-voto')->group(function () {
+                Route::get('/{eleccionId}/exito', [VotanteController::class, 'votoExitoso'])->name('exito');
+                Route::get('/{eleccionId}/comprobante-pdf', [VotanteController::class, 'generarComprobantePDF'])->name('comprobante.pdf');
+            });
         });
 
         // APIs para obtener datos de propuestas
@@ -98,9 +108,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/areas', [AreaController::class, 'index'])->name('crud.area.ver')->middleware('can:viewAny,App\Models\Area');
     Route::get('/areas/crear', [AreaController::class, 'create'])->name('crud.area.crear')->middleware('can:create,App\Models\Area');
-    Route::post('/areas/crear', [AreaController::class, 'store'])->name('crud.area.crear')->middleware('can:create,App\Models\Area');
+    Route::post('/areas/crear', [AreaController::class, 'store'])->name('crud.area.guardar')->middleware('can:create,App\Models\Area');
     Route::get('/areas/{id}/editar', [AreaController::class, 'edit'])->name('crud.area.editar')->middleware('can:update,App\Models\Area');
-    Route::post('/areas/{id}/editar', [AreaController::class, 'update'])->name('crud.area.editar')->middleware('can:update,App\Models\Area');
+    Route::put('/areas/{id}/editar', [AreaController::class, 'update'])->name('crud.area.actualizar')->middleware('can:update,App\Models\Area');
     Route::delete('/areas/{id}', [AreaController::class, 'destroy'])->name('crud.area.eliminar')->middleware('can:delete,App\Models\Area');
     Route::get('/areas/{id}', [AreaController::class, 'show'])->name('crud.area.ver_datos')->middleware('can:view,App\Models\Area');
 });
@@ -109,9 +119,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/carreras', [CarreraController::class, 'index'])->name('crud.carrera.ver')->middleware('can:viewAny,App\Models\Carrera');
     Route::get('/carreras/crear', [CarreraController::class, 'create'])->name('crud.carrera.crear')->middleware('can:create,App\Models\Carrera');
-    Route::post('/carreras/crear', [CarreraController::class, 'store'])->name('crud.carrera.crear')->middleware('can:create,App\Models\Carrera');
+    Route::post('/carreras/crear', [CarreraController::class, 'store'])->name('crud.carrera.guardar')->middleware('can:create,App\Models\Carrera');
     Route::get('/carreras/{id}/editar', [CarreraController::class, 'edit'])->name('crud.carrera.editar')->middleware('can:update,App\Models\Carrera');
-    Route::post('/carreras/{id}/editar', [CarreraController::class, 'update'])->name('crud.carrera.editar')->middleware('can:update,App\Models\Carrera');
+    Route::put('/carreras/{id}/editar', [CarreraController::class, 'update'])->name('crud.carrera.actualizar')->middleware('can:update,App\Models\Carrera');
     Route::delete('/carreras/{id}', [CarreraController::class, 'destroy'])->name('crud.carrera.eliminar')->middleware('can:delete,App\Models\Carrera');
     Route::get('/carreras/{id}', [CarreraController::class, 'show'])->name('crud.carrera.ver_datos')->middleware('can:view,App\Models\Carrera');
 });
@@ -120,9 +130,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/elecciones', [EleccionesController::class, 'index'])->name('crud.elecciones.ver')->middleware('can:viewAny,App\Models\Elecciones');
     Route::get('/elecciones/crear', [EleccionesController::class, 'create'])->name('crud.elecciones.crear')->middleware('can:create,App\Models\Elecciones');
-    Route::post('/elecciones/crear', [EleccionesController::class, 'store'])->name('crud.elecciones.crear')->middleware('can:create,App\Models\Elecciones');
+    Route::post('/elecciones/crear', [EleccionesController::class, 'store'])->name('crud.elecciones.guardar')->middleware('can:create,App\Models\Elecciones');
     Route::get('/elecciones/{id}/editar', [EleccionesController::class, 'edit'])->name('crud.elecciones.editar')->middleware('can:update,App\Models\Elecciones');
-    Route::put('/elecciones/{id}/editar', [EleccionesController::class, 'update'])->name('crud.elecciones.editar')->middleware('can:update,App\Models\Elecciones');
+    Route::put('/elecciones/{id}/editar', [EleccionesController::class, 'update'])->name('crud.elecciones.actualizar')->middleware('can:update,App\Models\Elecciones');
     Route::delete('/elecciones/{id}', [EleccionesController::class, 'destroy'])->name('crud.elecciones.eliminar')->middleware('can:delete,App\Models\Elecciones');
     Route::get('/elecciones/{id}', [EleccionesController::class, 'show'])->name('crud.elecciones.ver_datos')->middleware('can:view,App\Models\Elecciones');
     Route::post('/elecciones/{id}/activar', [EleccionesController::class, 'activar'])->name('crud.elecciones.activar')->middleware('can:update,App\Models\Elecciones');

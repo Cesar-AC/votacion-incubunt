@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8" x-data="votingForm()">
     <div class="max-w-7xl mx-auto">
         
         {{-- Header --}}
@@ -10,7 +10,7 @@
                 Sistema de Votación
             </h1>
             <p class="text-base sm:text-lg text-blue-700">
-                Elecciones INCUBUNT 2026
+                {{ $eleccionActiva->titulo }}
             </p>
             <p class="text-sm text-gray-500 mt-2">
                 Selecciona tus candidatos preferidos para cada cargo
@@ -22,7 +22,7 @@
             <div class="flex items-center justify-center space-x-2 sm:space-x-4">
                 <div class="flex items-center">
                     <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300"
-                         :class="Object.keys(selectedCandidates).length > 0 ? 'bg-green-600 text-white' : 'bg-blue-700 text-white'">
+                         :class="Object.keys(candidatos).length > 0 ? 'bg-green-600 text-white' : 'bg-blue-700 text-white'">
                         <span class="text-sm sm:text-base font-semibold">1</span>
                     </div>
                     <span class="ml-2 text-xs sm:text-sm font-medium text-gray-700">Selección</span>
@@ -30,7 +30,7 @@
                 <div class="h-0.5 w-12 sm:w-20 bg-gray-300"></div>
                 <div class="flex items-center">
                     <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300"
-                         :class="Object.keys(selectedCandidates).length === 6 ? 'bg-green-600 text-white' : 'bg-gray-400 text-gray-700'">
+                         :class="Object.keys(candidatos).length === 6 ? 'bg-green-600 text-white' : 'bg-gray-400 text-gray-700'">
                         <span class="text-sm sm:text-base font-semibold">2</span>
                     </div>
                     <span class="ml-2 text-xs sm:text-sm font-medium text-gray-700">Confirmación</span>
@@ -38,9 +38,10 @@
             </div>
         </div>
 
-        <form id="votingForm" action="{{ route('votante.votar.emitir', $eleccionActiva->idElecciones) }}" method="POST" x-data="votingForm()" data-eleccion-id="{{ $eleccionActiva->idElecciones }}">
+        @include('components.error-message')
+
+        <form id="votingForm" action="{{ route('votante.votar.emitir') }}" method="POST">
             @csrf
-            <input type="hidden" name="idPartido" :value="selectedParty">
 
             {{-- Instructions --}}
             <div class="mb-8 animate-fade-in">
@@ -63,7 +64,7 @@
                 </div>
             </div>
 
-            {{-- Selección de Partidos Reales --}}
+            {{-- Selección de Partidos --}}
             @if($partidos->isNotEmpty())
             <div class="mb-12">
                 <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6 flex items-center tracking-tight">
@@ -74,12 +75,12 @@
                 </h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach($partidos as $partidoEleccion)
-                    @if(is_object($partidoEleccion->partido))
-                        @php $partido = $partidoEleccion->partido; @endphp
+                    @foreach($partidos as $partido)
                         <div class="bg-white rounded-3xl shadow-lg p-6 cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-2xl relative border-4 border-blue-600"
-                             :class="selectedParty === {{ $partido->idPartido }} ? 'ring-4 ring-blue-600 scale-105 shadow-2xl' : ''"
-                             @click="selectParty({{ $partido->idPartido }})">
+                             :class="idPartido === {{ $partido->getKey() }} ? 'ring-4 ring-blue-600 scale-105 shadow-2xl' : ''"
+                             @click="selectParty({{ $partido->getKey() }}, '{{ $partido->partido }}')"
+                             data-partido-id="{{ $partido->getKey() }}"
+                             data-partido-nombre="{{ $partido->partido }}">
                             <div class="text-center mb-4">
                                 <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-3">
                                     <i class="fas fa-certificate text-blue-600 text-3xl"></i>
@@ -89,29 +90,48 @@
                                 </h3>
                                 <p class="text-sm text-gray-600 italic">{{ $partido->descripcion ?? 'Partido político' }}</p>
                             </div>
+
+                            @php
+                                $candidatosPartido = $eleccionesService->obtenerCandidatosDePartido($partido);
+                            @endphp
+                            
+                            @if($candidatosPartido->isNotEmpty())
                             <div class="space-y-3 mb-4">
-                                @foreach($partido->candidatos->take(3) as $candidato)
-                                <div class="flex items-center space-x-3 bg-gray-50 rounded-lg p-3">
-                                    @if($candidato->usuario && $candidato->usuario->perfil && $candidato->usuario->perfil->fotoPerfil)
-                                    <img src="{{ asset('storage/' . $candidato->usuario->perfil->fotoPerfil) }}" 
-                                         alt="{{ $candidato->usuario->perfil->nombres }}"
-                                         class="w-10 h-10 rounded-full object-cover border-2 border-blue-600">
-                                    @else
-                                    <div class="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold text-sm">
-                                        {{ substr($candidato->usuario->perfil->nombres ?? 'NC', 0, 1) }}
-                                    </div>
+                                @foreach($candidatosPartido as $candidato)
+                                    @if($candidato->usuario && $candidato->usuario->perfil)
+                                        @php
+                                            $candidatoEleccion = $candidato->candidatoElecciones->first();
+                                        @endphp
+                                        <div class="flex items-center space-x-3 bg-gray-50 rounded-lg p-3">
+                                            @if($candidato->usuario->perfil?->obtenerFotoURL())
+                                            <img src="{{ $candidato->usuario->perfil->obtenerFotoURL() }}" 
+                                                 alt="{{ $candidato->usuario->perfil->nombre }}"
+                                                 class="w-10 h-10 rounded-full object-cover border-2 border-blue-600">
+                                            @else
+                                            <div class="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold text-sm">
+                                                {{ substr($candidato->usuario->perfil->nombre ?? 'NC', 0, 1) }}
+                                            </div>
+                                            @endif
+                                            <div class="flex-1">
+                                                <p class="text-xs font-bold uppercase text-blue-600">
+                                                    {{ $candidatoEleccion && $candidatoEleccion->cargo ? $candidatoEleccion->cargo->cargo : 'Cargo' }}
+                                                </p>
+                                                <p class="font-semibold text-sm text-gray-900">
+                                                    {{ $candidato->usuario->perfil->nombre ?? 'Sin nombre' }} 
+                                                    {{ $candidato->usuario->perfil->apellidoPaterno ?? '' }}
+                                                </p>
+                                            </div>
+                                        </div>
                                     @endif
-                                    <div class="flex-1">
-                                        <p class="text-xs font-bold uppercase text-blue-600">{{ $candidato->cargo->nombreCargo ?? 'Cargo' }}</p>
-                                        <p class="font-semibold text-sm text-gray-900">
-                                            {{ $candidato->usuario->perfil->nombres ?? 'Sin nombre' }} 
-                                            {{ $candidato->usuario->perfil->apellidoPaterno ?? '' }}
-                                        </p>
-                                    </div>
-                                </div>
                                 @endforeach
                             </div>
-                            <template x-if="selectedParty === {{ $partido->idPartido }}">
+                            @else
+                            <div class="text-center text-sm text-gray-500 py-4">
+                                Este partido aún no tiene candidatos registrados
+                            </div>
+                            @endif
+                            
+                            <template x-if="idPartido === {{ $partido->getKey() }}">
                                 <div class="absolute top-4 right-4 bg-white rounded-full p-2 shadow-lg animate-bounce">
                                     <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
@@ -119,7 +139,6 @@
                                 </div>
                             </template>
                         </div>
-                    @endif
                     @endforeach
                 </div>
             </div>
@@ -135,100 +154,100 @@
                     {{ $area->area }}
                 </h2>
 
-                @forelse($area->cargos as $cargo)
+                @forelse($cargoService->obtenerCargosPorArea($area) as $cargo)
                 <div class="mb-8">
                     <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                         <span class="bg-purple-100 rounded-full p-2 mr-2">
                             <i class="fas fa-user-tie text-purple-700"></i>
                         </span>
-                        {{ $cargo->nombreCargo ?? $cargo->cargo }}
+                        {{ $cargo->cargo }}
                     </h3>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        @forelse($cargo->candidatoElecciones as $candidatoEleccion)
-                        @php $candidato = $candidatoEleccion->candidato; @endphp
+                        @forelse($candidatoService->obtenerCandidatosPorCargoEnEleccion($cargo, $eleccionActiva) as $candidato)
+                        @if($candidato && $candidato->usuario && $candidato->usuario->perfil)
                         <div class="bg-white rounded-xl shadow-md p-4 cursor-pointer transition-all duration-300 hover:shadow-xl border-2"
-                             :class="selectedCandidates[{{ $cargo->idCargo }}] === {{ $candidato->idCandidato }} ? 'border-purple-600 bg-purple-50' : 'border-gray-200'"
-                             @click="selectCandidate({{ $cargo->idCargo }}, {{ $candidato->idCandidato }})">
-                            <div class="flex items-center space-x-3">
-                                @if($candidato->usuario && $candidato->usuario->perfil && $candidato->usuario->perfil->fotoPerfil)
-                                <img src="{{ asset('storage/' . $candidato->usuario->perfil->fotoPerfil) }}" 
-                                     alt="{{ $candidato->usuario->perfil->nombre }} {{ $candidato->usuario->perfil->apellidoPaterno }} {{ $candidato->usuario->perfil->apellidoMaterno }}"
-                                     class="w-12 h-12 rounded-full object-cover border-2 border-gray-300">
+                             :class="candidatos[{{ $cargo->getKey() }}]?.id == {{ $candidato->getKey() }} ? 'border-purple-600 bg-purple-50' : 'border-gray-200'"
+                             @click="selectCandidate({{ $cargo->getKey() }}, {{ $candidato->getKey() }}, '{{ $cargo->cargo }}', '{{ $candidato->usuario->perfil->nombre }} {{ $candidato->usuario->perfil->apellidoPaterno }}')"
+                             data-candidato-id="{{ $candidato->getKey() }}"
+                             data-candidato-nombre="{{ $candidato->usuario->perfil->nombre }} {{ $candidato->usuario->perfil->apellidoPaterno }}"
+                             data-cargo-nombre="{{ $cargo->cargo }}">
+                            <div class="flex flex-col items-center text-center">
+                                @if($candidato->usuario->perfil->obtenerFotoURL())
+                                <img src="{{ $candidato->usuario->perfil->obtenerFotoURL() }}" 
+                                     alt="{{ $candidato->usuario->perfil->nombre }}"
+                                     class="w-16 h-16 rounded-full object-cover border-4 mb-3"
+                                     :class="candidatos[{{ $cargo->getKey() }}]?.id == {{ $candidato->getKey() }} ? 'border-purple-600' : 'border-gray-300'">
                                 @else
-                                <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold">
-                                    {{ substr($candidato->usuario->perfil->nombre ?? 'NC', 0, 1) }}
+                                <div class="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mb-3"
+                                     :class="candidatos[{{ $cargo->getKey() }}]?.id == {{ $candidato->getKey() }} ? 'bg-purple-600' : 'bg-gray-400'">
+                                    {{ substr($candidato->usuario->perfil?->nombre ?? 'NC', 0, 1) }}
                                 </div>
                                 @endif
-                                <div class="flex-1">
-                                    <p class="font-bold text-gray-900">
-                                        {{ $candidato->usuario->perfil->nombre ?? 'Sin nombre' }}
-                                        {{ $candidato->usuario->perfil->apellidoPaterno ?? '' }}
-                                        {{ $candidato->usuario->perfil->apellidoMaterno ?? '' }}
-                                    </p>
-                                    @if($candidatoEleccion->partido)
-                                    <p class="text-sm text-gray-600">{{ $candidatoEleccion->partido->partido }}</p>
-                                    @else
-                                    <p class="text-sm text-gray-600">Independiente</p>
-                                    @endif
-                                </div>
-                                <template x-if="selectedCandidates[{{ $cargo->idCargo }}] === {{ $candidato->idCandidato }}">
-                                    <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                    </svg>
+                                
+                                <h4 class="font-bold text-sm mb-1 text-gray-900">
+                                    {{ $candidato->usuario->perfil?->nombre ?? 'Sin nombre' }} 
+                                    {{ $candidato->usuario->perfil?->apellidoPaterno ?? '' }}
+                                </h4>
+                                
+                                <template x-if="candidatos[{{ $cargo->getKey() }}]?.id == {{ $candidato->getKey() }}">
+                                    <div class="mt-2">
+                                        <svg class="w-6 h-6 text-purple-600 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
                                 </template>
                             </div>
                         </div>
+                        @endif
                         @empty
-                        <div class="col-span-full text-center py-4 text-gray-500">
-                            <p>No hay candidatos disponibles para este cargo</p>
+                        <div class="col-span-full text-center py-8 text-gray-500">
+                            No hay candidatos registrados para este cargo
                         </div>
                         @endforelse
                     </div>
                 </div>
                 @empty
-                <div class="text-center py-8 text-gray-500">
-                    <p>No hay cargos disponibles en esta área</p>
-                </div>
+                <p class="text-gray-500 text-center py-4">No hay cargos definidos para esta área</p>
                 @endforelse
             </div>
             @empty
-            <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-6 mb-8">
-                <div class="flex">
-                    <i class="fas fa-exclamation-triangle text-yellow-400 mr-3 text-xl"></i>
-                    <div>
-                        <h3 class="font-bold text-yellow-800 mb-2">No hay candidatos disponibles</h3>
-                        <p class="text-yellow-700">Por el momento no hay candidatos registrados para esta elección. Los datos se mostrarán cuando estén disponibles.</p>
-                    </div>
-                </div>
+            <div class="text-center py-12">
+                <p class="text-gray-500 text-lg">No hay áreas disponibles para votación</p>
             </div>
             @endforelse
 
-            {{-- Confirmation Button --}}
-            <div class="sticky bottom-0 bg-white border-t-4 border-blue-600 p-6 shadow-2xl rounded-t-3xl">
-                <div class="max-w-4xl mx-auto">
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div class="text-center sm:text-left">
-                            <p class="text-sm text-gray-600">Votos seleccionados</p>
-                            <p class="text-2xl font-bold text-blue-900">
-                                <span x-text="Object.keys(selectedCandidates).length"></span> / 6
-                            </p>
-                        </div>
-                        <button type="button"
-                                @click="confirmVote()"
-                                :disabled="Object.keys(selectedCandidates).length !== 6"
-                                :class="Object.keys(selectedCandidates).length === 6 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'"
-                                class="w-full sm:w-auto px-8 py-4 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl text-lg">
-                            <i class="fas fa-check-circle mr-2"></i>
-                            Confirmar y Votar
-                        </button>
+            {{-- Submit Button --}}
+            <div class="sticky bottom-0 bg-white border-t-4 border-blue-600 p-4 sm:p-6 shadow-2xl rounded-t-3xl">
+                <div class="mb-4 flex items-center justify-center space-x-6 text-sm font-semibold flex-column flex-sm-row">
+                    <div :class="idPartido ? 'text-green-600' : 'text-red-600'" class="flex items-center">
+                        <span class="mr-2" x-text="idPartido ? '✓' : '✗'"></span>
+                        <span>Partido seleccionado</span>
+                    </div>
+                    <div :class="Object.keys(candidatos).length > 0 ? 'text-green-600' : 'text-red-600'" class="flex items-center">
+                        <span class="mr-2" x-text="Object.keys(candidatos).length > 0 ? '✓' : '✗'"></span>
+                        <span x-text="`Candidatos (${Object.keys(candidatos).length})`"></span>
                     </div>
                 </div>
+                
+                <button type="button"
+                        @click="confirmVote()"
+                        :disabled="!idPartido || Object.keys(candidatos).length === 0"
+                        :class="(!idPartido || Object.keys(candidatos).length === 0) ? 'opacity-50 cursor-not-allowed' : 'hover:from-blue-800 hover:to-blue-950'"
+                        class="w-full bg-gradient-to-r from-blue-700 to-blue-900 text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Confirmar y Emitir Voto
+                </button>
+                
+                <p class="text-xs text-gray-500 mt-3 text-center">
+                    Ambos campos son obligatorios: Selecciona un partido y al menos un candidato
+                </p>
             </div>
-
-            {{-- Hidden Inputs --}}
-            <template x-for="(candidatoId, cargoId) in selectedCandidates">
-                <input type="hidden" :name="'candidatos[' + cargoId + ']'" :value="candidatoId">
+            
+            <!-- Hidden inputs for form submission -->
+            <input type="hidden" name="idPartido" :value="idPartido">
+            <template x-for="(candidatoInfo, cargoId) in candidatos">
+                <input type="hidden" name="candidatos[]" :value="candidatoInfo.id">
             </template>
         </form>
 
@@ -250,13 +269,38 @@
                         Por favor revisa tu selección antes de confirmar. Una vez emitido, <strong>no podrás cambiar tu voto</strong>.
                     </p>
                     
-                    <div id="selectedCandidatesList" class="space-y-3 mb-6">
-                        {{-- Populated by JavaScript --}}
+                    <div class="space-y-4 mb-6">
+                        {{-- Partido seleccionado --}}
+                        <template x-if="partidoInfo">
+                            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
+                                <h3 class="font-bold text-blue-900 mb-2 flex items-center">
+                                    <i class="fas fa-users mr-2"></i>
+                                    Partido Seleccionado:
+                                </h3>
+                                <p class="text-blue-700 font-semibold text-lg ml-6" x-text="partidoInfo.nombre"></p>
+                            </div>
+                        </template>
+                        
+                        {{-- Candidatos seleccionados --}}
+                        <template x-if="Object.keys(candidatos).length > 0">
+                            <div class="bg-purple-50 border-l-4 border-purple-600 p-4 rounded-lg">
+                                <h3 class="font-bold text-purple-900 mb-3 flex items-center">
+                                    <i class="fas fa-user-check mr-2"></i>
+                                    Candidatos Seleccionados:
+                                </h3>
+                                <template x-for="(candidatoInfo, cargoId) in candidatos">
+                                    <div class="bg-white p-3 mb-2 rounded-lg shadow-sm">
+                                        <p class="font-bold text-purple-700 text-sm mb-1" x-text="candidatoInfo.cargo"></p>
+                                        <p class="text-gray-800 font-semibold" x-text="candidatoInfo.nombre"></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
                     </div>
 
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded">
                         <div class="flex">
-                            <i class="fas fa-exclamation-triangle text-yellow-400 mr-2"></i>
+                            <i class="fas fa-exclamation-triangle text-yellow-400 mr-2 flex-shrink-0 mt-0.5"></i>
                             <p class="text-sm text-yellow-800">
                                 <strong>Importante:</strong> Tu voto es secreto y no podrá ser modificado después de confirmar.
                             </p>
@@ -311,53 +355,68 @@
     </div>
 </div>
 
+@push('styles')
+<style>
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.6s ease-out;
+}
+</style>
+@endpush
+
 @push('scripts')
 <script>
 function votingForm() {
     return {
-        selectedCandidates: {},
-        selectedParty: null,
+        idPartido: null,
+        partidoInfo: null,
+        candidatos: {},
         showConfirmModal: false,
         showSuccessModal: false,
-
-        selectParty(partidoId) {
-            this.selectedParty = partidoId;
-            // Opcional: Limpiar selección de candidatos automáticos si lo deseas
+        
+        selectParty(partidoId, partidoNombre) {
+            console.log('Partido seleccionado:', partidoId, partidoNombre);
+            this.idPartido = partidoId;
+            this.partidoInfo = {
+                id: partidoId,
+                nombre: partidoNombre
+            };
         },
-
-        selectCandidate(cargoId, candidatoId) {
-            this.selectedCandidates[cargoId] = candidatoId;
+        
+        selectCandidate(cargoId, candidatoId, cargoNombre, candidatoNombre) {
+            console.log('Candidato seleccionado:', cargoId, candidatoId, cargoNombre, candidatoNombre);
+            this.candidatos[cargoId] = {
+                id: candidatoId,
+                nombre: candidatoNombre,
+                cargo: cargoNombre
+            };
         },
-
+        
         confirmVote() {
-            if (Object.keys(this.selectedCandidates).length === 0 || !this.selectedParty) {
-                alert('Por favor selecciona un partido y al menos un candidato.');
+            if (!this.idPartido) {
+                alert('❌ DEBE seleccionar un PARTIDO POLÍTICO');
                 return;
             }
+            
+            const candidatosCount = Object.keys(this.candidatos).length;
+            if (candidatosCount === 0) {
+                alert('❌ DEBE seleccionar al menos UN CANDIDATO');
+                return;
+            }
+            
             this.showConfirmModal = true;
-            this.updateConfirmationList();
         },
-
-        updateConfirmationList() {
-            const container = document.getElementById('selectedCandidatesList');
-            container.innerHTML = '';
-            // Recorrer los inputs ocultos para mostrar los candidatos seleccionados
-            document.querySelectorAll('input[type="hidden"][name^="candidatos["]')
-                .forEach(input => {
-                    const candidatoId = input.value;
-                    const candidatoDiv = document.querySelector(`[data-candidato-id="${candidatoId}"]`);
-                    if (candidatoDiv) {
-                        container.appendChild(candidatoDiv.cloneNode(true));
-                    }
-                });
-        },
-
+        
         submitVote() {
-            const form = document.getElementById('votingForm');
             this.showSuccessModal = true;
             this.showConfirmModal = false;
+            
             setTimeout(() => {
-                form.submit();
+                document.getElementById('votingForm').submit();
             }, 1000);
         }
     }
@@ -366,10 +425,7 @@ function votingForm() {
 @endpush
 
 @push('styles')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-[x-cloak] { display: none !important; }
-
 @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
