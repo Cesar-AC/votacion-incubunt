@@ -34,7 +34,7 @@
         @include('components.sidebar_mobile')
         
         <!-- Content Wrapper -->
-        <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content-wrapper" class="d-flex flex-column ">
 
             <!-- Main Content -->
             <div id="content">
@@ -53,7 +53,7 @@
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ optional(Auth::user()->perfil)->obtenerNombreApellidoCorto() ?? Auth::user()->correo ?? 'Usuario' }}</span>
+                                <span class="mr-2 inline text-gray-600 small">{{ optional(Auth::user()->perfil)->obtenerNombreApellidoCorto() ?? Auth::user()->correo ?? 'Usuario' }}</span>
                                 <img class="img-profile rounded-circle" src="{{ Auth::user()->perfil?->obtenerFotoURL() ?? asset('img/undraw_profile.svg') }}">
                             </a>
                             <!-- Dropdown - User Information -->
@@ -63,6 +63,7 @@
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Perfil
                                 </a>
+                                <!-- Temporalmente deshabilitado
                                 <a class="dropdown-item" href="#">
                                     <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Configuración
@@ -71,6 +72,7 @@
                                     <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Registro de Actividad
                                 </a>
+                                -->
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -95,7 +97,7 @@
             <!-- End of Main Content -->
 
             <!-- Footer -->
-            <footer class="sticky-footer bg-white d-none d-md-block">
+            <footer class="bg-white d-block py-8 mb-0">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
                         <span>Copyright &copy; VotaIncubi {{ date('Y') }}</span>
@@ -103,15 +105,13 @@
                 </div>
             </footer>
             <!-- End of Footer -->
-
         </div>
         <!-- End of Content Wrapper -->
-
     </div>
     <!-- End of Page Wrapper -->
 
     <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top">
+    <a class="scroll-to-top rounded" href="#page-top" style="bottom: 5rem;">
         <i class="fas fa-angle-up"></i>
     </a>
 

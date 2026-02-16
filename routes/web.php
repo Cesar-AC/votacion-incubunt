@@ -15,7 +15,7 @@ use App\Http\Controllers\VotoController;
 use App\Http\Controllers\CargoController;
 use App\Http\Controllers\EstadoEleccionesController;
 use App\Http\Controllers\PermisoController;
-
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PropuestaCandidatoController;
 use App\Http\Controllers\PropuestaPartidoController;
 use App\Http\Controllers\RolController;
@@ -35,7 +35,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\ProfileController::class, 'show'])->name('show');
+        Route::get('/', [ProfileController::class, 'show'])->name('show');
 
         /** Rutas deshabilitadas ya que no se permite la edición de datos, solo foto
          * Route::get('/edit', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('edit');

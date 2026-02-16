@@ -291,7 +291,7 @@
 /* Asegurar que el content wrapper no tenga margin */
 #content-wrapper {
     margin-left: 0 !important;
-    padding-bottom: 80px !important;
+    padding-bottom: 2rem !important;
 }
 
 /* Ocultar el topbar toggle button */
