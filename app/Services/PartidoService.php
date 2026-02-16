@@ -82,10 +82,9 @@ class PartidoService implements IPartidoService
         $propuestaPartido->update($datos);
     }
 
-    public function eliminarPropuestaDePartido(int $idPropuestaPartido): void
+    public function eliminarPropuestaDePartido(PropuestaPartido $propuestaPartido): void
     {
-        $propuesta = PropuestaPartido::findOrFail($idPropuestaPartido);
-        $propuesta->delete();
+        $propuestaPartido->delete();
     }
 
     public function inscribirPartidoEnElecciones(Partido $partido, ?Elecciones $elecciones = null): void

@@ -10,18 +10,19 @@
         </a>
     </div>
 
+    @include('components.error-message')
+
     <div class="card shadow mb-4">
         <div class="card-body">
-            <form action="{{ route('crud.propuesta_candidato.editar', $m->idPropuesta) }}" method="POST">
+            <form action="{{ route('crud.propuesta_candidato.editar', $propuesta->idPropuesta) }}" method="POST">
                 @csrf
-                @method('PUT')
 
                 <div class="form-group">
                     <label for="idEleccion">Elección</label>
                     <select class="form-control" id="idEleccion" name="idEleccion" required>
                         <option value="">Seleccione una elección</option>
                         @foreach($elecciones as $eleccion)
-                            <option value="{{ $eleccion->idElecciones }}" {{ $m->candidato->partido->elecciones->contains('idElecciones', $eleccion->idElecciones) ? 'selected' : '' }}>{{ $eleccion->titulo }}</option>
+                            <option value="{{ $eleccion->idElecciones }}" @if ($propuesta->idElecciones == $eleccion->getKey()) selected @endif>{{ $eleccion->titulo }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -30,31 +31,26 @@
                     <label for="idCandidato">Candidato</label>
                     <select class="form-control" id="idCandidato" name="idCandidato" required>
                         <option value="">Seleccione un candidato</option>
-                        @foreach($elecciones as $eleccion)
-                            @if($eleccion->partidos)
-                                @foreach($eleccion->partidos as $partido)
-                                    @if($partido->candidatos)
-                                        @foreach($partido->candidatos as $candidato)
-                                            <option value="{{ $candidato->idCandidato }}" {{ $m->idCandidato == $candidato->idCandidato ? 'selected' : '' }}>
-                                                {{ $candidato->usuario->perfil ? trim($candidato->usuario->perfil->nombre . ' ' . $candidato->usuario->perfil->apellidoPaterno . ' ' . $candidato->usuario->perfil->apellidoMaterno) : $candidato->usuario->correo }}
-                                                ({{ $partido->partido }} - {{ $candidato->cargo->cargo }})
-                                            </option>
-                                        @endforeach
-                                    @endif
-                                @endforeach
-                            @endif
+                        @foreach($candidatos as $candidato)
+                        @php
+                            $candidatoEleccion = $eleccionesService->obtenerCandidatoEleccion($candidato, $eleccion);
+                        @endphp
+                            <option value="{{ $candidato->idCandidato }}" @if ($propuesta->idCandidato == $candidato->getKey()) selected @endif>
+                                {{ $candidato->usuario->perfil->obtenerNombreApellido() ?? $candidato->usuario->correo }}
+                                ({{ $candidatoEleccion->partido?->partido ?? 'Sin partido' }} - {{ $candidatoEleccion->cargo->cargo }})
+                            </option>
                         @endforeach
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="propuesta">Propuesta</label>
-                    <input type="text" class="form-control" id="propuesta" name="propuesta" value="{{ $m->propuesta }}" required>
+                    <input type="text" class="form-control" id="propuesta" name="propuesta" value="{{ $propuesta->propuesta }}" required>
                 </div>
 
                 <div class="form-group">
                     <label for="descripcion">Descripción</label>
-                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required>{{ $m->descripcion }}</textarea>
+                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required>{{ $propuesta->descripcion }}</textarea>
                 </div>
 
                 <button type="submit" class="btn btn-primary">

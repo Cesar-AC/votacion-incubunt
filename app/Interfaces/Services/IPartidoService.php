@@ -119,13 +119,13 @@ interface IPartidoService
     public function actualizarPropuestaDePartido(array $datos, PropuestaPartido $propuestaPartido): void;
 
     /**
-     * @param int $idPropuestaPartido
+     * @param PropuestaPartido $propuestaPartido
      *      Obligatorio.
-     *      El id de la propuesta que se desea eliminar.
+     *      La propuesta que se desea eliminar.
      * @return void
      * @throws \Exception Si no se envían los datos necesarios.
      */
-    public function eliminarPropuestaDePartido(int $idPropuestaPartido): void;
+    public function eliminarPropuestaDePartido(PropuestaPartido $propuestaPartido): void;
 
     /**
      * @param Partido $partido

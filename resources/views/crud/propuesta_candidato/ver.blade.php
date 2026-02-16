@@ -3,6 +3,8 @@
 @section('content')
 <div class="container-fluid">
 
+    @include('components.error-message')
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 text-gray-800">Gestión de Propuestas de Candidato</h1>
         <a href="{{ route('crud.propuesta_candidato.crear') }}" class="btn btn-primary">
@@ -13,7 +15,6 @@
     <div id="accordionElecciones">
 
         @forelse($elecciones as $eleccion)
-
             @php
                 $candidatosEleccion = $eleccion->candidatoElecciones->pluck('candidato')->filter();
                 $propuestas = $candidatosEleccion->flatMap(function ($candidato) use ($eleccion) {
@@ -66,6 +67,7 @@
                                             }}
                                         </h5>
                                         <p class="text-muted mb-2">
+                                            <strong>Área:</strong> {{ $candidatoEleccion->cargo->area->area }} | 
                                             <strong>Cargo:</strong> {{ $cargoNombre }} | 
                                             <strong>{{ $candidatoEleccion?->idPartido ? 'Partido' : 'Tipo' }}:</strong> {{ $partidoNombre }}
                                         </p>
