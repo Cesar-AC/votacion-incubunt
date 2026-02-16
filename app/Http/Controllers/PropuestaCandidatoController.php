@@ -2,71 +2,143 @@
 
 namespace App\Http\Controllers;
 
+use App\Interfaces\Services\ICandidatoService;
+use App\Interfaces\Services\IEleccionesService;
+use App\Models\Candidato;
 use App\Models\PropuestaCandidato;
 use Illuminate\Http\Request;
+use App\Models\Elecciones;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 class PropuestaCandidatoController extends Controller
 {
+    public function __construct(
+        protected IEleccionesService $eleccionesService,
+        protected ICandidatoService $candidatoService,
+    ) {}
+
     public function index()
     {
-        $elecciones = \App\Models\Elecciones::with(['partidos.candidatos.propuestas'])->get();
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+
         return view('crud.propuesta_candidato.ver', compact('elecciones'));
     }
 
     public function create()
     {
-        $elecciones = \App\Models\Elecciones::with(['partidos.candidatos'])->get();
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+
         return view('crud.propuesta_candidato.crear', compact('elecciones'));
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate(['propuesta'=>'required|string','descripcion'=>'required|string','idCandidato'=>'required|integer']);
-        $m = new PropuestaCandidato($data); $m->save();
-        return response()->json(['success'=>true,'message'=>'Propuesta creada','data'=>['id'=>$m->getKey(),'propuesta'=>$m->propuesta,'descripcion'=>$m->descripcion,'idCandidato'=>$m->idCandidato]], Response::HTTP_CREATED);
+        $datos = $request->validate([
+            'idEleccion' => 'required|integer|exists:Elecciones,idElecciones',
+            'idCandidato' => 'required|integer|exists:Candidato,idCandidato',
+            'propuesta' => 'required|string|max:255',
+            'descripcion' => 'required|string'
+        ], [
+            'idEleccion.required' => 'La elección es obligatoria.',
+            'idEleccion.integer' => 'La elección debe ser un número entero.',
+            'idEleccion.exists' => 'La elección no existe.',
+            'idCandidato.required' => 'El candidato es obligatorio.',
+            'idCandidato.integer' => 'El candidato debe ser un número entero.',
+            'idCandidato.exists' => 'El candidato no existe.',
+            'propuesta.required' => 'La propuesta es obligatoria.',
+            'propuesta.string' => 'La propuesta debe ser una cadena de texto.',
+            'propuesta.max' => 'La propuesta debe tener máximo 255 caracteres.',
+            'descripcion.required' => 'La descripción es obligatoria.',
+            'descripcion.string' => 'La descripción debe ser una cadena de texto.',
+        ]);
+
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($datos['idEleccion']);
+        $candidato = $this->candidatoService->obtenerCandidatoPorId($datos['idCandidato']);
+
+        $this->candidatoService->añadirPropuestaDeCandidato([
+            'propuesta' => $datos['propuesta'],
+            'descripcion' => $datos['descripcion'],
+        ], $candidato, $eleccion);
+
+        return redirect()->route('crud.propuesta_candidato.ver')->with('success', 'La propuesta se creó correctamente.');
     }
 
-    public function show($id)
+    public function show(int $idPropuesta)
     {
-        $m = PropuestaCandidato::findOrFail($id);
-        return response()->json(['success'=>true,'message'=>'Propuesta obtenida','data'=>['propuesta'=>$m->propuesta,'descripcion'=>$m->descripcion,'idCandidato'=>$m->idCandidato]]);
+        return redirect()->route('crud.propuesta_candidato.ver');
     }
 
-    public function edit($id)
+    public function edit(int $idPropuesta)
     {
-        $m = PropuestaCandidato::findOrFail($id);
-        $elecciones = \App\Models\Elecciones::with(['partidos.candidatos'])->get();
-        return view('crud.propuesta_candidato.editar', compact('m', 'elecciones'));
+        $propuesta = $this->candidatoService->obtenerPropuestaDeCandidato($idPropuesta);
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+        $candidatos = $this->candidatoService->obtenerCandidatosInscritosEnEleccion($propuesta->elecciones);
+
+        $eleccionesService = $this->eleccionesService;
+
+        return view('crud.propuesta_candidato.editar', compact('propuesta', 'elecciones', 'candidatos', 'eleccionesService'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $idPropuesta)
     {
-        $m = PropuestaCandidato::findOrFail($id);
-        $data = $request->validate(['propuesta'=>'required|string','descripcion'=>'required|string']);
-        $m->update($data);
-        return response()->json(['success'=>true,'message'=>'Propuesta actualizada','data'=>['id'=>$m->getKey(),'propuesta'=>$m->propuesta,'descripcion'=>$m->descripcion,'idCandidato'=>$m->idCandidato]]);
+        $propuesta = $this->candidatoService->obtenerPropuestaDeCandidato($idPropuesta);
+
+        $datos = $request->validate([
+            'idEleccion' => 'required|integer|exists:Elecciones,idElecciones',
+            'idCandidato' => 'required|integer|exists:Candidato,idCandidato',
+            'propuesta' => 'required|string|max:255',
+            'descripcion' => 'string'
+        ], [
+            'idEleccion.required' => 'La elección es obligatoria.',
+            'idEleccion.integer' => 'La elección debe ser un número entero.',
+            'idEleccion.exists' => 'La elección no existe.',
+            'idCandidato.required' => 'El candidato es obligatorio.',
+            'idCandidato.integer' => 'El candidato debe ser un número entero.',
+            'idCandidato.exists' => 'El candidato no existe.',
+            'propuesta.required' => 'La propuesta es obligatoria.',
+            'propuesta.string' => 'La propuesta debe ser una cadena de texto.',
+            'propuesta.max' => 'La propuesta debe tener máximo 255 caracteres.',
+            'descripcion.string' => 'La descripción debe ser una cadena de texto.',
+        ]);
+
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($datos['idEleccion']);
+        $candidato = $this->candidatoService->obtenerCandidatoPorId($datos['idCandidato']);
+
+        $this->candidatoService->actualizarPropuestaDeCandidato([
+            'idCandidato' => $candidato->getKey(),
+            'idElecciones' => $eleccion->getKey(),
+            'propuesta' => $datos['propuesta'],
+            'descripcion' => $datos['descripcion'],
+        ], $propuesta);
+
+        return redirect()->route('crud.propuesta_candidato.ver')->with('success', 'La propuesta se actualizó correctamente.');
     }
 
-    public function destroy($id)
+    public function destroy(int $idPropuesta)
     {
-        $m = PropuestaCandidato::findOrFail($id);
-        $m->delete();
-        return response()->json(['success'=>true,'message'=>'Propuesta eliminada','data'=>['id'=>(int)$id,'propuesta'=>$m->propuesta,'descripcion'=>$m->descripcion,'idCandidato'=>$m->idCandidato]]);
+        $propuesta = $this->candidatoService->obtenerPropuestaDeCandidato($idPropuesta);
+        $this->candidatoService->eliminarPropuestaDeCandidato($propuesta);
+
+        return redirect()->route('crud.propuesta_candidato.ver')->with('success', 'La propuesta se eliminó correctamente.');
     }
 
-    public function getCandidatosByEleccion($eleccionId)
+    public function getCandidatosByEleccion(int $idEleccion)
     {
-        $eleccion = \App\Models\Elecciones::with(['partidos.candidatos.usuario.perfil', 'partidos.candidatos.cargo'])->findOrFail($eleccionId);
-        $candidatos = $eleccion->partidos->flatMap->candidatos->map(function($candidato) {
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($idEleccion);
+
+        $candidatos = $this->candidatoService->obtenerCandidatosInscritosEnEleccion($eleccion);
+
+        $candidatos = $candidatos->map(function (Candidato $candidato) use ($eleccion) {
+            $candidatoEleccion = $this->eleccionesService->obtenerCandidatoEleccion($candidato, $eleccion);
+
             return [
                 'idCandidato' => $candidato->idCandidato,
                 'nombre' => $candidato->usuario->perfil
-                    ? trim($candidato->usuario->perfil->nombre . ' ' . $candidato->usuario->perfil->apellidoPaterno . ' ' . $candidato->usuario->perfil->apellidoMaterno)
+                    ? $candidato->usuario->perfil->obtenerNombreApellido()
                     : $candidato->usuario->correo,
-                'partido' => $candidato->partido->partido,
-                'cargo' => $candidato->cargo->cargo
+                'partido' => $candidatoEleccion->partido?->partido ?? 'Sin partido',
+                'cargo' => $candidatoEleccion->cargo->cargo
             ];
         });
         return response()->json($candidatos);

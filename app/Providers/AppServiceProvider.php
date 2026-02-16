@@ -7,8 +7,10 @@ use App\Enum\Config;
 use App\Interfaces\DTO\Services\IVotosCandidatoDTO;
 use App\Services\EstadisticasElectoralesService;
 use App\Interfaces\IEstadisticasElectoralesService;
+use App\Interfaces\Services\IArchivoService;
 use App\Interfaces\Services\IAreaService;
 use App\Interfaces\Services\ICandidatoService;
+use App\Interfaces\Services\ICargoService;
 use App\Interfaces\Services\ICarreraService;
 use App\Services\EleccionesService;
 use App\Interfaces\Services\IEleccionesService;
@@ -21,10 +23,12 @@ use App\Interfaces\Services\PadronElectoral\IImportadorFactory;
 use App\Interfaces\Services\PadronElectoral\IImportadorService;
 use App\Models\Configuracion;
 use App\Models\Elecciones;
+use App\Services\ArchivoService;
 use App\Services\PadronElectoral\ImportadorFactory;
 use App\Services\PadronElectoral\ImportadorService;
 use App\Services\AreaService;
 use App\Services\CandidatoService;
+use App\Services\CargoService;
 use App\Services\CarreraService;
 use App\Services\PadronElectoralService;
 use App\Services\PartidoService;
@@ -43,7 +47,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(IEstadisticasElectoralesService::class, EstadisticasElectoralesService::class);
         $this->app->singleton(IEleccionesService::class, function () {
             return new EleccionesService(
                 Elecciones::find(Configuracion::obtenerValor(Config::ELECCION_ACTIVA))
@@ -59,9 +62,14 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(IArchivoService::class, ArchivoService::class);
         $this->app->singleton(IImportadorFactory::class, ImportadorFactory::class);
         $this->app->singleton(IImportadorService::class, ImportadorService::class);
-        $this->app->singleton(IAreaService::class, AreaService::class);
+        $this->app->singleton(IAreaService::class, function () {
+            return new AreaService(
+                $this->app->make(IEleccionesService::class)
+            );
+        });
         $this->app->singleton(ICandidatoService::class, CandidatoService::class);
         $this->app->singleton(ICarreraService::class, CarreraService::class);
         $this->app->singleton(IPadronElectoralService::class, function () {
@@ -72,11 +80,26 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(IPartidoService::class, function () {
             return new PartidoService(
-                $this->app->make(IEleccionesService::class)
+                $this->app->make(IEleccionesService::class),
+                $this->app->make(IArchivoService::class),
             );
         });
 
-        $this->app->singleton(IUserService::class, UserService::class);
+        $this->app->singleton(IUserService::class, function () {
+            return new UserService(
+                $this->app->make(IArchivoService::class),
+            );
+        });
+
+        $this->app->singleton(ICargoService::class, CargoService::class);
+
+        $this->app->singleton(IEstadisticasElectoralesService::class, function () {
+            return new EstadisticasElectoralesService(
+                $this->app->make(IAreaService::class),
+                $this->app->make(IEleccionesService::class),
+                $this->app->make(ICargoService::class),
+            );
+        });
     }
 
     /**

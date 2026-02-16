@@ -82,17 +82,18 @@ class AreaController extends Controller
 
     public function destroy(int $id)
     {
-        $area = $this->areaService->obtenerAreaPorId($id);
+        try {
+            $area = $this->areaService->obtenerAreaPorId($id);
 
-        $this->areaService->eliminarArea($area);
+            $this->areaService->eliminarArea($area);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Área eliminada correctamente',
-            'data' => [
-                'id' => $id,
-                'area' => $area->area,
-            ],
-        ]);
+            return redirect()
+                ->route('crud.area.ver')
+                ->with('success', 'Área eliminada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.area.ver')
+                ->with('error', 'Error al eliminar el área: ' . $e->getMessage());
+        }
     }
 }

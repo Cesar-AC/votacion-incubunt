@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\Permiso;
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Interfaces\Services\IPermisoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,13 +16,15 @@ class ProfileController extends Controller
     /**
      * Display the user's profile (read-only).
      */
-    public function show(Request $request): View
+    public function show(Request $request, IPermisoService $permisoService): View
     {
         $user = $request->user();
-        $user->load(['perfil.carrera', 'perfil.area', 'roles', 'estadoUsuario']);
-        
-       
-        return view('profile.show', compact('user'));
+        $user->load(['perfil.carrera', 'perfil.area', 'perfil.foto', 'roles', 'estadoUsuario']);
+
+        $permiso = $permisoService->permisoDesdeEnum(Permiso::USUARIO_CAMBIAR_FOTO);
+        $puedeCambiarFoto = $permiso && $permisoService->comprobarUsuario(Auth::user(), $permiso);
+
+        return view('profile.show', compact('user', 'puedeCambiarFoto'));
     }
 
     /**

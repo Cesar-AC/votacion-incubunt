@@ -10,7 +10,7 @@
   @else
 
   <!-- Header -->
-  <form method="POST" action="{{ route('crud.partido.editar', $partido->idPartido) }}">
+  <form method="POST" action="{{ route('crud.partido.editar', $partido->idPartido) }}" enctype="multipart/form-data">
     @csrf
     @method('PUT')
 
@@ -72,11 +72,13 @@
           @enderror
         </div>
 
+        @include('components.previewable-upload-photo-for-crud', ['foto' => $partido->obtenerFotoURL()])
+
         <!-- Elecciones -->
         <div class="form-group">
-          <label class="small font-weight-bold">Elecciones asociadas</label>
+          <label class="small font-weight-bold">Elecciones asociadas (opcional)</label>
           <select name="elecciones[]" multiple
-                  class="form-control @error('elecciones') is-invalid @enderror" required>
+                  class="form-control @error('elecciones') is-invalid @enderror">
             @php $seleccionadas = $partido->elecciones->pluck('idElecciones')->toArray(); @endphp
             @foreach($elecciones as $eleccion)
               <option value="{{ $eleccion->idElecciones }}"

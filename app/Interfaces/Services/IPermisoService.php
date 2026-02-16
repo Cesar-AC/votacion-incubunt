@@ -17,7 +17,7 @@ interface IPermisoService
      * @param User $usuario
      *      Obligatorio.
      *      Usuario que se desea verificar.
-     * @param Permiso $permiso
+     * @param Permiso|null $permiso
      *      Obligatorio.
      *      Permiso que se desea verificar.
      * @param bool $estricto
@@ -27,20 +27,20 @@ interface IPermisoService
      * @return bool
      *      Retorna true si el usuario tiene el permiso, false en caso contrario.
      */
-    public function comprobarUsuario(User $usuario, Permiso $permiso, bool $estricto = false): bool;
+    public function comprobarUsuario(User $usuario, ?Permiso $permiso, bool $estricto = false): bool;
 
     /**
      * Comprueba si un rol tiene un permiso específico.
      * @param Rol $rol
      *      Obligatorio.
      *      Rol que se desea verificar.
-     * @param Permiso $permiso
+     * @param Permiso|null $permiso
      *      Obligatorio.
      *      Permiso que se desea verificar.
      * @return bool
      *      Retorna true si el rol tiene el permiso, false en caso contrario.
      */
-    public function comprobarRol(Rol $rol, Permiso $permiso): bool;
+    public function comprobarRol(Rol $rol, ?Permiso $permiso): bool;
 
     /**
      * Verifica si un usuario pertenece a un rol.
@@ -132,10 +132,10 @@ interface IPermisoService
      * @param \App\Enum\Permiso $permisoEnum
      *      Obligatorio.
      *      Enum de permiso que se desea obtener.
-     * @return Permiso
-     *      Retorna el permiso.
+     * @return Permiso|null
+     *      Retorna el permiso o null si no existe.
      */
-    public function permisoDesdeEnum(\App\Enum\Permiso $permisoEnum): Permiso;
+    public function permisoDesdeEnum(\App\Enum\Permiso $permisoEnum): ?Permiso;
 
     /**
      * Obtiene un permiso desde su ID.
@@ -146,4 +146,14 @@ interface IPermisoService
      *      Retorna el permiso.
      */
     public function obtenerPermisoPorId(int $idPermiso): Permiso;
+
+    /**
+     * Obtiene un rol desde su ID.
+     * @param int $idRol
+     *      Obligatorio.
+     *      ID del rol que se desea obtener.
+     * @return Rol
+     *      Retorna el rol.
+     */
+    public function obtenerRolPorId(int $idRol): Rol;
 }

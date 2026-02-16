@@ -7,22 +7,9 @@
     <h5 class="font-weight-bold mb-0">Editar Usuario</h5>
   </div>
 
-  <!-- Errores -->
-  @if ($errors->any())
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <strong>Error:</strong>
-      <ul class="mb-0">
-        @foreach ($errors->all() as $error)
-          <li>{{ $error }}</li>
-        @endforeach
-      </ul>
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-  @endif
+  @include('components.error-message')
 
-  <form method="POST" action="{{ route('crud.user.editar', $usuario->getKey()) }}">
+  <form method="POST" action="{{ route('crud.user.editar', $usuario->getKey()) }}" enctype="multipart/form-data">
     @csrf
     @method('PUT')
 
@@ -158,6 +145,33 @@
       </div>
     </div>
 
+    <!-- FOTO -->
+    <div class="card shadow-sm mb-4" x-data="{inputFoto: null}">
+      <div class="card-body">
+        <h6 class="font-weight-bold mb-3">Foto</h6>
+
+        <div class="form-group">
+          <input
+            type="file"
+            x-ref="inputFoto"
+            name="foto"
+            id="inputFoto"
+            class="form-control-file @error('foto') is-invalid @enderror"
+            accept=".png, .jpg, .jpeg, .gif"
+            x-model="inputFoto"
+            value="{{ old('foto') }}">
+          @error('foto')
+          <div class="invalid-feedback d-block">{{ $message }}</div>
+          @enderror
+        </div>
+
+        <div id="fotoPreview" class="mt-3" @if (!$usuario->perfil?->tieneFoto()) x-cloak x-show="inputFoto != null" @endif>
+          <p class="text-muted mb-2">Previsualización:</p>
+          <img id="visualizacionFoto" src="{{ $usuario->perfil?->obtenerFotoURL() }}" alt="Previsualización de foto" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+        </div>
+      </div>
+    </div>
+
     <div class="text-right mb-4">
       <a href="{{ route('crud.user.ver') }}" class="btn btn-secondary px-4 mr-2">
         Volver
@@ -172,23 +186,7 @@
 </div>
 
 @push('scripts')
-<script>
-  // Mostrar SweetAlert si hay errores
-  @if ($errors->any())
-    Swal.fire({
-      icon: 'error',
-      title: 'Error al actualizar el usuario',
-      html: `
-        <ul style="text-align: left;">
-          @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-          @endforeach
-        </ul>
-      `,
-      confirmButtonText: 'Entendido'
-    });
-  @endif
-</script>
+@include('components.preview-upload-photo-script')
 @endpush
 
 @endsection

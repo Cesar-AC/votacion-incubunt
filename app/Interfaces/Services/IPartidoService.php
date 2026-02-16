@@ -5,6 +5,7 @@ namespace App\Interfaces\Services;
 use App\Models\Elecciones;
 use App\Models\Partido;
 use App\Models\PropuestaPartido;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 
 interface IPartidoService
@@ -118,13 +119,13 @@ interface IPartidoService
     public function actualizarPropuestaDePartido(array $datos, PropuestaPartido $propuestaPartido): void;
 
     /**
-     * @param int $idPropuestaPartido
+     * @param PropuestaPartido $propuestaPartido
      *      Obligatorio.
-     *      El id de la propuesta que se desea eliminar.
+     *      La propuesta que se desea eliminar.
      * @return void
      * @throws \Exception Si no se envían los datos necesarios.
      */
-    public function eliminarPropuestaDePartido(int $idPropuestaPartido): void;
+    public function eliminarPropuestaDePartido(PropuestaPartido $propuestaPartido): void;
 
     /**
      * @param Partido $partido
@@ -135,9 +136,9 @@ interface IPartidoService
      *      La elección en la que se desea inscribir el partido.
      *      Si no se envía, se utilizará la elección activa.
      * @return void
-     * @throws \Exception Si no se envían los datos necesarios.
+     * @throws \Exception Si la elección no está programada.
      */
-    public function inscribirPartidoEnElecciones(Partido $partido, ?Elecciones $elecciones): void;
+    public function inscribirPartidoEnElecciones(Partido $partido, ?Elecciones $elecciones = null): void;
 
     /**
      * @param Partido $partido
@@ -148,7 +149,68 @@ interface IPartidoService
      *      La elección en la que se desea remover el partido.
      *      Si no se envía, se utilizará la elección activa.
      * @return void
-     * @throws \Exception Si no se envían los datos necesarios.
+     * @throws \Exception Si la elección no está programada.
      */
     public function removerPartidoDeElecciones(Partido $partido, ?Elecciones $elecciones): void;
+
+    /**
+     * Agrega al partido a las elecciones especificadas. Elimina al partido de las elecciones no especificadas que sean programables.
+     * Solo puede actualizar elecciones programadas.
+     * 
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido que participará de las elecciones establecidas.
+     * @param Collection<Elecciones> $elecciones
+     *      Obligatorio.
+     *      Las elecciones a las que se desea que pertenezca el partido.
+     * @return void
+     * @throws \Exception Si la elección no está programada.
+     */
+    public function establecerEleccionesDePartido(Partido $partido, Collection $elecciones): void;
+
+    /**
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido al que se desea subir la foto.
+     * @param UploadedFile $archivo
+     *      Obligatorio.
+     *      El archivo que se desea subir.
+     * @return void
+     * @throws \Exception Si el partido ya tiene una foto.
+     * @see self::cambiarFoto() En caso de no saber si el partido tiene foto, es mejor utilizarlo.
+     */
+    public function subirFoto(Partido $partido, UploadedFile $archivo): void;
+
+    /**
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido al que se desea remover la foto.
+     * @return void
+     * @throws \Exception Si el partido no tiene foto.
+     * @see self::cambiarFoto() En caso de no saber si el partido tiene foto, es mejor utilizarlo.
+     */
+    public function removerFoto(Partido $partido): void;
+
+    /**
+     * Cambia la foto del partido, exista o no exista.
+     * 
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido al que se desea cambiar la foto.
+     * @param UploadedFile $archivo
+     *      Obligatorio.
+     *      El archivo que se desea asignar como foto.
+     * @return void
+     */
+    public function cambiarFoto(Partido $partido, UploadedFile $archivo): void;
+
+    /**
+     * @param Partido $partido
+     *      Obligatorio.
+     *      El partido al que se desea obtener la foto.
+     * @return string|null
+     *      Retorna la URL pública de la foto del partido.
+     *      Retorna null si el partido no tiene foto.
+     */
+    public function obtenerFotoURL(Partido $partido): ?string;
 }

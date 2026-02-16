@@ -2,13 +2,13 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-6 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
     <div class="max-w-5xl mx-auto">
         
         {{-- Back Button --}}
         <div class="mb-6">
             <a href="{{ route('votante.votar.lista', $eleccion->id) }}"
-               class="inline-flex items-center text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
+               class="inline-flex items-center text-gray-700 hover:text-gray-900 font-semibold transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300 rounded-lg px-2 py-1">
                 <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
                 </svg>
@@ -17,7 +17,7 @@
         </div>
 
         {{-- Candidate Profile Card --}}
-        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden mb-6">
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden mb-6">
             
             {{-- Header with Party Colors --}}
             @if($candidato->partido)
@@ -58,7 +58,7 @@
                                 </h1>
                                 
                                 <div class="flex flex-wrap items-center gap-3 mb-3">
-                                    <span class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                                    <span class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-900 rounded-full text-sm font-bold border border-blue-300">
                                         {{ $candidato->cargo->nombreCargo }}
                                     </span>
                                     
@@ -125,10 +125,10 @@
                     </h2>
                     <div class="grid grid-cols-1 gap-4">
                         @foreach($candidato->propuestas as $propuesta)
-                        <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-6 border border-blue-200 hover:shadow-lg transition-shadow duration-300">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200 hover:shadow-lg transition-shadow duration-300">
                             <div class="flex items-start">
                                 <div class="flex-shrink-0">
-                                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
                                         {{ $loop->iteration }}
                                     </div>
                                 </div>
@@ -206,14 +206,14 @@
         {{-- Action Buttons --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <a href="{{ route('votante.votar.lista', $eleccion->id) }}"
-               class="bg-white text-gray-700 border-2 border-gray-300 py-4 rounded-xl font-semibold text-center hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center space-x-2">
+               class="bg-white text-gray-800 border-2 border-gray-400 py-4 rounded-xl font-bold text-center hover:bg-gray-100 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center space-x-2 focus:outline-none focus:ring-4 focus:ring-gray-300">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
                 </svg>
                 <span>Volver a votar</span>
             </a>
             <button onclick="window.print()"
-                    class="bg-blue-600 text-white py-4 rounded-xl font-semibold text-center hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center space-x-2">
+                    class="bg-blue-700 text-white py-4 rounded-xl font-bold text-center hover:bg-blue-800 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center space-x-2 focus:outline-none focus:ring-4 focus:ring-blue-400">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd"/>
                 </svg>
@@ -224,6 +224,7 @@
 </div>
 
 @push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 @media print {
     body * {

@@ -21,10 +21,15 @@ return new class extends Migration
             $table->string('telefono', 15)->nullable();
             $table->unsignedInteger('idCarrera')->nullable();
             $table->unsignedInteger('idArea');
+            $table->unsignedInteger('foto_idArchivo')->nullable();
 
             $table->foreign('idUser')->references('idUser')->on('User');
             $table->foreign('idCarrera')->references('idCarrera')->on('Carrera');
             $table->foreign('idArea')->references('idArea')->on('Area');
+            $table->foreign('foto_idArchivo')
+                ->references('idArchivo')
+                ->on('Archivo')
+                ->onDelete('set null');
         });
     }
 

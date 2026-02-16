@@ -64,18 +64,40 @@ class PadronElectoralController extends Controller
 	{
 		$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-		return response()->json([
-			'success' => true,
-			'message' => 'Padrón obtenido',
-			'data' => [
-				'idElecciones' => $eleccion->idElecciones,
-			],
-		]);
+		// Obtener todos los usuarios del padrón con sus perfiles
+		$participantes = PadronElectoral::where('idElecciones', $id)
+			->with(['usuario.perfil'])
+			->get()
+			->map(function ($padron) {
+				return $padron->usuario;
+			})
+			->sortBy('idUser');
+
+		return view('crud.padron_electoral.detalle', compact('eleccion', 'participantes'));
 	}
 
 	public function edit(int $id)
 	{
 		$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+
+		// Validar si se puede editar el padrón
+		if ($this->eleccionesService->votacionHabilitada($eleccion)) {
+			return redirect()
+				->route('crud.padron_electoral.ver')
+				->with('warning', 'No se puede editar el padrón: La elección ya se encuentra en periodo de votación.');
+		}
+
+		if ($eleccion->estaFinalizado()) {
+			return redirect()
+				->route('crud.padron_electoral.ver')
+				->with('warning', 'No se puede editar el padrón: La elección ya ha finalizado.');
+		}
+
+		if ($eleccion->estaAnulado()) {
+			return redirect()
+				->route('crud.padron_electoral.ver')
+				->with('warning', 'No se puede editar el padrón: La elección está anulada.');
+		}
 
 		$usuarios = User::with('perfil')->orderBy('idUser')->get();
 		$padronUsuarios = PadronElectoral::where('idElecciones', '=', $id)->pluck('idUsuario')->toArray();
@@ -84,37 +106,44 @@ class PadronElectoralController extends Controller
 
 	public function update(Request $request, int $id)
 	{
-		$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+		try {
+			$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-		$data = $request->validate([
-			'usuarios' => 'required|array',
-			'usuarios.*' => 'exists:User,idUser',
-		]);
+			$data = $request->validate([
+				'usuarios' => 'required|array',
+				'usuarios.*' => 'exists:User,idUser',
+			]);
 
-		PadronElectoral::where('idElecciones', '=', $id)->delete();
+			PadronElectoral::where('idElecciones', '=', $id)->delete();
 
-		foreach ($data['usuarios'] as $idUsuario) {
-			$this->padronElectoralService->agregarUsuarioAEleccion(User::find($idUsuario), $eleccion);
+			foreach ($data['usuarios'] as $idUsuario) {
+				$this->padronElectoralService->agregarUsuarioAEleccion(User::find($idUsuario), $eleccion);
+			}
+
+			return redirect()
+				->route('crud.padron_electoral.ver')
+				->with('success', 'Padrón actualizado correctamente');
+		} catch (\Exception $e) {
+			return redirect()
+				->route('crud.padron_electoral.ver')
+				->with('error', $e->getMessage());
 		}
-
-		return redirect()
-			->route('crud.padron_electoral.ver')
-			->with('success', 'Padrón actualizado correctamente');
 	}
 
 	public function destroy(int $id)
 	{
-		$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
-		$this->padronElectoralService->restablecerPadronElectoral($eleccion);
+		try {
+			$eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+			$this->padronElectoralService->restablecerPadronElectoral($eleccion);
 
-		return response()->json([
-			'success' => true,
-			'message' => 'Padrón eliminado',
-			'data' => [
-				'id' => (int) $id,
-				'idElecciones' => $eleccion->idElecciones,
-			],
-		]);
+			return redirect()
+				->route('crud.padron_electoral.ver')
+				->with('success', 'Padrón electoral eliminado correctamente');
+		} catch (\Exception $e) {
+			return redirect()
+				->route('crud.padron_electoral.ver')
+				->with('error', 'Error al eliminar el padrón electoral: ' . $e->getMessage());
+		}
 	}
 
 	public function importForm()

@@ -2,18 +2,20 @@
 
 namespace App\Services;
 
+use App\Interfaces\Services\IArchivoService;
 use App\Interfaces\Services\IUserService;
+use App\Models\Archivo;
 use App\Models\EstadoUsuario;
 use App\Models\PerfilUsuario;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 
 class UserService implements IUserService
 {
+    public function __construct(protected IArchivoService $archivoService) {}
+
     public function obtenerUsuarios(): Collection
     {
         return User::all();
@@ -67,5 +69,47 @@ class UserService implements IUserService
             $usuario->perfil()->delete();
         }
         $usuario->delete();
+    }
+
+    public function subirFoto(User $usuario, UploadedFile $archivo): void
+    {
+        if ($usuario->perfil?->foto) {
+            throw new \Exception('El usuario ya tiene una foto.');
+        }
+
+        $archivo = $this->archivoService->subirArchivo('usuarios/fotos', $archivo->hashName(), $archivo, 'public');
+
+        $usuario->perfil->foto()->associate($archivo);
+        $usuario->perfil->save();
+    }
+
+    public function removerFoto(User $usuario): void
+    {
+        $foto = $usuario->perfil?->foto;
+
+        $usuario->perfil?->foto()->disassociate();
+        $usuario->perfil?->save();
+
+        if ($foto == null) {
+            throw new \Exception('El usuario no tiene una foto.');
+        }
+
+        $this->archivoService->eliminarArchivo($foto->getKey());
+    }
+
+    public function cambiarFoto(User $usuario, UploadedFile $archivo): void
+    {
+        try {
+            $this->removerFoto($usuario);
+        } catch (\Exception $e) {
+            // Ignorar, puede que no tenga foto.
+        }
+
+        $this->subirFoto($usuario, $archivo);
+    }
+
+    public function obtenerFotoURL(User $usuario): string
+    {
+        return $usuario->perfil->obtenerFotoURL();
     }
 }

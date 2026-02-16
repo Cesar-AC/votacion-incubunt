@@ -21,9 +21,9 @@ return new class extends Migration
 
             $table->primary(['idCandidato', 'idElecciones']);
 
-            $table->foreign('idCandidato')->references('idCandidato')->on('Candidato');
+            $table->foreign('idCandidato')->references('idCandidato')->on('Candidato')->onDelete('cascade');
             $table->foreign('idElecciones')->references('idElecciones')->on('Elecciones');
-            $table->foreign('idPartido')->references('idPartido')->on('Partido');
+            $table->foreign('idPartido')->references('idPartido')->on('Partido')->onDelete('set null');
             $table->foreign('idCargo')->references('idCargo')->on('Cargo');
         });
     }

@@ -3,7 +3,9 @@
 namespace App\Interfaces\Services;
 
 use App\Models\Candidato;
+use App\Models\Cargo;
 use App\Models\Elecciones;
+use App\Models\Partido;
 use App\Models\PropuestaCandidato;
 use Illuminate\Support\Collection;
 
@@ -14,6 +16,15 @@ interface ICandidatoService
      *      Retorna la lista de candidatos.
      */
     public function obtenerCandidatos(): Collection;
+
+    /**
+     * @param Elecciones $eleccion
+     *      Obligatorio.
+     *      La elección en la que se desea obtener los candidatos.
+     * @return Collection<Candidato>
+     *      Retorna la lista de candidatos inscritos en la elección.
+     */
+    public function obtenerCandidatosInscritosEnEleccion(Elecciones $eleccion): Collection;
 
     /**
      * @param int $id
@@ -71,6 +82,30 @@ interface ICandidatoService
      * @throws \Exception Si no se envían los datos necesarios.
      */
     public function actualizarPartidoDeCandidatoEnElecciones(array $datos, Candidato $candidato, Elecciones $elecciones): void;
+
+    /**
+     * @param Candidato $candidato
+     *      Obligatorio.
+     *      El candidato del que se desea obtener información.
+     * @param Elecciones $elecciones
+     *      Obligatorio.
+     *      La elección en la que se desea evaluar al candidato.
+     * @return Cargo
+     *      Retorna el cargo del candidato en la elección.
+     */
+    public function obtenerCargoDeCandidatoEnElecciones(Candidato $candidato, Elecciones $elecciones): Cargo;
+
+    /**
+     * @param Candidato $candidato
+     *      Obligatorio.
+     *      El candidato del que se desea obtener información.
+     * @param Elecciones $elecciones
+     *      Obligatorio.
+     *      La elección en la que se desea evaluar al candidato.
+     * @return Partido
+     *      Retorna el partido del candidato en la elección.
+     */
+    public function obtenerPartidoDeCandidatoEnElecciones(Candidato $candidato, Elecciones $elecciones): Partido;
 
     /**
      * @param array $datos
@@ -192,11 +227,24 @@ interface ICandidatoService
     public function actualizarPropuestaDeCandidato(array $datos, PropuestaCandidato $propuestaCandidato): void;
 
     /**
-     * @param int $idPropuestaCandidato
+     * @param PropuestaCandidato $propuestaCandidato
      *      Obligatorio.
-     *      El id de la propuesta que se desea eliminar.
+     *      La propuesta que se desea eliminar.
      * @return void
      * @throws \Exception Si no se envían los datos necesarios.
      */
-    public function eliminarPropuestaDeCandidato(int $idPropuestaCandidato): void;
+    public function eliminarPropuestaDeCandidato(PropuestaCandidato $propuestaCandidato): void;
+
+    /**
+     * @param Cargo $cargo
+     *      Obligatorio.
+     *      El cargo del que se desea obtener los candidatos.
+     * @param Elecciones $elecciones
+     *      Obligatorio.
+     *      La elección en la que se desea obtener los candidatos.
+     * @return Collection<Candidato>
+     *      Retorna la lista de candidatos del cargo en la elección.
+     * @throws \Exception Si no se encuentra el cargo o la elección.
+     */
+    public function obtenerCandidatosPorCargoEnEleccion(Cargo $cargo, Elecciones $elecciones): Collection;
 }

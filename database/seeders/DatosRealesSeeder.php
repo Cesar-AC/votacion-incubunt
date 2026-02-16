@@ -10,6 +10,7 @@ use App\Models\EstadoElecciones;
 use App\Models\EstadoUsuario;
 use App\Models\NivelLog;
 use App\Models\TipoVoto;
+use App\Models\Partido;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -20,34 +21,49 @@ class DatosRealesSeeder extends Seeder
      */
     public function run(): void
     {
+
+        $areaPresidencia = Area::firstOrCreate(
+            ['area' => 'Presidencia'],
+            ['area' => 'Presidencia']
+        );
+
+        $cargosPresidencia = [
+            'Presidente',
+            'Vicepresidente',
+            'Coordinador general',
+        ];
+
+        foreach ($cargosPresidencia as $cargo) {
+            Cargo::firstOrCreate(
+                ['cargo' => $cargo, 'idArea' => $areaPresidencia->getKey()],
+                ['cargo' => $cargo, 'idArea' => $areaPresidencia->getKey()]
+            );
+        }
+
         $areas = [
             'Sin área asignada',
-            'Presidencia',
             'Marketing',
             'Project Management Office',
             'Tecnologías de la Información',
             'Logística y Finanzas',
-            'Sistemas Integrados de Gestión y Emprendimiento',
             'Gestión del Talento Humano',
         ];
 
-        foreach ($areas as $index => $area) {
-            Area::create([
-                'area' => $area,
-            ]);
-        }
-
         $cargos = [
-            'Director',
-            'Presidencia'
+            'Director de Área',
         ];
 
-        foreach ($cargos as $cargo) {
-            foreach (Area::all() as $area) {
-                Cargo::create([
-                    'cargo' => $cargo,
-                    'idArea' => $area->getKey(),
-                ]);
+        foreach ($areas as $area) {
+            $areaModelo = Area::firstOrCreate(
+                ['area' => $area],
+                ['area' => $area]
+            );
+
+            foreach ($cargos as $cargo) {
+                Cargo::firstOrCreate(
+                    ['cargo' => $cargo, 'idArea' => $areaModelo->getKey()],
+                    ['cargo' => $cargo, 'idArea' => $areaModelo->getKey()]
+                );
             }
         }
 
@@ -101,9 +117,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($carreras as $carrera) {
-            Carrera::create([
-                'carrera' => $carrera,
-            ]);
+            Carrera::firstOrCreate(
+                ['carrera' => $carrera],
+                ['carrera' => $carrera]
+            );
         }
 
         $estadosElecciones = [
@@ -113,9 +130,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($estadosElecciones as $estado) {
-            EstadoElecciones::create([
-                'estado' => $estado,
-            ]);
+            EstadoElecciones::firstOrCreate(
+                ['estado' => $estado],
+                ['estado' => $estado]
+            );
         }
 
         $estadosUsuario = [
@@ -126,12 +144,14 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($estadosUsuario as $estado) {
-            EstadoUsuario::create([
-                'nombre' => $estado,
-            ]);
+            EstadoUsuario::firstOrCreate(
+                ['nombre' => $estado],
+                ['nombre' => $estado]
+            );
         }
 
         $nivelLog = [
+            'Éxito',
             'Información',
             'Advertencia',
             'Error',
@@ -139,9 +159,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($nivelLog as $nivel) {
-            NivelLog::create([
-                'nombre' => $nivel,
-            ]);
+            NivelLog::firstOrCreate(
+                ['nombre' => $nivel],
+                ['nombre' => $nivel]
+            );
         }
 
         $categoriaLog = [
@@ -149,9 +170,10 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($categoriaLog as $categoria) {
-            CategoriaLog::create([
-                'nombre' => $categoria,
-            ]);
+            CategoriaLog::firstOrCreate(
+                ['nombre' => $categoria],
+                ['nombre' => $categoria]
+            );
         }
 
         $tiposVoto = [
@@ -161,7 +183,25 @@ class DatosRealesSeeder extends Seeder
         ];
 
         foreach ($tiposVoto as $tipoVoto) {
-            TipoVoto::create($tipoVoto);
+            TipoVoto::firstOrCreate(
+                ['idTipoVoto' => $tipoVoto['idTipoVoto']],
+                $tipoVoto
+            );
+        }
+
+        $partidos = [
+            ['partido' => 'Partido A', 'urlPartido' => 'https://ejemplo.com/partida-a', 'descripcion' => 'Descripción del Partido A'],
+            ['partido' => 'Partido B', 'urlPartido' => 'https://ejemplo.com/partida-b', 'descripcion' => 'Descripción del Partido B'],
+            ['partido' => 'Partido C', 'urlPartido' => 'https://ejemplo.com/partida-c', 'descripcion' => 'Descripción del Partido C'],
+            ['partido' => 'Partido D', 'urlPartido' => 'https://ejemplo.com/partida-d', 'descripcion' => 'Descripción del Partido D'],
+            ['partido' => 'Independiente', 'urlPartido' => 'https://ejemplo.com/independiente', 'descripcion' => 'Lista de candidatos independientes'],
+        ];
+
+        foreach ($partidos as $partido) {
+            Partido::firstOrCreate(
+                ['partido' => $partido['partido']],
+                $partido
+            );
         }
     }
 }

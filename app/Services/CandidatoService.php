@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Interfaces\Services\ICandidatoService;
 use App\Models\Candidato;
 use App\Models\CandidatoEleccion;
+use App\Models\Cargo;
 use App\Models\Elecciones;
+use App\Models\Partido;
 use App\Models\PropuestaCandidato;
 use Illuminate\Support\Collection;
 
@@ -14,6 +16,13 @@ class CandidatoService implements ICandidatoService
     public function obtenerCandidatos(): Collection
     {
         return Candidato::get();
+    }
+
+    public function obtenerCandidatosInscritosEnEleccion(Elecciones $eleccion): Collection
+    {
+        return Candidato::whereHas('elecciones', function ($query) use ($eleccion) {
+            $query->where('Elecciones.idElecciones', '=', $eleccion->getKey());
+        })->get();
     }
 
     public function obtenerCandidatoPorId(int $id): Candidato
@@ -44,6 +53,22 @@ class CandidatoService implements ICandidatoService
         $candidato->delete();
     }
 
+    public function obtenerCargoDeCandidatoEnElecciones(Candidato $candidato, Elecciones $elecciones): Cargo
+    {
+        return CandidatoEleccion::where('idCandidato', $candidato->getKey())
+            ->where('idElecciones', $elecciones->getKey())
+            ->first()
+            ->cargo;
+    }
+
+    public function obtenerPartidoDeCandidatoEnElecciones(Candidato $candidato, Elecciones $elecciones): Partido
+    {
+        return CandidatoEleccion::where('idCandidato', $candidato->getKey())
+            ->where('idElecciones', $elecciones->getKey())
+            ->first()
+            ->partido;
+    }
+
     public function actualizarPartidoDeCandidatoEnElecciones(array $datos, Candidato $candidato, Elecciones $elecciones): void
     {
         CandidatoEleccion::where('idCandidato', $candidato->getKey())
@@ -67,7 +92,7 @@ class CandidatoService implements ICandidatoService
         CandidatoEleccion::create([
             'idCandidato' => $candidato->getKey(),
             'idElecciones' => $elecciones->getKey(),
-            'idPartido' => $datos['idPartido'],
+            'idPartido' => $datos['idPartido'] ?? null,
             'idCargo' => $datos['idCargo'],
         ]);
     }
@@ -122,15 +147,19 @@ class CandidatoService implements ICandidatoService
 
     public function actualizarPropuestaDeCandidato(array $datos, PropuestaCandidato $propuestaCandidato): void
     {
-        $propuestaCandidato->update([
-            'propuesta' => $datos['propuesta'],
-            'descripcion' => $datos['descripcion'],
-        ]);
+        $propuestaCandidato->update($datos);
     }
 
-    public function eliminarPropuestaDeCandidato(int $idPropuestaCandidato): void
+    public function eliminarPropuestaDeCandidato(PropuestaCandidato $propuestaCandidato): void
     {
-        PropuestaCandidato::where('idPropuestaCandidato', $idPropuestaCandidato)
-            ->delete();
+        $propuestaCandidato->delete();
+    }
+
+    public function obtenerCandidatosPorCargoEnEleccion(Cargo $cargo, Elecciones $elecciones): Collection
+    {
+        return Candidato::whereHas('candidatoElecciones', function ($query) use ($cargo, $elecciones) {
+            $query->where('idCargo', '=', $cargo->getKey())
+                ->where('idElecciones', '=', $elecciones->getKey());
+        })->get();
     }
 }

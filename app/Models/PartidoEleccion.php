@@ -14,7 +14,9 @@ class PartidoEleccion extends Model
     public $incrementing = false;
 
     protected $table = 'PartidoEleccion';
+
     public $timestamps = false;
+
     protected $fillable = [
         'idPartido',
         'idElecciones'

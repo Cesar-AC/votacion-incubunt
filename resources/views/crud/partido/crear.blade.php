@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-fluid px-3">
 
-  <form method="POST" action="{{ route('crud.partido.crear') }}">
+  <form method="POST" action="{{ route('crud.partido.crear') }}" enctype="multipart/form-data">
     @csrf
 
     <!-- Header -->
@@ -55,6 +55,8 @@
                  value="{{ old('planTrabajo') }}">
           @error('planTrabajo')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
+
+        @include('components.previewable-upload-photo-for-crud')
 
       </div>
     </div>

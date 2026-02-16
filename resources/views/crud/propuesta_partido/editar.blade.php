@@ -10,18 +10,19 @@
         </a>
     </div>
 
+    @include('components.error-message')
+
     <div class="card shadow mb-4">
         <div class="card-body">
-            <form action="{{ route('crud.propuesta_partido.editar', $m->idPropuesta) }}" method="POST">
+            <form action="{{ route('crud.propuesta_partido.editar', $propuesta->getKey()) }}" method="POST">
                 @csrf
-                @method('PUT')
 
                 <div class="form-group">
                     <label for="idEleccion">Elección</label>
                     <select class="form-control" id="idEleccion" name="idEleccion" required>
                         <option value="">Seleccione una elección</option>
                         @foreach($elecciones as $eleccion)
-                            <option value="{{ $eleccion->idElecciones }}" {{ $m->partido->elecciones->contains('idElecciones', $eleccion->idElecciones) ? 'selected' : '' }}>{{ $eleccion->titulo }}</option>
+                            <option value="{{ $eleccion->idElecciones }}" {{ $propuesta->partido->elecciones->contains('idElecciones', $eleccion->idElecciones) ? 'selected' : '' }}>{{ $eleccion->titulo }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -33,7 +34,7 @@
                         @foreach($elecciones as $eleccion)
                             @if($eleccion->partidos)
                                 @foreach($eleccion->partidos as $partido)
-                                    <option value="{{ $partido->idPartido }}" {{ $m->idPartido == $partido->idPartido ? 'selected' : '' }}>
+                                    <option value="{{ $partido->idPartido }}" {{ $propuesta->idPartido == $partido->idPartido ? 'selected' : '' }}>
                                         {{ $partido->partido }}
                                     </option>
                                 @endforeach
@@ -44,12 +45,12 @@
 
                 <div class="form-group">
                     <label for="propuesta">Propuesta</label>
-                    <input type="text" class="form-control" id="propuesta" name="propuesta" value="{{ $m->propuesta }}" required>
+                    <input type="text" class="form-control" id="propuesta" name="propuesta" value="{{ $propuesta->propuesta }}" required>
                 </div>
 
                 <div class="form-group">
                     <label for="descripcion">Descripción</label>
-                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required>{{ $m->descripcion }}</textarea>
+                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required>{{ $propuesta->descripcion }}</textarea>
                 </div>
 
                 <button type="submit" class="btn btn-primary">

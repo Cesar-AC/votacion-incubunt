@@ -15,6 +15,34 @@
     </div>
   </div>
 
+  <!-- Mensajes flash -->
+  @if(session('success'))
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ session('success') }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  @endif
+
+  @if(session('error'))
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ session('error') }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  @endif
+
+  @if(session('warning'))
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    {{ session('warning') }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  @endif
+
   <!-- Mostrar resultados de importación -->
   @if(session('import_result'))
   @php $result = session('import_result') @endphp
@@ -52,6 +80,11 @@
         </div>
 
         <div class="text-right">
+          <a href="{{ route('crud.padron_electoral.ver_datos', $eleccion->idElecciones) }}"
+            class="btn btn-outline-info btn-sm mb-1">
+            <i class="fas fa-users"></i> Ver Participantes
+          </a>
+
           <a href="{{ route('crud.padron_electoral.editar', $eleccion->idElecciones) }}"
             class="btn btn-outline-primary btn-sm mb-1">
             <i class="fas fa-edit"></i> Editar

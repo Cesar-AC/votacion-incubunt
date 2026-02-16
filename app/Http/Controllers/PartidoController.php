@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Interfaces\Services\IEleccionesService;
 use App\Interfaces\Services\IPartidoService;
+use App\Interfaces\Services\IArchivoService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PartidoController extends Controller
 {
-    public function __construct(protected IPartidoService $partidoService) {}
+    public function __construct(
+        protected IPartidoService $partidoService,
+        protected IArchivoService $archivoService
+    ) {}
 
     public function index()
     {
@@ -29,6 +34,7 @@ class PartidoController extends Controller
             'urlPartido' => 'required|url',
             'descripcion' => 'required|string',
             'planTrabajo' => 'nullable|url',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ], [
             'partido.required' => 'El nombre del partido es obligatorio.',
             'partido.string' => 'El nombre del partido debe ser texto.',
@@ -39,9 +45,18 @@ class PartidoController extends Controller
             'descripcion.required' => 'La descripción es obligatoria.',
             'descripcion.string' => 'La descripción debe ser texto.',
             'planTrabajo.url' => 'El plan de trabajo debe ser una URL válida.',
+            'foto.image' => 'La foto debe ser una imagen.',
+            'foto.mimes' => 'La foto debe ser un archivo de tipo jpeg, png, jpg o gif.',
+            'foto.max' => 'La foto no puede exceder los 5MB.',
         ]);
 
-        $this->partidoService->crearPartido($request->all());
+        DB::transaction(function () use ($request) {
+            $partido = $this->partidoService->crearPartido($request->all());
+
+            if ($request->hasFile('foto')) {
+                $this->partidoService->subirFoto($partido, $request->file('foto'));
+            }
+        });
 
         return redirect()
             ->route('crud.partido.ver')
@@ -73,27 +88,57 @@ class PartidoController extends Controller
         return view('crud.partido.editar', compact('partido', 'elecciones'));
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request, int $id, IEleccionesService $eleccionesService)
     {
         $partido = $this->partidoService->obtenerPartidoPorId($id);
 
+        if ($request->partido != $partido->partido) {
+            $request->validate([
+                'partido' => 'nullable|string|max:255|unique:Partido,partido',
+            ], [
+                'partido.string' => 'El nombre del partido debe ser texto.',
+                'partido.max' => 'El nombre del partido no puede exceder los 255 caracteres.',
+                'partido.unique' => 'El nombre del partido ya existe.',
+            ]);
+        }
+
         $request->validate([
-            'partido' => 'nullable|string|max:255|unique:Partido,partido',
             'urlPartido' => 'nullable|url|max:255',
             'descripcion' => 'nullable|string',
-            'tipo' => 'nullable|string|max:255',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'elecciones' => 'nullable|array',
+            'elecciones.*' => 'nullable|exists:Elecciones,idElecciones',
         ], [
-            'partido.string' => 'El nombre del partido debe ser texto.',
-            'partido.max' => 'El nombre del partido no puede exceder los 255 caracteres.',
-            'partido.unique' => 'El nombre del partido ya existe.',
             'urlPartido.url' => 'La URL del partido debe ser válida.',
             'urlPartido.max' => 'La URL del partido no puede exceder los 255 caracteres.',
             'descripcion.string' => 'La descripción debe ser texto.',
-            'tipo.string' => 'El tipo debe ser texto.',
-            'tipo.max' => 'El tipo no puede exceder los 255 caracteres.',
+            'foto.image' => 'La foto debe ser una imagen.',
+            'foto.mimes' => 'La foto debe ser un archivo de tipo jpeg, png, jpg o gif.',
+            'foto.max' => 'La foto no puede exceder los 5MB.',
+            'elecciones.array' => 'Las elecciones deben ser un array.',
+            'elecciones.*.exists' => 'Las elecciones deben existir.'
         ]);
 
-        $this->partidoService->editarPartido($request->all(), $partido);
+        DB::transaction(function () use ($request, $partido, $eleccionesService) {
+            $this->partidoService->editarPartido([
+                'partido' => $request->partido,
+                'urlPartido' => $request->urlPartido,
+                'descripcion' => $request->descripcion,
+                'planTrabajo' => $request->planTrabajo,
+            ], $partido);
+
+            if ($request->has('elecciones')) {
+                $elecciones = collect($request->elecciones)->map(function ($eleccion) use ($eleccionesService) {
+                    return $eleccionesService->obtenerEleccionPorId($eleccion);
+                });
+
+                $this->partidoService->establecerEleccionesDePartido($partido, $elecciones);
+            }
+
+            if ($request->hasFile('foto')) {
+                $this->partidoService->cambiarFoto($partido, $request->file('foto'));
+            }
+        });
 
         return redirect()
             ->route('crud.partido.ver')
@@ -102,20 +147,18 @@ class PartidoController extends Controller
 
     public function destroy($id)
     {
-        $partido = $this->partidoService->obtenerPartidoPorId($id);
+        try {
+            $partido = $this->partidoService->obtenerPartidoPorId($id);
 
-        $this->partidoService->eliminarPartido($partido);
+            $this->partidoService->eliminarPartido($partido);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Partido eliminado',
-            'data' => [
-                'id' => (int) $id,
-                'partido' => $partido->partido,
-                'urlPartido' => $partido->urlPartido,
-                'descripcion' => $partido->descripcion,
-                'tipo' => $partido->tipo,
-            ],
-        ]);
+            return redirect()
+                ->route('crud.partido.ver')
+                ->with('success', 'Partido eliminado correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.partido.ver')
+                ->with('error', 'Error al eliminar el partido: ' . $e->getMessage());
+        }
     }
 }

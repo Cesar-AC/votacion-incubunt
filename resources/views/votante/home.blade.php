@@ -18,24 +18,24 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 10px 30px rgba(124, 58, 237, 0.1);
+        box-shadow: 0 10px 30px rgba(30, 58, 138, 0.15);
         position: relative;
     }
 
     .voter-card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 20px 40px rgba(124, 58, 237, 0.2);
+        box-shadow: 0 20px 40px rgba(30, 58, 138, 0.25);
     }
 
     .card-vote {
-        background: linear-gradient(145deg, #1e1b4b 0%, #4c1d95 100%);
+        background: linear-gradient(145deg, #1e3a8a 0%, #1e40af 100%);
         color: white;
     }
 
     .card-proposals {
         background: #ffffff;
-        color: #1e1b4b;
-        border: 1px solid rgba(124, 58, 237, 0.1);
+        color: #1e3a8a;
+        border: 2px solid #dbeafe;
     }
 
     .card-voter-body {
@@ -60,12 +60,12 @@
     }
 
     .card-vote .voter-icon-box {
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     }
 
     .card-proposals .voter-icon-box {
-        background-color: #f5f3ff;
-        border: 1px solid #ddd6fe;
+        background-color: #eff6ff;
+        border: 2px solid #bfdbfe;
     }
 
     .voter-icon-box i {
@@ -73,7 +73,7 @@
     }
 
     .card-vote .voter-icon-box i { color: white; }
-    .card-proposals .voter-icon-box i { color: #7c3aed; }
+    .card-proposals .voter-icon-box i { color: #1e40af; }
 
     .voter-card h2 {
         font-weight: 800;
@@ -83,12 +83,11 @@
     }
 
     .brand-text-sm {
-        color: #a78bfa;
+        color: #93c5fd;
         font-weight: 700;
         font-size: 1.3rem;
         display: block;
         margin-bottom: 20px;
-        text-transform: lowercase;
     }
 
     .voter-card p {
@@ -96,11 +95,10 @@
         line-height: 1.6;
         margin-bottom: 40px;
         max-width: 320px;
-        opacity: 0.9;
     }
 
-    .card-vote p { color: #c4b5fd; }
-    .card-proposals p { color: #6b7280; }
+    .card-vote p { color: #dbeafe; }
+    .card-proposals p { color: #4b5563; }
 
     .btn-voter {
         padding: 16px 50px;
@@ -117,37 +115,71 @@
         text-align: center;
     }
 
+    .btn-voter:focus {
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+    }
+
     .btn-voter-light {
         background-color: #ffffff;
-        color: #5b21b6;
+        color: #1e3a8a;
         border: 2px solid transparent;
         box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     }
 
     .btn-voter-light:hover {
-        background-color: #7c3aed;
+        background-color: #3b82f6;
         color: #ffffff;
         transform: scale(1.05);
-        border-color: #7c3aed;
+        border-color: #3b82f6;
     }
 
     .btn-voter-outline {
         background-color: transparent;
-        color: #7c3aed;
-        border: 2px solid #7c3aed;
+        color: #1e40af;
+        border: 2px solid #1e40af;
     }
 
     .btn-voter-outline:hover {
-        background-color: #7c3aed;
+        background-color: #1e40af;
         color: white;
         transform: scale(1.05);
+    }
+
+    .btn-voter:disabled {
+        opacity: 0.6;
+        cursor: not-allowed !important;
+        pointer-events: none;
+    }
+
+    .btn-voter-light:disabled {
+        background-color: #d1d5db;
+        color: #6b7280;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .btn-voter-light:disabled:hover {
+        transform: none;
+        background-color: #d1d5db;
+    }
+
+    .btn-voter-outline:disabled {
+        background-color: transparent;
+        color: #9ca3af;
+        border-color: #d1d5db;
+    }
+
+    .btn-voter-outline:disabled:hover {
+        transform: none;
+        background-color: transparent;
+        color: #9ca3af;
     }
 
     .status-badge {
         position: absolute;
         top: 20px;
         right: 20px;
-        padding: 8px 16px;
+        padding: 10px 18px;
         border-radius: 20px;
         font-size: 0.85rem;
         font-weight: 700;
@@ -156,24 +188,25 @@
     }
 
     .badge-active {
-        background-color: rgba(16, 185, 129, 0.2);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.3);
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 2px solid #10b981;
     }
 
     .badge-inactive {
-        background-color: rgba(239, 68, 68, 0.2);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.3);
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 2px solid #ef4444;
     }
 
     .no-elections-message {
         font-size: 0.9rem;
         margin-top: 10px;
         padding: 12px 20px;
-        background-color: rgba(239, 68, 68, 0.1);
+        background-color: #fef2f2;
         border-radius: 10px;
-        color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
     }
 
     @media (max-width: 991px) {
@@ -207,7 +240,7 @@
             <!-- Card 1: Votar -->
             <div class="col-xl-5 col-lg-6 col-md-10 mb-4">
                 <div class="voter-card card-vote">
-                    @if(isset($eleccionActiva) && $eleccionActiva)
+                    @if(isset($eleccionActiva))
                         <span class="status-badge badge-active">
                             <i class="fas fa-circle mr-1"></i> Activa
                         </span>
@@ -222,12 +255,12 @@
                             <i class="fas fa-vote-yea"></i>
                         </div>
                         <h2>Elecciones</h2>
-                        <span class="brand-text-sm">incubunt 2026</span>
+                        <span class="brand-text-sm">{{$eleccionActiva->titulo ?? 'Cerrado actualmente'}}</span>
 
-                        @if(isset($eleccionActiva) && $eleccionActiva)
+                        @if(isset($eleccionActiva) && $esPeriodoDeVotar && !$yaVotoUsuario)
                             <p>Ejerce tu derecho y elige a los líderes que guiarán nuestra organización.</p>
-                            {{-- CORREGIDO: Usar el campo correcto de ID --}}
-                            <a href="{{ route('votante.votar.lista', $eleccionActiva->idElecciones) }}"
+
+                            <a href="{{ route('votante.votar.lista', $eleccionActiva->getKey()) }}" 
                                class="btn btn-voter btn-voter-light">
                                 Votar Ahora
                             </a>
@@ -235,22 +268,32 @@
                                 <i class="fas fa-calendar-alt mr-1"></i>
                                 Cierra: {{ \Carbon\Carbon::parse($eleccionActiva->fechaCierre)->format('d/m/Y') }}
                             </div>
+                        @elseif (isset($eleccionActiva) && !$esPeriodoDeVotar && !$yaVotoUsuario)
+                            <p>Estás dentro del padrón electoral, pero la votación está cerrada.</p>
+                            <p>Revisa las propuestas de los candidatos para estar informado al momento de votar.</p>
+                            <button type="button" disabled
+                                   class="btn btn-voter btn-voter-light">
+                                Votación Cerrada
+                            </button>
+                        @elseif (isset($eleccionActiva) && $yaVotoUsuario)
+                            <p>Gracias por ejercer tu derecho en estas elecciones.</p>
+                            <p>Próximamente las autoridades competentes informarán sobre los resultados de la elección.</p>
+                            <button type="button" disabled
+                                   class="btn btn-voter btn-voter-light">
+                                <i class="fas fa-check-circle mr-2"></i>Ya has votado
+                            </button>
                         @else
-                            <p>Por el momento no hay elecciones activas disponibles para votar.</p>
-                            <button class="btn btn-voter btn-voter-light"
-                                    style="opacity: 0.5; cursor: not-allowed;"
-                                    disabled>
+                            <p>No hay una elección programada ahora mismo.</p>
+                            <button type="button" disabled
+                                   class="btn btn-voter btn-voter-light">
                                 Sin Elecciones
                             </button>
-                            <div class="no-elections-message">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Serás notificado cuando haya una nueva elección
-                            </div>
                         @endif
                     </div>
                 </div>
             </div>
 
+            @if(isset($eleccionActiva))
             <!-- Card 2: Propuestas -->
             <div class="col-xl-5 col-lg-6 col-md-10 mb-4">
                 <div class="voter-card card-proposals">
@@ -275,6 +318,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 </div>

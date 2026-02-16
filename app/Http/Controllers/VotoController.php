@@ -2,58 +2,86 @@
 
 namespace App\Http\Controllers;
 
+use App\Interfaces\IEstadisticasElectoralesService;
+use App\Interfaces\Services\IAreaService;
+use App\Interfaces\Services\ICandidatoService;
+use App\Interfaces\Services\IEleccionesService;
+use App\Interfaces\Services\IPartidoService;
 use App\Interfaces\Services\IVotoService;
-use App\Models\Voto;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Area;
+
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class VotoController extends Controller
 {
     public function __construct(
-        protected readonly IVotoService $votoService,
+        protected IVotoService $votoService,
+        protected IEleccionesService $eleccionesService,
+        protected IAreaService $areaService,
+        protected IPartidoService $partidoService,
+        protected ICandidatoService $candidatoService,
+        protected IEstadisticasElectoralesService $eeService
     ) {}
 
     public function index()
     {
-        $votos = Voto::with('candidato.usuario.perfil')->get();
-        return view('crud.voto.ver', compact('votos'));
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+        $areas = $this->areaService->obtenerAreas();
+        $presidencia = $this->areaService->obtenerAreaPorId(Area::PRESIDENCIA);
+
+        return view('crud.voto.ver', array_merge(
+            compact('elecciones', 'areas', 'presidencia'),
+            [
+                'partidoService' => $this->partidoService,
+                'eeService' => $this->eeService,
+                'candidatoService' => $this->candidatoService,
+                'mostrarBotonExportar' => true,
+            ]
+        ));
     }
 
-    public function create()
+    public function verResultadoElecciones($idEleccion)
     {
-        return view('crud.voto.crear');
-    }
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($idEleccion);
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'idCandidato' => 'required|integer'
-        ]);
-
-        try {
-            $this->votoService->votar(Auth::user(), $data['idCandidato']);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], Response::HTTP_BAD_REQUEST);
+        if (!$eleccion->estaFinalizado()) {
+            return back()->withErrors('No se puede ver los resultados de una elección que no ha finalizado.');
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Voto creado',
-        ], Response::HTTP_OK);
+        $elecciones = [$eleccion];
+        $areas = $this->areaService->obtenerAreas();
+        $presidencia = $this->areaService->obtenerAreaPorId(Area::PRESIDENCIA);
+
+        return view('crud.voto.ver', array_merge(
+            compact('elecciones', 'areas', 'presidencia'),
+            [
+                'partidoService' => $this->partidoService,
+                'eeService' => $this->eeService,
+                'candidatoService' => $this->candidatoService,
+                'mostrarBotonExportar' => true,
+            ]
+        ));
     }
 
-    /**
-     * @param Request $request
-     * @return void
-     * Un alias para la funcionalidad de store
-     */
-
-    public function votar(Request $request)
+    public function generarPDF($idEleccion)
     {
-        return $this->store($request);
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($idEleccion);
+        $areas = $this->areaService->obtenerAreas();
+        $presidencia = $this->areaService->obtenerAreaPorId(Area::PRESIDENCIA);
+
+        $pdf = Pdf::loadView('crud.voto.pdf', array_merge(
+            compact('eleccion', 'areas', 'presidencia'),
+            [
+                'partidoService' => $this->partidoService,
+                'eeService' => $this->eeService,
+                'candidatoService' => $this->candidatoService,
+            ]
+        ));
+
+        $pdf->setPaper('a4', 'landscape');
+        $pdf->setOption('chroot', public_path());
+        $pdf->setOption('isRemoteEnabled', true);
+
+        return $pdf->stream('reporte_eleccion_' . $idEleccion . '.pdf');
     }
 }

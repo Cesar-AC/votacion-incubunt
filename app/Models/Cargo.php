@@ -25,6 +25,6 @@ class Cargo extends Model
 
     public function candidatos()
     {
-        return $this->hasMany(Candidato::class, 'idCargo');
+        return $this->belongsToMany(Candidato::class, 'CandidatoEleccion', 'idCargo', 'idCandidato');
     }
 }

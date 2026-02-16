@@ -81,16 +81,17 @@ class CarreraController extends Controller
 
     public function destroy($id)
     {
-        $carrera = $this->carreraService->obtenerCarreraPorId($id);
-        $this->carreraService->eliminarCarrera($carrera);
+        try {
+            $carrera = $this->carreraService->obtenerCarreraPorId($id);
+            $this->carreraService->eliminarCarrera($carrera);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Carrera eliminada correctamente',
-            'data' => [
-                'id' => (int) $id,
-                'carrera' => $carrera->carrera,
-            ],
-        ]);
+            return redirect()
+                ->route('crud.carrera.ver')
+                ->with('success', 'Carrera eliminada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.carrera.ver')
+                ->with('error', 'Error al eliminar la carrera: ' . $e->getMessage());
+        }
     }
 }

@@ -41,6 +41,10 @@ class Elecciones extends Model
     {
         return $this->belongsToMany(Partido::class, 'PartidoEleccion', 'idElecciones', 'idPartido');
     }
+    public function candidatoElecciones()
+{
+    return $this->hasMany(CandidatoEleccion::class, 'idElecciones');
+}
 
     public function usuarios()
     {
@@ -49,7 +53,8 @@ class Elecciones extends Model
 
     public function candidatos()
     {
-        return $this->belongsToMany(Candidato::class, 'CandidatoEleccion', 'idElecciones', 'idCandidato');
+        return $this->belongsToMany(Candidato::class, 'CandidatoEleccion', 'idElecciones', 'idCandidato')
+            ->withPivot('idCargo', 'idPartido');
     }
 
     public function estado()

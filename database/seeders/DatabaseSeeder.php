@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             DatosRealesSeeder::class,
             PermisoSeeder::class,
             ConfiguracionSeeder::class,
+            VotacionSeeder::class,
         ]);
     }
 }

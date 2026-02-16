@@ -11,11 +11,13 @@
     </a>
   </div>
 
+  @include('components.error-message')
+
   <!-- Información del Usuario -->
-  <div class="row">
+  <div class="row grid grid-cols-3 lg:gap-3">
     
     <!-- Datos Personales -->
-    <div class="col-lg-8">
+    <div class="col-span-3 lg:col-span-2">
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white">
           <h6 class="m-0 font-weight-bold">
@@ -121,24 +123,47 @@
     </div>
 
     <!-- Tarjeta de Perfil -->
-    <div class="col-lg-4">
+    <div class="col-span-3 lg:col-span-1">
       <div class="card shadow-sm mb-4">
         <div class="card-body text-center">
-          <img src="{{ asset('img/undraw_profile.svg') }}" 
-               class="img-fluid rounded-circle mb-3" 
-               alt="Foto de perfil"
-               style="max-width: 150px;">
-          
+          <div class="text-center" x-data="{ nuevaFoto: null }">
+            <div class="relative flex justify-center items-center mb-3">
+              @if ($puedeCambiarFoto)
+              <div class="opacity-0 hover:opacity-50 transition-all absolute top-0 right-0 bottom-0 left-0 bg-black z-20">
+                <button type="button" @click="$refs.inputFoto.click()" class="absolute top-0 right-0 bottom-0 left-0 z-30 flex items-center justify-center cursor-pointer flex flex-col gap-2">
+                  <i class="fas fa-camera text-white text-2xl"></i>
+                  <p class="text-white">Cambiar foto</p>
+                </button>
+              </div>
+
+              <img id="visualizacionFoto" src="{{ Auth::user()->perfil?->obtenerFotoURL() ?? asset('img/undraw_profile.svg') }}"
+                class="block img-fluid z-10 max-w-48 sm:max-w-96 lg:max-w-72 xl:max-w-100" 
+                alt="Foto de perfil">
+
+              <form class="hidden" action="{{ route('profile.subirFoto') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <input accept=".png, .jpg, .jpeg, .gif" x-ref="inputFoto" type="file" name="foto" id="inputFoto" class="" x-model="nuevaFoto">
+                <input type="submit" x-ref="inputSubir">
+              </form>
+              @else
+              <img id="visualizacionFoto" src="{{ Auth::user()->perfil?->obtenerFotoURL() ?? asset('img/undraw_profile.svg') }}"
+                class="block img-fluid z-10 max-w-48 sm:max-w-96 lg:max-w-72 xl:max-w-100" 
+                alt="Foto de perfil">
+              @endif
+            </div>
+
+            <button type="button" x-ref="botonGuardar" class="btn btn-primary mt-2 mb-4" x-cloak x-show="nuevaFoto != null" @click="$refs.inputSubir.click()">Guardar foto</button>
+          </div>
           <h5 class="font-weight-bold mb-1">
             {{ $user->perfil->nombre ?? 'Usuario' }} 
             {{ $user->perfil->apellidoPaterno ?? '' }}
           </h5>
           
-          <p class="text-muted mb-3">
+          <p class="text-muted">
             {{ $user->roles->first()->rol ?? 'Sin rol' }}
           </p>
 
-          <hr>
+          <hr class="my-3">
 
           <div class="text-left">
             <p class="mb-2">
@@ -194,3 +219,8 @@
 
 </div>
 @endsection
+
+@push('scripts')
+@include('components.preview-upload-photo-script')
+@endpush
+

@@ -3,6 +3,8 @@
 @section('content')
 <div class="container-fluid px-3">
 
+  @include('components.error-message')
+
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="font-weight-bold mb-0">Gestionar Partidos</h5>
@@ -21,20 +23,25 @@
     <div class="card shadow-sm mb-3">
       <div class="card-body py-3">
         <div class="d-flex justify-content-between">
-
           <!-- Info -->
-          <div>
-            <h6 class="font-weight-bold mb-1">{{ $partido->partido }}</h6>
-            <small class="text-muted d-block mb-2">
-              {{ $partido->urlPartido ?? 'Sin URL' }}
-            </small>
-            <p class="mb-2">
-              {{ $partido->descripcion }}
-            </p>
-            <span class="badge badge-info">
-              Tipo: {{ $partido->tipo }}
-            </span>
+          <div class="d-flex gap-3">
+            @if ($partido->tieneFoto())
+              <img src="{{ $partido->obtenerFotoURL() }}" alt="Foto del partido" class="h-28">
+            @endif
+            <div>
+              <h6 class="font-weight-bold mb-1">{{ $partido->partido }}</h6>
+              <small class="text-muted d-block mb-2">
+                {{ $partido->urlPartido ?? 'Sin URL' }}
+              </small>
+              <p class="mb-2">
+                {{ $partido->descripcion }}
+              </p>
+              <span class="badge badge-info">
+                Tipo: {{ $partido->tipo }}
+              </span>
+            </div>
           </div>
+
 
 
           <!-- Acciones -->

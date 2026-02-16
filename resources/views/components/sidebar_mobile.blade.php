@@ -5,10 +5,12 @@
     $permisoService = app(\App\Interfaces\Services\IPermisoService::class);
     $permisoCandidato = $permisoService->permisoDesdeEnum(\App\Enum\Permiso::PROPUESTA_CANDIDATO_CRUD);
     $permisoPartido = $permisoService->permisoDesdeEnum(\App\Enum\Permiso::PROPUESTA_PARTIDO_CRUD);
+    $permisoPerfil = $permisoService->permisoDesdeEnum(\App\Enum\Permiso::PERFIL_EDITAR);
     
-    $tienePropuestaCandidato = Auth::check() && $permisoService->comprobarUsuario(Auth::user(), $permisoCandidato);
-    $tienePropuestaPartido = Auth::check() && $permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
+    $tienePropuestaCandidato = Auth::check() && $permisoCandidato && $permisoService->comprobarUsuario(Auth::user(), $permisoCandidato);
+    $tienePropuestaPartido = Auth::check() && $permisoPartido && $permisoService->comprobarUsuario(Auth::user(), $permisoPartido);
     $puedeGestionarPropuestas = $tienePropuestaCandidato || $tienePropuestaPartido;
+    $tienePermisoPerfil = Auth::check() && $permisoPerfil && $permisoService->comprobarUsuario(Auth::user(), $permisoPerfil);
     
     // Verificar si es candidato
     $esCandidato = Auth::check() && \App\Models\Candidato::where('idUsuario', Auth::id())->exists();
@@ -126,17 +128,11 @@
                             <i class="fas fa-clipboard-list mr-3" style="color: #161349; font-size: 1.1rem;"></i>
                             <span>Padrones</span>
                         </a>
-                        <a href="{{ route('crud.lista_votante.ver') }}" 
-                           class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
-                           data-dismiss="modal">
-                            <i class="fas fa-list-ol mr-3" style="color: #161349; font-size: 1.1rem;"></i>
-                            <span>Listas Votantes</span>
-                        </a>
                         <a href="{{ route('crud.voto.ver') }}" 
-                           class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
-                           data-dismiss="modal">
-                            <i class="fas fa-box mr-3" style="color: #161349; font-size: 1.1rem;"></i>
-                            <span>Votos</span>
+                       class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
+                       data-dismiss="modal">
+                        <i class="fas fa-box mr-3" style="color: #161349; font-size: 1.1rem;"></i>
+                        <span>Resumen de Votos</span>
                         </a>
 
                         <!-- Usuarios -->
@@ -194,13 +190,13 @@
                            class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
                            data-dismiss="modal">
                             <i class="fas fa-file-alt mr-3" style="color: #6c757d; font-size: 1.1rem;"></i>
-                            <span>Propuestas Candidatos</span>
+                            <span>Propuestas de Candidatos</span>
                         </a>
                         <a href="{{ route('crud.propuesta_partido.ver') }}" 
                            class="list-group-item list-group-item-action d-flex align-items-center py-3 pl-4 border-0 menu-item"
                            data-dismiss="modal">
                             <i class="fas fa-file-contract mr-3" style="color: #6c757d; font-size: 1.1rem;"></i>
-                            <span>Propuestas Partidos</span>
+                            <span>Propuestas de Partidos</span>
                         </a>
                         
                         <!-- Configuración -->
@@ -232,6 +228,15 @@
                             <i class="fas fa-user mr-3" style="color: #161349; font-size: 1.1rem;"></i>
                             <span>Mi Perfil</span>
                         </a>
+
+                        @if($tienePermisoPerfil)
+                        <a href="{{ route('votante.perfil.editar') }}" 
+                           class="list-group-item list-group-item-action d-flex align-items-center py-3 px-4 border-0 menu-item"
+                           data-dismiss="modal">
+                            <i class="fas fa-user-edit mr-3" style="color: #161349; font-size: 1.1rem;"></i>
+                            <span>Editar Perfil</span>
+                        </a>
+                        @endif
 
                         @if($esCandidato && $puedeGestionarPropuestas)
                             <!-- Sección Propuestas (solo para candidatos con permisos) -->
@@ -286,7 +291,7 @@
 /* Asegurar que el content wrapper no tenga margin */
 #content-wrapper {
     margin-left: 0 !important;
-    padding-bottom: 80px !important;
+    padding-bottom: 2rem !important;
 }
 
 /* Ocultar el topbar toggle button */
