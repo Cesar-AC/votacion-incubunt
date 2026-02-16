@@ -8,10 +8,7 @@
     $partidoFotoURL = $partido->obtenerFotoURL() ?? null;
 @endphp
 
-<article @click="verPartidoModal = true; setPartidoModal({{ $partido->getKey() }})"
-        class="partido-card group bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300 flex-shrink-0"
-        style="width: 280px;"
-        x-data>
+<article class="partido-card group bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300 flex-shrink-0 max-w-56 sm:max-w-none" style="width: 280px;" x-data @click="verPartidoModal = true; setPartidoModal({{ $partido->getKey() }})">
 
     {{-- Header con indicador de color --}}
     <div class="relative">
@@ -39,7 +36,7 @@
             </h3>
 
             {{-- Descripción breve --}}
-            <p class="text-sm text-gray-500 line-clamp-2 mb-4 min-h-[2.5rem]">
+            <p class="text-sm text-gray-500 line-clamp-2 mb-4 min-h-[2.5rem] text-center">
                 {{ Str::limit($partido->descripcion ?? 'Conoce nuestras propuestas y plan de trabajo.', 80) }}
             </p>
         </div>
@@ -49,7 +46,7 @@
     <div class="px-5 pb-5">
         <button class="w-full h-11 bg-gray-900 hover:bg-gray-800 active:bg-black text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 text-sm group-hover:bg-indigo-600">
             <span>Ver Propuestas</span>
-            <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="hidden sm:inline w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
             </svg>
         </button>

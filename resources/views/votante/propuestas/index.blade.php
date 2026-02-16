@@ -187,7 +187,7 @@
             @if($partidos->count() > 0)
             <section class="my-8 px-4 sm:px-0">
                 {{-- Header de sección --}}
-                <div class="flex flex-col items-start text-start sm:flex-row sm:items-start gap-2 my-4">
+                <div class="flex flex-col sm:flex-row items-center text-center sm:text-start sm:items-start gap-2 my-4">
                     <div class="section-header-icon bg-gradient-to-br from-indigo-500 to-purple-600">
                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"/>
@@ -236,14 +236,14 @@
                     @if($totalCandidatos > 0)
                     <section class="mb-8 sm:mb-10 px-4 sm:px-0">
                         {{-- Header de área --}}
-                        <div class="section-header flex flex-col sm:flex-row items-start">
+                        <div class="section-header flex flex-col sm:flex-row items-start text-center sm:text-start">
                             <div class="section-header-icon bg-gradient-to-br from-gray-700 to-gray-900">
                                 <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
                                 </svg>
                             </div>
 
-                            <div class="flex flex-col items-start">
+                            <div class="flex flex-col items-center sm:items-start">
                                 <h2 class="text-lg sm:text-xl font-bold text-gray-900">{{ $area->area }}</h2>
                                 <p class="text-xs text-gray-500">{{ $totalCandidatos }} {{ $totalCandidatos == 1 ? 'candidato' : 'candidatos' }}</p>
                             </div>
