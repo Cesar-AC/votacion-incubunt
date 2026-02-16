@@ -13,9 +13,9 @@
             <!-- Scrollable Content -->
             <div class="overflow-y-auto p-4 sm:p-8 lg:p-10 custom-scrollbar">
                 <!-- HEADER SECTION -->
-                <div class="flex flex-col lg:flex-row justify-between items-start gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-10 lg:mb-12 border-b border-gray-100 pb-6 sm:pb-8 lg:pb-10">
+                <div class="flex flex-col lg:flex-row justify-between items-center text-center gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-10 lg:mb-12 border-b border-gray-100 pb-6 sm:pb-8 lg:pb-10 ">
                     <!-- Left: Logo & Info -->
-                    <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8 flex-1 items-center text-center">
+                    <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8 flex-1 items-center sm:px-4">
                         <!-- Logo Box - solo si existe foto -->
                         <div class="flex-shrink-0" id="partido-modal-logo-container">
                             <div class="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-none flex items-center justify-center bg-white p-2 border border-gray-100">
@@ -24,10 +24,10 @@
                         </div>
 
                         <!-- Text Info -->
-                        <div class="flex-1 space-y-2 sm:space-y-3 pt-2">
+                        <div class="flex-1 space-y-2 sm:space-y-3 pt-2 items-center lg:text-start lg:items-start">
                             <h2 id="partido-modal-nombre" class="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 uppercase tracking-tight leading-tight break-words">Nombre Partido</h2>
-                            <div class="h-1 w-16 sm:w-20 bg-indigo-600 my-2"></div>
-                            <p id="partido-modal-descripcion" class="text-gray-600 leading-relaxed text-sm md:text-base max-w-2xl text-justify break-words">Descripción</p>
+                            <div class="h-1 w-16 sm:w-20 bg-indigo-600 my-2 inline-block"></div>
+                            <p id="partido-modal-descripcion" class="text-gray-600 leading-relaxed text-sm md:text-base max-w-2xl break-words">Descripción</p>
                             <div class="pt-2">
                                 <a id="partido-modal-enlace" href="#" target="_blank" class="inline-flex items-center gap-2 text-indigo-600 font-bold hover:text-indigo-800 hover:underline transition-colors group text-sm sm:text-base">
                                     <span class="group-hover:translate-x-1 transition-transform break-all" id="partido-modal-enlace-text">www.ejemplo.com</span>
@@ -46,10 +46,9 @@
 
                 <!-- CANDIDATES SECTION -->
                 <div class="mb-6 sm:mb-8">
-                    <div class="flex items-center justify-center mb-6 sm:mb-8 lg:mb-10">
-                        <h3 class="text-center text-xs sm:text-sm font-black text-gray-900 uppercase tracking-wider sm:tracking-[0.2em] relative px-2 sm:px-4">
-                            <span class="bg-white relative z-10 px-4">Candidatos por este partido</span>
-                            <div class="absolute inset-0 top-1/2 h-px bg-gray-200 -z-0"></div>
+                    <div class="flex items-center justify-center text-center mb-6 sm:mb-8 lg:mb-10">
+                        <h3 class="text-xs sm:text-sm font-black text-gray-900 uppercase tracking-wider sm:tracking-[0.2em] relative px-2 sm:px-4">
+                            Candidatos por este partido
                         </h3>
                     </div>
 
@@ -58,7 +57,7 @@
                     </div>
                 </div>
 
-                <!-- PROPOSTAS SECTION -->
+                <!-- PROPUESTAS SECTION -->
                 <div class="mb-6 sm:mb-8">
                     <div class="flex items-center justify-center mb-6 sm:mb-8 lg:mb-10">
                         <h3 class="text-center text-xs sm:text-sm font-black text-gray-900 uppercase tracking-wider sm:tracking-[0.2em] relative px-2 sm:px-4">

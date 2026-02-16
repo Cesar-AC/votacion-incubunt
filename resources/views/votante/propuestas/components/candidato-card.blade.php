@@ -9,10 +9,7 @@
     $esPresidencial = $cargo && in_array($cargo->cargo, ['Presidente', 'Vicepresidente']);
 @endphp
 
-<article @click="verCandidatoModal = true; setCandidatoModal({{ $candidato->getKey() }})"
-         class="partido-card group bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300 flex-shrink-0"
-         style="width: 280px; min-width: 280px;"
-         x-data>
+<article class="partido-card group bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden cursor-pointer transition-all duration-300 flex-shrink-0 max-w-56 sm:max-w-none" style="width: 280px;" x-data @click="verCandidatoModal = true; setCandidatoModal({{ $candidato->getKey() }})">
 
     {{-- Header con indicador de color --}}
     <div class="relative">
@@ -21,9 +18,9 @@
 
         {{-- Contenido del header --}}
         <div class="px-5 py-3 flex flex-col items-center gap-4">
-            <h3 class="text-lg text-gray-900 line-clamp-2 text-center leading-snug py-2">
+            <h3 class="text-lg text-gray-900 line-clamp-3 text-center leading-snug py-2">
                 <span class="text-gray-500 font-normal text-sm">Para el cargo de</span>
-                <span class="font-bold text-lg text-amber-500">{{ $cargo ? $cargo->cargo : 'Candidato' }}</span>
+                <span class="font-bold text-lg text-amber-500 ">{{ $cargo ? $cargo->cargo : 'Candidato' }}</span>
             </h3>
 
             {{-- Logo/Icono del Candidato - solo si existe foto --}}
@@ -48,7 +45,7 @@
     <div class="px-5 pb-5">
         <button class="w-full h-11 bg-gray-900 hover:bg-gray-800 active:bg-black text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 text-sm group-hover:bg-indigo-600">
             <span>Ver Propuestas</span>
-            <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="hidden sm:inline w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
             </svg>
         </button>
