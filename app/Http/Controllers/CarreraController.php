@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Carrera;
+use App\Interfaces\Services\ICarreraService;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class CarreraController extends Controller
 {
+    public function __construct(protected ICarreraService $carreraService) {}
+
     public function index()
     {
-        return view('crud.carrera.ver');
+        $carreras = $this->carreraService->obtenerCarreras();
+
+        return view('crud.carrera.ver', compact('carreras'));
     }
 
     public function create()
@@ -20,27 +23,25 @@ class CarreraController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'idCarrera' => 'required|integer',
-            'carrera' => 'required|string|max:100',
+        $request->validate([
+            'carrera' => 'required|string|max:100|unique:Carrera,carrera',
+        ], [
+            'carrera.required' => 'El nombre de la carrera es obligatorio.',
+            'carrera.string' => 'El nombre de la carrera debe ser texto.',
+            'carrera.max' => 'El nombre de la carrera no puede exceder 100 caracteres.',
+            'carrera.unique' => 'El nombre de la carrera ya existe.',
         ]);
 
-        $carrera = new Carrera($data);
-        $carrera->save();
+        $carrera = $this->carreraService->crearCarrera($request->all());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Carrera creada correctamente',
-            'data' => [
-                'id' => $carrera->getKey(),
-                'carrera' => $carrera->carrera,
-            ],
-        ], Response::HTTP_CREATED);
+        return redirect()
+            ->route('crud.carrera.ver')
+            ->with('success', 'Carrera creada correctamente');
     }
 
     public function show($id)
     {
-        $carrera = Carrera::findOrFail($id);
+        $carrera = $this->carreraService->obtenerCarreraPorId($id);
 
         return response()->json([
             'success' => true,
@@ -53,41 +54,44 @@ class CarreraController extends Controller
 
     public function edit($id)
     {
-        return view('crud.carrera.editar');
+        $carrera = $this->carreraService->obtenerCarreraPorId($id);
+
+        return view('crud.carrera.editar', compact('carrera'));
     }
 
     public function update(Request $request, $id)
     {
-        $carrera = Carrera::findOrFail($id);
+        $carrera = $this->carreraService->obtenerCarreraPorId($id);
 
-        $data = $request->validate([
-            'carrera' => 'required|string|max:100',
+        $request->validate([
+            'carrera' => 'required|string|max:100|unique:Carrera,carrera',
+        ], [
+            'carrera.required' => 'El nombre de la carrera es obligatorio.',
+            'carrera.string' => 'El nombre de la carrera debe ser texto.',
+            'carrera.max' => 'El nombre de la carrera no puede exceder 100 caracteres.',
+            'carrera.unique' => 'El nombre de la carrera ya existe.',
         ]);
 
-        $carrera->update($data);
+        $this->carreraService->editarCarrera($request->all(), $carrera);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Carrera actualizada correctamente',
-            'data' => [
-                'id' => $carrera->getKey(),
-                'carrera' => $carrera->carrera,
-            ],
-        ]);
+        return redirect()
+            ->route('crud.carrera.ver')
+            ->with('success', 'Carrera actualizada correctamente');
     }
 
     public function destroy($id)
     {
-        $carrera = Carrera::findOrFail($id);
-        $carrera->delete();
+        try {
+            $carrera = $this->carreraService->obtenerCarreraPorId($id);
+            $this->carreraService->eliminarCarrera($carrera);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Carrera eliminada correctamente',
-            'data' => [
-                'id' => (int) $id,
-                'carrera' => $carrera->carrera,
-            ],
-        ]);
+            return redirect()
+                ->route('crud.carrera.ver')
+                ->with('success', 'Carrera eliminada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.carrera.ver')
+                ->with('error', 'Error al eliminar la carrera: ' . $e->getMessage());
+        }
     }
 }

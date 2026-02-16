@@ -2,55 +2,128 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PropuestaPartido;
+use App\Interfaces\Services\IEleccionesService;
+use App\Interfaces\Services\IPartidoService;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 
 class PropuestaPartidoController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
+    public function __construct(
+        protected IEleccionesService $eleccionesService,
+        protected IPartidoService $partidoService
+    ) {}
+
+    public function index()
     {
-        if (!Auth::check()) { return view('auth.login'); }
-        $user = Auth::user();
-        if (!$user->permisos()->where('permiso', $permiso)->exists()) { abort(404); }
-        return null;
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+        return view('crud.propuesta_partido.ver', compact('elecciones'));
     }
 
-    public function index(){ if ($r = $this->ensureAuthAndPerm('gestion.propuesta_partido.*')) { return $r; } return view('crud.propuesta_partido.ver'); }
-    public function create(){ if ($r = $this->ensureAuthAndPerm('gestion.propuesta_partido.*')) { return $r; } return view('crud.propuesta_partido.crear'); }
+    public function create()
+    {
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+        return view('crud.propuesta_partido.crear', compact('elecciones'));
+    }
 
     public function store(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.propuesta_partido.*')) { return $r; }
-        $data = $request->validate(['propuesta'=>'required|string','descripcion'=>'required|string','idPartido'=>'required|integer']);
-        $m = new PropuestaPartido($data); $m->save();
-        return response()->json(['success'=>true,'message'=>'Propuesta creada','data'=>['id'=>$m->getKey(),'propuesta'=>$m->propuesta,'descripcion'=>$m->descripcion,'idPartido'=>$m->idPartido]], Response::HTTP_CREATED);
+        $datos = $request->validate([
+            'idEleccion' => 'required|integer|exists:Elecciones,idElecciones',
+            'idPartido' => 'required|integer|exists:Partido,idPartido',
+            'propuesta' => 'required|string|max:255',
+            'descripcion' => 'required|string'
+        ], [
+            'idEleccion.required' => 'La elección es obligatoria.',
+            'idEleccion.integer' => 'La elección debe ser un número entero.',
+            'idEleccion.exists' => 'La elección no existe.',
+            'idPartido.required' => 'El partido es obligatorio.',
+            'idPartido.integer' => 'El partido debe ser un número entero.',
+            'idPartido.exists' => 'El partido no existe.',
+            'propuesta.required' => 'La propuesta es obligatoria.',
+            'propuesta.string' => 'La propuesta debe ser una cadena de texto.',
+            'propuesta.max' => 'La propuesta debe tener máximo 255 caracteres.',
+            'descripcion.required' => 'La descripción es obligatoria.',
+            'descripcion.string' => 'La descripción debe ser una cadena de texto.',
+        ]);
+
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($request->idEleccion);
+        $partido = $this->partidoService->obtenerPartidoPorId($request->idPartido);
+
+        try {
+            $this->partidoService->añadirPropuestaDePartido([
+                'propuesta' => $datos['propuesta'],
+                'descripcion' => $datos['descripcion'],
+            ], $partido, $eleccion);
+        } catch (\Exception $e) {
+            return back()->withErrors('No se creó la propuesta: ' . $e->getMessage());
+        }
+
+        return redirect()->route('crud.propuesta_partido.ver')->with('success', 'La propuesta se creó correctamente.');
     }
 
     public function show($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.propuesta_partido.*')) { return $r; }
-        $m = PropuestaPartido::findOrFail($id);
-        return response()->json(['success'=>true,'message'=>'Propuesta obtenida','data'=>['propuesta'=>$m->propuesta,'descripcion'=>$m->descripcion,'idPartido'=>$m->idPartido]]);
+        return redirect()->route('crud.propuesta_partido.ver');
     }
 
-    public function edit($id){ if ($r = $this->ensureAuthAndPerm('gestion.propuesta_partido.*')) { return $r; } return view('crud.propuesta_partido.editar'); }
-
-    public function update(Request $request, $id)
+    public function edit(Request $request, int $idPropuesta)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.propuesta_partido.*')) { return $r; }
-        $m = PropuestaPartido::findOrFail($id);
-        $data = $request->validate(['propuesta'=>'required|string','descripcion'=>'required|string']);
-        $m->update($data);
-        return response()->json(['success'=>true,'message'=>'Propuesta actualizada','data'=>['id'=>$m->getKey(),'propuesta'=>$m->propuesta,'descripcion'=>$m->descripcion,'idPartido'=>$m->idPartido]]);
+        $propuesta = $this->partidoService->obtenerPropuestaDePartido($idPropuesta);
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+
+        return view('crud.propuesta_partido.editar', compact('propuesta', 'elecciones'));
     }
 
-    public function destroy($id)
+    public function update(Request $request, int $idPropuesta)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.propuesta_partido.*')) { return $r; }
-        $m = PropuestaPartido::findOrFail($id);
-        $m->delete();
-        return response()->json(['success'=>true,'message'=>'Propuesta eliminada','data'=>['id'=>(int)$id,'propuesta'=>$m->propuesta,'descripcion'=>$m->descripcion,'idPartido'=>$m->idPartido]]);
+        $propuesta = $this->partidoService->obtenerPropuestaDePartido($idPropuesta);
+
+        $datos = $request->validate([
+            'idEleccion' => 'required|integer|exists:Elecciones,idElecciones',
+            'idPartido' => 'required|integer|exists:Partido,idPartido',
+            'propuesta' => 'required|string|max:255',
+            'descripcion' => 'string'
+        ], [
+            'idEleccion.required' => 'La elección es obligatoria.',
+            'idEleccion.integer' => 'La elección debe ser un número entero.',
+            'idEleccion.exists' => 'La elección no existe.',
+            'idPartido.required' => 'El partido es obligatorio.',
+            'idPartido.integer' => 'El partido debe ser un número entero.',
+            'idPartido.exists' => 'El partido no existe.',
+            'propuesta.required' => 'La propuesta es obligatoria.',
+            'propuesta.string' => 'La propuesta debe ser una cadena de texto.',
+            'propuesta.max' => 'La propuesta debe tener máximo 255 caracteres.',
+            'descripcion.string' => 'La descripción debe ser una cadena de texto.',
+        ]);
+
+        $this->partidoService->actualizarPropuestaDePartido([
+            'idEleccion' => $datos['idEleccion'],
+            'idPartido' => $datos['idPartido'],
+            'propuesta' => $datos['propuesta'],
+            'descripcion' => $datos['descripcion'],
+        ], $propuesta);
+
+        return redirect()->route('crud.propuesta_partido.ver')->with('success', 'La propuesta se actualizó correctamente.');
+    }
+
+    public function destroy(int $idPropuesta)
+    {
+        $propuesta = $this->partidoService->obtenerPropuestaDePartido($idPropuesta);
+        $this->partidoService->eliminarPropuestaDePartido($propuesta);
+
+        return redirect()->route('crud.propuesta_partido.ver')->with('success', 'La propuesta se eliminó correctamente.');
+    }
+
+    public function getPartidosByEleccion($eleccionId)
+    {
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($eleccionId);
+        $partidos = $this->partidoService->obtenerPartidosInscritosEnEleccion($eleccion)->map(function ($partido) {
+            return [
+                'idPartido' => $partido->idPartido,
+                'partido' => $partido->partido
+            ];
+        });
+
+        return response()->json($partidos);
     }
 }

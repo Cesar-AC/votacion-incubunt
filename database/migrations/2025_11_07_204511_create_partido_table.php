@@ -13,12 +13,15 @@ return new class extends Migration
     {
         Schema::create('Partido', function (Blueprint $table) {
             $table->increments('idPartido');
-            $table->unsignedInteger('idElecciones');
             $table->string('partido', 255);
             $table->text('urlPartido');
             $table->text('descripcion');
-            
-            $table->foreign('idElecciones')->references('idElecciones')->on('Elecciones');
+            $table->unsignedInteger('foto_idArchivo')->nullable();
+
+            $table->foreign('foto_idArchivo')
+                ->references('idArchivo')
+                ->on('Archivo')
+                ->onDelete('set null');
         });
     }
 

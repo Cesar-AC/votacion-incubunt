@@ -2,110 +2,86 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Voto;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
+use App\Interfaces\IEstadisticasElectoralesService;
+use App\Interfaces\Services\IAreaService;
+use App\Interfaces\Services\ICandidatoService;
+use App\Interfaces\Services\IEleccionesService;
+use App\Interfaces\Services\IPartidoService;
+use App\Interfaces\Services\IVotoService;
+use App\Models\Area;
+
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class VotoController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) { return view('auth.login'); }
-        $user = Auth::user();
-        if (!$user->permisos()->where('permiso', $permiso)->exists()) { abort(404); }
-        return null;
-    }
+    public function __construct(
+        protected IVotoService $votoService,
+        protected IEleccionesService $eleccionesService,
+        protected IAreaService $areaService,
+        protected IPartidoService $partidoService,
+        protected ICandidatoService $candidatoService,
+        protected IEstadisticasElectoralesService $eeService
+    ) {}
 
     public function index()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
-        return view('crud.voto.ver');
+        $elecciones = $this->eleccionesService->obtenerTodasLasEleccionesProgramables();
+        $areas = $this->areaService->obtenerAreas();
+        $presidencia = $this->areaService->obtenerAreaPorId(Area::PRESIDENCIA);
+
+        return view('crud.voto.ver', array_merge(
+            compact('elecciones', 'areas', 'presidencia'),
+            [
+                'partidoService' => $this->partidoService,
+                'eeService' => $this->eeService,
+                'candidatoService' => $this->candidatoService,
+                'mostrarBotonExportar' => true,
+            ]
+        ));
     }
 
-    public function create()
+    public function verResultadoElecciones($idEleccion)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
-        return view('crud.voto.crear');
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($idEleccion);
+
+        if (!$eleccion->estaFinalizado()) {
+            return back()->withErrors('No se puede ver los resultados de una elección que no ha finalizado.');
+        }
+
+        $elecciones = [$eleccion];
+        $areas = $this->areaService->obtenerAreas();
+        $presidencia = $this->areaService->obtenerAreaPorId(Area::PRESIDENCIA);
+
+        return view('crud.voto.ver', array_merge(
+            compact('elecciones', 'areas', 'presidencia'),
+            [
+                'partidoService' => $this->partidoService,
+                'eeService' => $this->eeService,
+                'candidatoService' => $this->candidatoService,
+                'mostrarBotonExportar' => true,
+            ]
+        ));
     }
 
-    public function store(Request $request)
+    public function generarPDF($idEleccion)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
-        $data = $request->validate([
-            'idCandidato' => 'required|integer',
-            'idElecciones' => 'required|integer',
-            'fechaVoto' => 'required|date',
-        ]);
-        $v = new Voto($data);
-        $v->save();
-        return response()->json([
-            'success' => true,
-            'message' => 'Voto creado',
-            'data' => [
-                'id' => $v->getKey(),
-                'idCandidato' => $v->idCandidato,
-                'idElecciones' => $v->idElecciones,
-                'fechaVoto' => $v->fechaVoto,
-            ],
-        ], Response::HTTP_CREATED);
-    }
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($idEleccion);
+        $areas = $this->areaService->obtenerAreas();
+        $presidencia = $this->areaService->obtenerAreaPorId(Area::PRESIDENCIA);
 
-    public function show($id)
-    {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
-        $v = Voto::findOrFail($id);
-        return response()->json([
-            'success' => true,
-            'message' => 'Voto obtenido',
-            'data' => [
-                'idCandidato' => $v->idCandidato,
-                'idElecciones' => $v->idElecciones,
-                'fechaVoto' => $v->fechaVoto,
-            ],
-        ]);
-    }
+        $pdf = Pdf::loadView('crud.voto.pdf', array_merge(
+            compact('eleccion', 'areas', 'presidencia'),
+            [
+                'partidoService' => $this->partidoService,
+                'eeService' => $this->eeService,
+                'candidatoService' => $this->candidatoService,
+            ]
+        ));
 
-    public function edit($id)
-    {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
-        return view('crud.voto.editar');
-    }
+        $pdf->setPaper('a4', 'landscape');
+        $pdf->setOption('chroot', public_path());
+        $pdf->setOption('isRemoteEnabled', true);
 
-    public function update(Request $request, $id)
-    {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
-        $v = Voto::findOrFail($id);
-        $data = $request->validate([
-            'fechaVoto' => 'required|date',
-        ]);
-        $v->update($data);
-        return response()->json([
-            'success' => true,
-            'message' => 'Voto actualizado',
-            'data' => [
-                'id' => $v->getKey(),
-                'idCandidato' => $v->idCandidato,
-                'idElecciones' => $v->idElecciones,
-                'fechaVoto' => $v->fechaVoto,
-            ],
-        ]);
-    }
-
-    public function destroy($id)
-    {
-        if ($r = $this->ensureAuthAndPerm('gestion.voto.*')) { return $r; }
-        $v = Voto::findOrFail($id);
-        $v->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Voto eliminado',
-            'data' => [
-                'id' => (int) $id,
-                'idCandidato' => $v->idCandidato,
-                'idElecciones' => $v->idElecciones,
-                'fechaVoto' => $v->fechaVoto,
-            ],
-        ]);
+        return $pdf->stream('reporte_eleccion_' . $idEleccion . '.pdf');
     }
 }

@@ -10,17 +10,10 @@ class Carrera extends Model
 
     protected $primaryKey = 'idCarrera';
 
-    public $incrementing = false;
-
     public $timestamps = false;
 
     protected $fillable = [
         'idCarrera',
         'carrera'
     ];
-
-    public function participantes()
-    {
-        return $this->hasMany(Participante::class, 'idCarrera');
-    }
 }

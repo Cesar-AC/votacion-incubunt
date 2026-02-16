@@ -24,9 +24,9 @@ class User extends Authenticatable
     public $timestamps = false;
 
     protected $fillable = [
-        'usuario',
-        'email',
-        'password',
+        'correo',
+        'contraseña',
+        'idEstadoUsuario',
     ];
 
     /**
@@ -35,7 +35,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'password',
+        'contraseña',
         'remember_token',
     ];
 
@@ -47,7 +47,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password' => 'hashed',
+            'contraseña' => 'hashed',
         ];
     }
 
@@ -59,5 +59,55 @@ class User extends Authenticatable
     public function permisos()
     {
         return $this->belongsToMany(Permiso::class, 'UserPermiso', 'idUser', 'idPermiso');
+    }
+
+    public function excepciones_permisos()
+    {
+        return $this->belongsToMany(Permiso::class, 'ExcepcionPermiso', 'idUser', 'idPermiso');
+    }
+
+    public function perfil()
+    {
+        return $this->hasOne(PerfilUsuario::class, 'idUser');
+    }
+
+    public function estadoUsuario()
+    {
+        return $this->belongsTo(EstadoUsuario::class, 'idEstadoUsuario');
+    }
+
+    public function padronElectoral()
+    {
+        return $this->hasMany(PadronElectoral::class, 'idUsuario', 'idUser');
+    }
+
+    public function getAuthPassword()
+    {
+        return $this->contraseña;
+    }
+
+    public function username()
+    {
+        return 'correo';
+    }
+
+    public function estaActivo()
+    {
+        return $this->idEstadoUsuario === EstadoUsuario::ACTIVO;
+    }
+
+    public function estaInactivo()
+    {
+        return $this->idEstadoUsuario === EstadoUsuario::INACTIVO;
+    }
+
+    public function estaSuspendido()
+    {
+        return $this->idEstadoUsuario === EstadoUsuario::SUSPENDIDO;
+    }
+
+    public function estaInhabilitado()
+    {
+        return $this->idEstadoUsuario === EstadoUsuario::INHABILITADO;
     }
 }

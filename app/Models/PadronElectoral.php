@@ -3,34 +3,33 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Thiagoprz\CompositeKey\HasCompositeKey;
 
 class PadronElectoral extends Model
 {
+    use HasCompositeKey;
+
     protected $table = 'PadronElectoral';
 
-    protected $primaryKey = 'idPadronElectoral';
+    protected $primaryKey = ['idElecciones', 'idUsuario'];
+
+    public $incrementing = false;
 
     public $timestamps = false;
 
     protected $fillable = [
-        'idPadronElectoral',
         'idElecciones',
-        'idUser',
-        'idEstadoParticipante'
+        'idUsuario',
+        'fechaVoto',
     ];
 
-    public function elecciones()
+    public function eleccion()
     {
         return $this->belongsTo(Elecciones::class, 'idElecciones');
     }
 
-    public function user()
+    public function usuario()
     {
-        return $this->belongsTo(User::class, 'idUser');
-    }
-
-    public function estadoParticipante()
-    {
-        return $this->belongsTo(EstadoParticipante::class, 'idEstadoParticipante');
+        return $this->belongsTo(User::class, 'idUsuario', 'idUser');
     }
 }

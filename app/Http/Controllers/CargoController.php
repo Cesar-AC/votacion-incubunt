@@ -9,50 +9,37 @@ use Illuminate\Support\Facades\Auth;
 
 class CargoController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) { return view('auth.login'); }
-        $user = Auth::user();
-        if (!$user->permisos()->where('permiso', $permiso)->exists()) { abort(404); }
-        return null;
-    }
-
     public function index()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
-        return view('crud.cargo.ver');
+        $cargos = Cargo::with('area')->get();
+        return view('crud.cargo.ver', compact('cargos'));
     }
 
     public function create()
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
-        return view('crud.cargo.crear');
+        $areas = \App\Models\Area::all();
+        return view('crud.cargo.crear', compact('areas'));
     }
 
     public function store(Request $request)
-    {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
-        $data = $request->validate([
-            'idCargo' => 'required|integer',
-            'cargo' => 'required|string|max:100',
-            'idArea' => 'required|integer',
-        ]);
-        $c = new Cargo($data);
-        $c->save();
-        return response()->json([
-            'success' => true,
-            'message' => 'Cargo creado',
-            'data' => [
-                'id' => $c->getKey(),
-                'cargo' => $c->cargo,
-                'idArea' => $c->idArea,
-            ],
-        ], Response::HTTP_CREATED);
-    }
+{
+    $data = $request->validate([
+        // 'idCargo' no es necesario si es auto-increment
+        'cargo' => 'required|string|max:100',
+        'idArea' => 'required|integer',
+    ]);
+
+    $c = new Cargo($data);
+    $c->save();
+
+    // Redirige a la lista de cargos con un mensaje de éxito
+    return redirect()->route('crud.cargo.ver')
+                     ->with('success', 'Cargo creado correctamente');
+}
+
 
     public function show($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
         $c = Cargo::findOrFail($id);
         return response()->json([
             'success' => true,
@@ -66,43 +53,36 @@ class CargoController extends Controller
 
     public function edit($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
-        return view('crud.cargo.editar');
+        $cargo = Cargo::findOrFail($id);
+        $areas = \App\Models\Area::all();
+        return view('crud.cargo.editar', compact('cargo', 'areas'));
     }
 
     public function update(Request $request, $id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
         $c = Cargo::findOrFail($id);
         $data = $request->validate([
             'cargo' => 'required|string|max:100',
             'idArea' => 'required|integer',
         ]);
         $c->update($data);
-        return response()->json([
-            'success' => true,
-            'message' => 'Cargo actualizado',
-            'data' => [
-                'id' => $c->getKey(),
-                'cargo' => $c->cargo,
-                'idArea' => $c->idArea,
-            ],
-        ]);
+        return redirect()
+            ->route('crud.cargo.ver')
+            ->with('success', 'Cargo actualizado correctamente');
     }
 
     public function destroy($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.cargo.*')) { return $r; }
-        $c = Cargo::findOrFail($id);
-        $c->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Cargo eliminado',
-            'data' => [
-                'id' => (int) $id,
-                'cargo' => $c->cargo,
-                'idArea' => $c->idArea,
-            ],
-        ]);
+        try {
+            $c = Cargo::findOrFail($id);
+            $c->delete();
+            return redirect()
+                ->route('crud.cargo.ver')
+                ->with('success', 'Cargo eliminado correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.cargo.ver')
+                ->with('error', 'Error al eliminar el cargo: ' . $e->getMessage());
+        }
     }
 }

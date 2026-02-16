@@ -2,10 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Enum\TablasVoto;
+use App\Models\Interfaces\IElegibleAVoto;
+use App\Models\Traits\ElegibleAVoto;
 use Illuminate\Database\Eloquent\Model;
 
-class Candidato extends Model
+class Candidato extends Model implements IElegibleAVoto
 {
+    use ElegibleAVoto;
+
+    protected $tablaVoto = TablasVoto::CANDIDATO->value;
+
     protected $table = 'Candidato';
 
     protected $primaryKey = 'idCandidato';
@@ -14,24 +21,18 @@ class Candidato extends Model
 
     protected $fillable = [
         'idCandidato',
-        'idParticipante',
-        'idCargo',
-        'idPartido'
+        'idUsuario',
+        'planTrabajo'
     ];
 
-    public function participante()
+    public function votos()
     {
-        return $this->belongsTo(Participante::class, 'idParticipante');
+        return $this->hasMany(VotoCandidato::class, 'idCandidato');
     }
 
-    public function cargo()
+    public function usuario()
     {
-        return $this->belongsTo(Cargo::class, 'idCargo');
-    }
-
-    public function partido()
-    {
-        return $this->belongsTo(Partido::class, 'idPartido');
+        return $this->belongsTo(User::class, 'idUsuario');
     }
 
     public function propuestas()
@@ -39,8 +40,51 @@ class Candidato extends Model
         return $this->hasMany(PropuestaCandidato::class, 'idCandidato');
     }
 
-    public function votos()
+    public function elecciones()
     {
-        return $this->hasMany(Voto::class, 'idCandidato');
+        return $this->belongsToMany(Elecciones::class, 'CandidatoEleccion', 'idCandidato', 'idElecciones')
+            ->withPivot('idCargo', 'idPartido');
+    }
+
+    public function candidatoElecciones()
+    {
+        return $this->hasMany(CandidatoEleccion::class, 'idCandidato');
+    }
+
+    public function obtenerTipoVoto(User $votante): TipoVoto
+    {
+        // Cargar relaciones si no están cargadas
+        if (!$this->relationLoaded('usuario')) {
+            $this->load('usuario.perfil.area');
+        }
+        if (!$votante->relationLoaded('perfil')) {
+            $votante->load('perfil.area');
+        }
+
+        // Validar que las relaciones existan
+        if (!$this->usuario) {
+            return TipoVoto::otraArea();
+        }
+
+        if (!$this->usuario->perfil) {
+            return TipoVoto::otraArea();
+        }
+
+        if (!$this->usuario->perfil->area) {
+            return TipoVoto::otraArea();
+        }
+
+        if (!$votante->perfil) {
+            return TipoVoto::otraArea();
+        }
+
+        if (!$votante->perfil->area) {
+            return TipoVoto::otraArea();
+        }
+
+        // Comparar áreas
+        $mismaArea = $this->usuario->perfil->area->getKey() == $votante->perfil->area->getKey();
+
+        return $mismaArea ? TipoVoto::mismaArea() : TipoVoto::otraArea();
     }
 }

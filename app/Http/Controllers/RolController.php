@@ -10,20 +10,14 @@ use Illuminate\Support\Facades\Auth;
 
 class RolController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) { return view('auth.login'); }
-        $user = Auth::user();
-        if (!$user->permisos()->where('permiso', $permiso)->exists()) { abort(404); }
-        return null;
+    public function index(){ 
+        $roles = Rol::all();
+        return view('crud.rol.ver', compact('roles')); 
     }
-
-    public function index(){ if ($r = $this->ensureAuthAndPerm('gestion.rol.*')) { return $r; } return view('crud.rol.ver'); }
-    public function create(){ if ($r = $this->ensureAuthAndPerm('gestion.rol.*')) { return $r; } return view('crud.rol.crear'); }
+    public function create(){ return view('crud.rol.crear'); }
 
     public function store(Request $request)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.rol.*')) { return $r; }
         $data = $request->validate(['rol'=>'required|string']);
         $m = new Rol($data); $m->save();
         return response()->json(['success'=>true,'message'=>'Rol creado','data'=>['id'=>$m->getKey(),'rol'=>$m->rol]], Response::HTTP_CREATED);
@@ -31,16 +25,17 @@ class RolController extends Controller
 
     public function show($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.rol.*')) { return $r; }
         $m = Rol::findOrFail($id);
         return response()->json(['success'=>true,'message'=>'Rol obtenido','data'=>['rol'=>$m->rol]]);
     }
 
-    public function edit($id){ if ($r = $this->ensureAuthAndPerm('gestion.rol.*')) { return $r; } return view('crud.rol.editar'); }
+    public function edit($id){ 
+        $rol = Rol::findOrFail($id);
+        return view('crud.rol.editar', compact('rol')); 
+    }
 
     public function update(Request $request, $id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.rol.*')) { return $r; }
         $m = Rol::findOrFail($id);
         $data = $request->validate(['rol'=>'required|string']);
         $m->update($data);
@@ -49,7 +44,6 @@ class RolController extends Controller
 
     public function destroy($id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.rol.*')) { return $r; }
         $m = Rol::findOrFail($id);
         $m->delete();
         return response()->json(['success'=>true,'message'=>'Rol eliminado','data'=>['id'=>(int)$id,'rol'=>$m->rol]]);
@@ -57,7 +51,6 @@ class RolController extends Controller
 
     public function agregarPermiso(Request $request, $id)
     {
-        if ($r = $this->ensureAuthAndPerm('gestion.rol.*')) { return $r; }
         $m = Rol::findOrFail($id);
         $data = $request->validate(['idPermiso'=>'required|integer']);
         $permiso = Permiso::findOrFail($data['idPermiso']);

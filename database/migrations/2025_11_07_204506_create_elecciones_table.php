@@ -15,11 +15,11 @@ return new class extends Migration
             $table->increments('idElecciones');
             $table->string('titulo', 255);
             $table->text('descripcion');
-            $table->dateTime('fecha_inicio');
-            $table->dateTime('fecha_cierre');
-            $table->unsignedInteger('estado');
+            $table->dateTime('fechaInicio');
+            $table->dateTime('fechaCierre');
+            $table->unsignedInteger('idEstado');
             
-            $table->foreign('estado')->references('idEstado')->on('EstadoElecciones');
+            $table->foreign('idEstado')->references('idEstado')->on('EstadoElecciones');
         });
     }
 

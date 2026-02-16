@@ -4,230 +4,201 @@ namespace App\Http\Controllers;
 
 use App\Models\Elecciones;
 use App\Models\EstadoElecciones;
-use App\Models\Usuario;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
+use App\Interfaces\Services\IEleccionesService;
 
 class EleccionesController extends Controller
 {
-    private function ensureAuthAndPerm(string $permiso)
-    {
-        if (!Auth::check()) {
-            return view('auth.login');
-        }
+    private IEleccionesService $eleccionesService;
 
-        /** @var Usuario $user */
-        $user = Auth::user();
-        $hasPerm = $user->permisos()->where('permiso', $permiso)->exists();
-        if (!$hasPerm) {
-            abort(404);
-        }
-        return null;
+    public function __construct(IEleccionesService $eleccionesService)
+    {
+        $this->eleccionesService = $eleccionesService;
     }
 
     public function index()
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
+        $eleccionesService = $this->eleccionesService;
+
+        $elecciones = Elecciones::with(['estadoEleccion'])
+            ->withCount('usuarios') // cuenta padrón electoral
+            ->orderBy('fechaInicio', 'desc')
+            ->get();
+
+        $eleccionActiva = null;
+        try {
+            $eleccionActiva = $eleccionesService->obtenerEleccionActiva();
+        } catch (\Exception $e) {
+            // sin elección activa configurada, omitimos
         }
-        return view('crud.elecciones.ver');
+
+        return view('crud.elecciones.ver', compact('elecciones', 'eleccionActiva', 'eleccionesService'));
     }
 
-    public function show($id)
+    public function show(int $id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
-        $e = Elecciones::findOrFail($id);
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+
         return response()->json([
             'success' => true,
             'message' => 'Elección obtenida',
             'data' => [
-                'titulo' => $e->titulo,
-                'fecha_inicio' => $e->fecha_inicio,
-                'fecha_cierre' => $e->fecha_cierre,
-                'descripcion' => $e->descripcion,
-                'estado' => $e->estado,
+                'titulo' => $eleccion->titulo,
+                'descripcion' => $eleccion->descripcion,
+                'fechaInicio' => $eleccion->fechaInicio,
+                'fechaCierre' => $eleccion->fechaCierre,
+                'estado' => $eleccion->estadoEleccion(),
+                'partidos' => $eleccion->partidos()->pluck('idPartido'),
             ],
         ]);
     }
 
     public function create()
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
-        return view('crud.elecciones.crear');
-    }
-
-    private function overlapsExisting(?int $excludeId, Carbon $inicio, Carbon $fin): bool
-    {
-        $q = Elecciones::query();
-        if ($excludeId) {
-            $q->where('idElecciones', '!=', $excludeId);
-        }
-        $rows = $q->get(['fecha_inicio','fecha_cierre']);
-        $ns = $inicio->getTimestamp();
-        $ne = $fin->getTimestamp();
-        foreach ($rows as $row) {
-            $es = Carbon::parse($row->fecha_inicio)->getTimestamp();
-            $ee = Carbon::parse($row->fecha_cierre)->getTimestamp();
-            if ($es <= $ne && $ee >= $ns) {
-                return true;
-            }
-        }
-        return false;
+        $estados = EstadoElecciones::all();
+        return view('crud.elecciones.crear', compact('estados'));
     }
 
     public function store(Request $request)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
-        // Normalizar fechas a string para que pase la validación aunque el test envíe Carbon
-        $fi = $request->input('fecha_inicio');
-        $fc = $request->input('fecha_cierre');
-        if ($fi instanceof Carbon) { $fi = $fi->toDateTimeString(); }
-        if ($fc instanceof Carbon) { $fc = $fc->toDateTimeString(); }
-        if (!is_null($fi) || !is_null($fc)) {
-            $request->merge([
-                'fecha_inicio' => $fi,
-                'fecha_cierre' => $fc,
-            ]);
-        }
-        $data = $request->validate([
-            'titulo' => 'required|string|max:255',
-            'descripcion' => 'required|string',
-            'fecha_inicio' => 'required|date',
-            'fecha_cierre' => 'required|date|after_or_equal:fecha_inicio',
-        ]);
-
-        $inicio = Carbon::parse($data['fecha_inicio']);
-        $fin = Carbon::parse($data['fecha_cierre']);
-
-        if ($this->overlapsExisting(null, $inicio, $fin)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ya existe una elección en el rango de fechas indicado',
-            ], Response::HTTP_CONFLICT);
-        }
-
-        // Asegurar estado por defecto existente
-        $estadoId = EstadoElecciones::query()->value('idEstado');
-        if (!$estadoId) {
-            $nuevoEstado = new EstadoElecciones(['estado' => 'Programada']);
-            $nuevoEstado->save();
-            $estadoId = $nuevoEstado->getKey();
-        }
-
-        $e = new Elecciones([
-            'titulo' => $data['titulo'],
-            'descripcion' => $data['descripcion'],
-            'fecha_inicio' => $inicio,
-            'fecha_cierre' => $fin,
-            'estado' => $estadoId,
-        ]);
-        $e->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Elección creada correctamente',
-            'data' => [
-                'id' => $e->getKey(),
-                'titulo' => $e->titulo,
-                'fecha_inicio' => $e->fecha_inicio,
-                'fecha_cierre' => $e->fecha_cierre,
-                'descripcion' => $e->descripcion,
-                'estado' => $e->estado,
+        $request->validate(
+            [
+                'titulo' => 'required|string|max:255',
+                'descripcion' => 'required|string',
+                'fechaInicio' => 'required|date|after:now',
+                'fechaCierre' => 'required|date|after:fechaInicio',
             ],
-        ], Response::HTTP_CREATED);
+            [
+                'titulo.required' => 'El título es obligatorio.',
+                'titulo.string' => 'El título debe ser una cadena de texto.',
+                'titulo.max' => 'El título no puede exceder los 255 caracteres.',
+                'descripcion.required' => 'La descripción es obligatoria.',
+                'descripcion.string' => 'La descripción debe ser una cadena de texto.',
+                'fechaInicio.required' => 'La fecha de inicio es obligatoria.',
+                'fechaInicio.date' => 'La fecha de inicio debe ser una fecha válida.',
+                'fechaInicio.after' => 'La fecha de inicio debe ser posterior a la fecha de hoy.',
+                'fechaCierre.required' => 'La fecha de cierre es obligatoria.',
+                'fechaCierre.date' => 'La fecha de cierre debe ser una fecha válida.',
+                'fechaCierre.after' => 'La fecha de cierre debe ser posterior a la fecha de inicio.',
+            ]
+        );
+
+        $this->eleccionesService->crearElecciones($request->all());
+
+        return redirect()->route('crud.elecciones.ver')->with('success', 'Elección creada correctamente');
     }
 
     public function edit($id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
-        return view('crud.elecciones.editar');
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+
+        $estados = EstadoElecciones::all();
+        return view('crud.elecciones.editar', compact('eleccion', 'estados'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
-        }
-        $e = Elecciones::findOrFail($id);
-        // Normalizar fechas a string para que pase la validación aunque el test envíe Carbon
-        $fi = $request->input('fecha_inicio');
-        $fc = $request->input('fecha_cierre');
-        if ($fi instanceof Carbon) { $fi = $fi->toDateTimeString(); }
-        if ($fc instanceof Carbon) { $fc = $fc->toDateTimeString(); }
-        if (!is_null($fi) || !is_null($fc)) {
-            $request->merge([
-                'fecha_inicio' => $fi,
-                'fecha_cierre' => $fc,
-            ]);
-        }
-        $data = $request->validate([
-            'titulo' => 'required|string|max:255',
-            'descripcion' => 'required|string',
-            'fecha_inicio' => 'required|date',
-            'fecha_cierre' => 'required|date|after_or_equal:fecha_inicio',
-            'estado' => 'nullable|integer',
-        ]);
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-        $inicio = Carbon::parse($data['fecha_inicio']);
-        $fin = Carbon::parse($data['fecha_cierre']);
-        if ($this->overlapsExisting($e->getKey(), $inicio, $fin)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Las fechas se sobreponen con otra elección',
-            ], Response::HTTP_CONFLICT);
-        }
-
-        $e->titulo = $data['titulo'];
-        $e->descripcion = $data['descripcion'];
-        $e->fecha_inicio = $inicio;
-        $e->fecha_cierre = $fin;
-        if (array_key_exists('estado', $data)) {
-            $e->estado = $data['estado'];
-        }
-        $e->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Elección actualizada correctamente',
-            'data' => [
-                'id' => $e->getKey(),
-                'titulo' => $e->titulo,
-                'fecha_inicio' => $e->fecha_inicio,
-                'fecha_cierre' => $e->fecha_cierre,
-                'descripcion' => $e->descripcion,
-                'estado' => $e->estado,
+        $request->validate(
+            [
+                'titulo' => 'string|max:255',
+                'descripcion' => 'string',
+                'fechaInicio' => 'date|after:now',
+                'fechaCierre' => 'date|after:fechaInicio',
+                'idEstado' => 'integer|exists:EstadoElecciones,idEstado',
             ],
-        ]);
+            [
+                'titulo.string' => 'El título debe ser una cadena de texto.',
+                'titulo.max' => 'El título no puede exceder los 255 caracteres.',
+                'descripcion.string' => 'La descripción debe ser una cadena de texto.',
+                'fechaInicio.date' => 'La fecha de inicio debe ser una fecha válida.',
+                'fechaInicio.after' => 'La fecha de inicio debe ser posterior a la fecha de hoy.',
+                'fechaCierre.date' => 'La fecha de cierre debe ser una fecha válida.',
+                'fechaCierre.after' => 'La fecha de cierre debe ser posterior a la fecha de inicio.',
+                'idEstado.integer' => 'El estado debe ser un número entero.',
+                'idEstado.exists' => 'El estado no existe.',
+            ]
+        );
+
+        $this->eleccionesService->editarElecciones($request->all(), $eleccion);
+
+        return redirect()->route('crud.elecciones.ver')->with('success', 'Elección actualizada correctamente');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, int $id)
     {
-        if ($resp = $this->ensureAuthAndPerm('gestion.elecciones.*')) {
-            return $resp;
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+
+        try {
+            $this->eleccionesService->anularElecciones($eleccion);
+
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->with('success', 'Elección anulada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->withErrors([
+                    'error' => 'Error al anular la elección: ' . $e->getMessage(),
+                ]);
         }
-        $e = Elecciones::findOrFail($id);
-        $e->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Elección eliminada',
-            'data' => [
-                'id' => (int) $id,
-                'titulo' => $e->titulo,
-                'fecha_inicio' => $e->fecha_inicio,
-                'fecha_cierre' => $e->fecha_cierre,
-                'descripcion' => $e->descripcion,
-                'estado' => $e->estado,
-            ],
-        ]);
+    }
+
+    public function finalizar(int $id)
+    {
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+
+        try {
+            $this->eleccionesService->finalizarElecciones($eleccion);
+
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->with('success', 'Elección finalizada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->withErrors([
+                    'error' => 'Error al finalizar la elección: ' . $e->getMessage(),
+                ]);
+        }
+    }
+
+    public function activar(int $id)
+    {
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+
+        try {
+            $this->eleccionesService->cambiarEleccionActiva($eleccion);
+
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->with('success', 'Elección activada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->withErrors([
+                    'error' => 'Error al activar la elección: ' . $e->getMessage(),
+                ]);
+        }
+    }
+
+    public function restaurar(int $id)
+    {
+        $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
+
+        try {
+            $this->eleccionesService->restaurarElecciones($eleccion);
+
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->with('success', 'Elección restaurada correctamente');
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('crud.elecciones.ver')
+                ->withErrors([
+                    'error' => 'Error al restaurar la elección: ' . $e->getMessage(),
+                ]);
+        }
     }
 }

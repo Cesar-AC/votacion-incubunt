@@ -1,11 +1,712 @@
-@import 'tailwindcss';
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+[x-cloak] {
+    display: none !important;
+}
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        font-family: "Poppins", sans-serif;
+    }
+}
+
+/* --- RESPONSIVIDAD GENERAL --- */
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 70px !important;
+    }
+}
+
+@layer utilities {
+    .nav-link.group {
+        padding: 0.75rem 1rem !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .nav-link i {
+        width: 1.5rem;
+        text-align: center;
+    }
+
+    /* Mejoras de accesibilidad - Estados de foco */
+    .sidebar-brand:focus,
+    .nav-link:focus {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    .sidebar-brand:focus-visible,
+    .nav-link:focus-visible {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+    }
+
+    #sidebarToggle:focus {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+    }
+
+    #sidebarToggle:focus-visible {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+    }
+
+    /* Mejora para lectores de pantalla - ocultar visualmente pero mantener accesible */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
+
+    /* Animaciones para vistas de votación */
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slide-up {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes scale-in {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes bounce {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @keyframes fall {
+        to {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.6s ease-out;
+    }
+
+    .animate-fade-in-up {
+        animation: fade-in-up 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .animate-slide-up {
+        animation: slide-up 0.8s ease-out;
+    }
+
+    .animate-scale-in {
+        animation: scale-in 0.5s ease-out;
+    }
+
+    .animate-bounce {
+        animation: bounce 1s ease-in-out infinite;
+    }
+
+    /* Mejoras responsive para vistas de votación */
+    @media (max-width: 640px) {
+        .votante-container {
+            padding-bottom: 100px;
+        }
+    }
+
+    /* Transiciones suaves para elementos interactivos */
+    .transition-smooth {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Mejoras de accesibilidad para botones */
+    button:focus-visible,
+    a:focus-visible {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* Efectos hover mejorados */
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Mejoras de accesibilidad - Estados de foco */
+    .sidebar-brand:focus,
+    .nav-link:focus {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    .sidebar-brand:focus-visible,
+    .nav-link:focus-visible {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+    }
+
+    #sidebarToggle:focus {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+    }
+
+    #sidebarToggle:focus-visible {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+    }
+
+    /* Mejora para lectores de pantalla - ocultar visualmente pero mantener accesible */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
+
+    /* Animaciones para vistas de votación */
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slide-up {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes scale-in {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes bounce {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @keyframes fall {
+        to {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.6s ease-out;
+    }
+
+    .animate-fade-in-up {
+        animation: fade-in-up 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .animate-slide-up {
+        animation: slide-up 0.8s ease-out;
+    }
+
+    .animate-scale-in {
+        animation: scale-in 0.5s ease-out;
+    }
+
+    .animate-bounce {
+        animation: bounce 1s ease-in-out infinite;
+    }
+
+    /* Mejoras responsive para vistas de votación */
+    @media (max-width: 640px) {
+        .votante-container {
+            padding-bottom: 100px;
+        }
+    }
+
+    /* Transiciones suaves para elementos interactivos */
+    .transition-smooth {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Mejoras de accesibilidad para botones */
+    button:focus-visible,
+    a:focus-visible {
+        outline: 2px solid #ffb700;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* Efectos hover mejorados */
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Estilos para mejorar la experiencia mobile */
+    @media (max-width: 767.98px) {
+
+        /* Agregar padding al contenido principal para que no quede oculto por el bottom nav */
+        #content-wrapper {
+            padding-bottom: 80px !important;
+            margin-left: 0 !important;
+        }
+
+        /* Ocultar el sidebar desktop en mobile */
+        #accordionSidebar {
+            display: none !important;
+        }
+
+        /* Ocultar el topbar toggle button en mobile ya que usamos bottom nav */
+        #sidebarToggleTop {
+            display: none !important;
+        }
+
+        /* Mejorar interactividad del bottom nav */
+        .navbar.fixed-bottom a:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+
+        /* Mejorar hover en modal */
+        .modal-body .list-group-item-action:hover {
+            background-color: #f8f9fa !important;
+            transform: translateX(5px);
+        }
+
+        /* Ajustar el container fluid en mobile */
+        .container-fluid {
+            padding-bottom: 20px;
+        }
+    }
+
+    /* Animación suave para el modal */
+    .modal.fade .modal-dialog {
+        transition: transform 0.3s ease-out;
+    }
+
+    /* Estilo del botón central en bottom nav */
+    .navbar.fixed-bottom a[href*="elecciones"] .rounded-circle {
+        transition: all 0.3s ease;
+    }
+
+    .navbar.fixed-bottom a[href*="elecciones"]:active .rounded-circle {
+        transform: scale(0.9);
+    }
+
+    /* Mejorar interacción de items del modal */
+    .modal-body .list-group-item-action {
+        transition: all 0.2s ease;
+    }
+
+    /* ========================================
+   LAYOUT FIXES - VOTAINCUBI
+   Corrige el layout para usar solo bottom nav
+   ======================================== */
+
+    /* Ocultar sidebar vertical en TODAS las pantallas */
+    #accordionSidebar {
+        display: none !important;
+    }
+
+    /* Asegurar que el wrapper principal no tenga margin */
+    #wrapper {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    /* Content wrapper sin margin lateral */
+    #content-wrapper {
+        width: 100% !important;
+        margin-left: 0 !important;
+        padding-bottom: 80px !important;
+        flex: 1;
+    }
+
+    /* Ocultar toggle del sidebar */
+    #sidebarToggleTop,
+    #sidebarToggle {
+        display: none !important;
+    }
+
+    /* ========================================
+   BOTTOM NAVIGATION
+   ======================================== */
+
+    .navbar.fixed-bottom {
+        height: 65px;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        background-color: #ffffff;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    /* Items del bottom nav */
+    .nav-item-bottom {
+        position: relative;
+        transition: all 0.2s ease;
+    }
+
+    .nav-item-bottom:active {
+        transform: scale(0.95);
+    }
+
+    .nav-item-bottom:focus-visible {
+        outline: 2px solid #161349;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* Botón central destacado */
+    .central-button {
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .central-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-item-bottom:active .central-button {
+        transform: scale(0.9);
+    }
+
+    /* ========================================
+   MODAL DE MENÚ
+   ======================================== */
+
+    .modal-content {
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+
+    .menu-item {
+        position: relative;
+        transition: all 0.2s ease;
+    }
+
+    .menu-item:hover {
+        background-color: #f8f9fa !important;
+        transform: translateX(5px);
+    }
+
+    .menu-item:focus-visible {
+        outline: 2px solid #161349;
+        outline-offset: -2px;
+    }
+
+    .menu-item:active {
+        transform: translateX(3px);
+        background-color: #e9ecef !important;
+    }
+
+    /* Botón de cerrar sesión */
+    .list-group-item button[type="submit"] {
+        background-color: #fff5f5;
+        transition: all 0.2s ease;
+    }
+
+    .list-group-item button[type="submit"]:hover {
+        background-color: #ffe5e5 !important;
+        transform: translateX(5px);
+    }
+
+    /* ========================================
+   CONTENIDO PRINCIPAL
+   ======================================== */
+
+    .container,
+    .container-fluid {
+        padding-bottom: 100px !important;
+    }
+
+    /* Asegurar que las tarjetas tengan animaciones suaves */
+    .shadow-md,
+    .shadow-lg {
+        transition: box-shadow 0.2s ease;
+    }
+
+    .hover\:shadow-xl:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* ========================================
+   RESPONSIVE
+   ======================================== */
+
+    /* Mobile (< 576px) */
+    @media (max-width: 575.98px) {
+        .navbar.fixed-bottom {
+            height: 60px;
+        }
+
+        .central-button {
+            width: 50px !important;
+            height: 50px !important;
+        }
+
+        .nav-item-bottom i {
+            font-size: 1.1rem !important;
+        }
+
+        .nav-item-bottom span {
+            font-size: 0.65rem !important;
+        }
+
+        #mobileMenuModal .modal-dialog {
+            max-width: 95%;
+            margin: 0.5rem auto;
+        }
+
+        .container,
+        .container-fluid {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+    }
+
+    /* Tablet (576px - 767px) */
+    @media (min-width: 576px) and (max-width: 767.98px) {
+        #mobileMenuModal .modal-dialog {
+            max-width: 500px;
+        }
+    }
+
+    /* Desktop (>= 768px) */
+    @media (min-width: 768px) {
+        #mobileMenuModal .modal-dialog {
+            max-width: 550px;
+        }
+
+        .navbar.fixed-bottom {
+            height: 70px;
+        }
+
+        .central-button {
+            width: 60px !important;
+            height: 60px !important;
+        }
+    }
+
+    /* ========================================
+   ACCESIBILIDAD
+   ======================================== */
+
+    /* Focus visible para todos los elementos interactivos */
+    a:focus-visible,
+    button:focus-visible {
+        outline: 2px solid #161349;
+        outline-offset: 2px;
+    }
+
+    /* Skip to content link (opcional) */
+    .skip-to-content {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: #161349;
+        color: white;
+        padding: 8px;
+        text-decoration: none;
+        z-index: 100;
+    }
+
+    .skip-to-content:focus {
+        top: 0;
+    }
+
+    /* ========================================
+   ANIMACIONES PERSONALIZADAS
+   ======================================== */
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .navbar.fixed-bottom {
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .modal.show {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    /* ========================================
+   UTILIDADES
+   ======================================== */
+
+    /* Ocultar scrollbar en modal si es necesario */
+    .modal-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .modal-body::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Prevenir scroll del body cuando el modal está abierto */
+    body.modal-open {
+        overflow: hidden;
+    }
+
+    /* ========================================
+   CORRECCIONES ESPECÍFICAS
+   ======================================== */
+
+    /* Asegurar que no haya overlapping con el bottom nav */
+    #content {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    /* Fix para el topbar si existe */
+    .navbar.navbar-expand {
+        border-left: none !important;
+    }
+
+    /* Fix para el footer si existe */
+    .sticky-footer {
+        margin-bottom: 80px !important;
+    }
+
+    /* ========================================
+   MODO IMPRESIÓN
+   ======================================== */
+
+    @media print {
+
+        .navbar.fixed-bottom,
+        #mobileMenuModal {
+            display: none !important;
+        }
+
+        #content-wrapper {
+            padding-bottom: 0 !important;
+        }
+    }
 }
