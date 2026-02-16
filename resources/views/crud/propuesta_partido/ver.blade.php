@@ -3,6 +3,8 @@
 @section('content')
 <div class="container-fluid">
 
+    @include('components.error-message')
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 text-gray-800">Gestión de Propuestas de Partido</h1>
         <a href="{{ route('crud.propuesta_partido.crear') }}" class="btn btn-primary">

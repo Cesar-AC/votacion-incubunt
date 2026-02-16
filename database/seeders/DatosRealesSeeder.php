@@ -46,7 +46,6 @@ class DatosRealesSeeder extends Seeder
             'Project Management Office',
             'Tecnologías de la Información',
             'Logística y Finanzas',
-            'Sistemas Integrados de Gestión y Emprendimiento',
             'Gestión del Talento Humano',
         ];
 

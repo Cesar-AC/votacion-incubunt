@@ -227,13 +227,13 @@ interface ICandidatoService
     public function actualizarPropuestaDeCandidato(array $datos, PropuestaCandidato $propuestaCandidato): void;
 
     /**
-     * @param int $idPropuestaCandidato
+     * @param PropuestaCandidato $propuestaCandidato
      *      Obligatorio.
-     *      El id de la propuesta que se desea eliminar.
+     *      La propuesta que se desea eliminar.
      * @return void
      * @throws \Exception Si no se envían los datos necesarios.
      */
-    public function eliminarPropuestaDeCandidato(int $idPropuestaCandidato): void;
+    public function eliminarPropuestaDeCandidato(PropuestaCandidato $propuestaCandidato): void;
 
     /**
      * @param Cargo $cargo
