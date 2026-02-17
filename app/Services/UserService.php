@@ -51,7 +51,11 @@ class UserService implements IUserService
 
     public function editarUsuario(array $datosUsuario, User $usuario): User
     {
-        $usuario->update($datosUsuario);
+        $usuario->update([
+            'correo' => $datosUsuario['correo'],
+            'contraseña' => bcrypt($datosUsuario['contraseña']),
+            'idEstadoUsuario' => $datosUsuario['idEstadoUsuario'],
+        ]);
 
         return $usuario;
     }

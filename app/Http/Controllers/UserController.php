@@ -153,8 +153,6 @@ class UserController extends Controller
             'contraseña.min' => 'La contraseña debe tener al menos 8 caracteres.',
         ]);
 
-        $this->userService->editarUsuario($datosUsuario, $usuario);
-
         $datosPerfil = $request->validate([
             'apellidoPaterno' => 'string|max:20',
             'apellidoMaterno' => 'string|max:20',
