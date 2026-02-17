@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Interfaces\Services\PadronElectoral\IImportadorService;
 use App\Interfaces\Services\IEleccionesService;
 use App\Interfaces\Services\IPadronElectoralService;
+use App\Jobs\ImportarPadron;
 use App\Models\Elecciones;
 use App\Models\PadronElectoral;
 use App\Models\User;
@@ -155,21 +156,28 @@ class PadronElectoralController extends Controller
 		return view('crud.padron_electoral.importar', compact('elecciones'));
 	}
 
-	public function importar(Request $request, IImportadorService $importadorService)
+	public function importar(Request $request)
 	{
 		$data = $request->validate([
 			'idElecciones' => 'required|integer',
 			'archivo' => 'required|file|mimes:csv,xlsx',
+		], [
+			'idElecciones.required' => 'Debe seleccionar una elección.',
+			'idElecciones.integer' => 'La elección debe ser un número entero.',
+			'archivo.required' => 'Debe seleccionar un archivo.',
+			'archivo.file' => 'El archivo debe ser un archivo.',
+			'archivo.mimes' => 'El archivo debe ser un archivo CSV o XLSX.',
 		]);
 
 		$eleccion = Elecciones::findOrFail($data['idElecciones']);
 		$path = $request->file('archivo')->store('padron_electoral');
 
-		$importadorService->importar(storage_path('app/private/' . $path), $eleccion);
-
-		unlink(storage_path('app/private/' . $path));
+		ImportarPadron::dispatch(
+			storage_path('app/private/' . $path),
+			$eleccion
+		)->onQueue('importacion_padrones');
 
 		return redirect()->route('crud.padron_electoral.ver')
-			->with('success', 'Padrón importado correctamente');
+			->with('success', 'El padrón se está importando: esto puede tomar unos minutos.');
 	}
 }
