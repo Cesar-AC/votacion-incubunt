@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\ExcepcionPermiso;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class ExcepcionPermisoPolicy
 {
@@ -24,10 +22,9 @@ class ExcepcionPermisoPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, ExcepcionPermiso $excepcionPermiso): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "excepcion_permiso:crud:ver:{$excepcionPermiso->id}",
             'excepcion_permiso:crud:ver:*',
             'excepcion_permiso:crud:*',
             'excepcion_permiso:*'

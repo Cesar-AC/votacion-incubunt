@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\TipoVoto;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class TipoVotoPolicy
 {
@@ -24,10 +22,9 @@ class TipoVotoPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, TipoVoto $tipoVoto): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "tipo_voto:crud:ver:{$tipoVoto->id}",
             'tipo_voto:crud:ver:*',
             'tipo_voto:crud:*',
             'tipo_voto:*'

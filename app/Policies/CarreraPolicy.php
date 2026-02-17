@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Carrera;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class CarreraPolicy
 {
@@ -24,10 +22,9 @@ class CarreraPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Carrera $carrera): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "carrera:crud:ver:{$carrera->id}",
             'carrera:crud:ver:*',
             'carrera:crud:*',
             'carrera:*'

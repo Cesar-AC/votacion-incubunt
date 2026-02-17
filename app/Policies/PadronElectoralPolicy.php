@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\PadronElectoral;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class PadronElectoralPolicy
 {
@@ -24,10 +22,9 @@ class PadronElectoralPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, PadronElectoral $padronElectoral): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "padron_electoral:crud:ver:{$padronElectoral->getKey()}",
             'padron_electoral:crud:ver:*',
             'padron_electoral:crud:*',
             'padron_electoral:*'

@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Partido;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class PartidoPolicy
 {
@@ -24,10 +22,9 @@ class PartidoPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Partido $partido): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "partido:crud:ver:{$partido->id}",
             'partido:crud:ver:*',
             'partido:crud:*',
             'partido:*'
