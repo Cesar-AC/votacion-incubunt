@@ -116,4 +116,12 @@ interface IUserService
      *      Retorna null si el usuario no tiene una foto.
      */
     public function obtenerFotoURL(User $usuario): ?string;
+
+    /**
+     * @param User $usuario
+     *      Obligatorio.
+     *      El usuario que se desea restaurar.
+     * @return void
+     */
+    public function restaurarUsuario(User $usuario): void;
 }

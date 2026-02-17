@@ -59,11 +59,18 @@
             {{ $usuario->correo }}
           </small>
 
+          @if($usuario->estaActivo())
           <span class="badge badge-primary">
             Rol:
             {{ $usuario->roles->first()->rol ?? 'Sin rol' }}
           </span>
+          @else
+          <span class="badge badge-danger">
+            Deshabilitado
+          </span>
+          @endif
 
+          @if($usuario->estaActivo())
           <div class="hidden sm:flex sm:flex-col sm:gap-1 lg:hidden">
             <a href="{{ route('crud.user.editar', $usuario->getKey()) }}" class="btn btn-outline-primary btn-sm">
               <i class="fas fa-edit"></i> Editar
@@ -71,16 +78,15 @@
             <a href="{{ route('crud.user.permisos', $usuario->getKey()) }}" class="btn btn-outline-info btn-sm">
               <i class="fas fa-key"></i> Permisos
             </a>
-            <a href="#" class="btn btn-outline-danger btn-sm">
-              <i class="fas fa-trash"></i> Eliminar
-            </a>
-            <a href="#" class="btn btn-outline-secondary btn-sm">
-              <i class="fas fa-eye"></i> Ver
+            <a href="#" class="btn btn-outline-danger btn-sm" disabled>
+              <i class="fas fa-trash"></i> Deshabilitar
             </a>
           </div>
+          @endif
         </div>
       </div>
 
+      @if($usuario->estaActivo())
       <div class="sm:hidden flex flex-col xl:text-right gap-1 lg:grid lg:grid-cols-2 lg:items-center">
         <a href="{{ route('crud.user.editar', $usuario->getKey()) }}" class="btn btn-outline-primary btn-sm">
           <i class="fas fa-edit"></i> Editar
@@ -88,13 +94,22 @@
         <a href="{{ route('crud.user.permisos', $usuario->getKey()) }}" class="btn btn-outline-info btn-sm">
           <i class="fas fa-key"></i> Permisos
         </a>
-        <a href="#" class="btn btn-outline-danger btn-sm">
-          <i class="fas fa-trash"></i> Eliminar
-        </a>
-        <a href="#" class="btn btn-outline-secondary btn-sm">
-          <i class="fas fa-eye"></i> Ver
-        </a>
+        <form action="{{ route('crud.user.eliminar', $usuario->getKey()) }}" method="POST">
+          @csrf
+          @method('DELETE')
+          <button type="submit" class="btn btn-outline-danger btn-sm">
+            <i class="fas fa-trash"></i> Deshabilitar
+          </button>
+        </form>
       </div>
+      @else 
+      <form action="{{ route('crud.user.restaurar', $usuario->getKey()) }}" method="POST">
+        @csrf
+        <button type="submit" class="btn btn-outline-success btn-sm">
+          <i class="fas fa-check"></i> Restaurar
+        </button>
+      </form>
+      @endif
 
     </div>
   </div>

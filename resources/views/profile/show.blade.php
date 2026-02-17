@@ -198,11 +198,6 @@
         </div>
         <div class="card-body">
           <p class="small text-muted mb-2">
-            <i class="fas fa-user-shield mr-2"></i>
-            ID de Usuario: <strong>{{ $user->idUser }}</strong>
-          </p>
-          
-          <p class="small text-muted mb-2">
             <i class="fas fa-graduation-cap mr-2"></i>
             Carrera: <strong>{{ $user->perfil->carrera->carrera ?? 'No asignada' }}</strong>
           </p>

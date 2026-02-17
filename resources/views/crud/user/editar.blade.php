@@ -131,17 +131,6 @@
         @error('password')
           <div class="invalid-feedback">{{ $message }}</div>
         @enderror
-
-        <select 
-          name="idEstadoUsuario" 
-          class="form-control @error('idEstadoUsuario') is-invalid @enderror"
-          required>
-          <option value="1" {{ old('idEstadoUsuario', $usuario->idEstadoUsuario) == 1 ? 'selected' : '' }}>Activo</option>
-          <option value="2" {{ old('idEstadoUsuario', $usuario->idEstadoUsuario) == 2 ? 'selected' : '' }}>Inactivo</option>
-        </select>
-        @error('idEstadoUsuario')
-          <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
       </div>
     </div>
 
