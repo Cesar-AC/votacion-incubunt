@@ -57,8 +57,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/propuestas', [VotanteController::class, 'propuestas'])->name('propuestas');
         });
 
-        // Route::get('/perfil/editar', [VotanteController::class, 'editarPerfil'])->name('perfil.editar');
-        // Route::put('/perfil', [VotanteController::class, 'actualizarPerfil'])->name('perfil.actualizar');
+        Route::get('/perfil/editar', [VotanteController::class, 'editarPerfil'])->name('perfil.editar');
+        Route::put('/perfil', [VotanteController::class, 'actualizarPerfil'])->name('perfil.actualizar');
         // Route::get('/elecciones', [VotanteController::class, 'listarElecciones'])->name('elecciones');
         // Route::get('/elecciones/{id}', [VotanteController::class, 'verDetalleEleccion'])->name('elecciones.detalle');
 

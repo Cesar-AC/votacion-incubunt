@@ -521,16 +521,16 @@ class VotanteController extends Controller
 
         // Verificar si el usuario es candidato y obtener su partido
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        $partido = $this->obtenerPartidoDeCandidato($candidato);
 
-        if (!$candidato || !$candidato->idPartido) {
+        if (!$partido) {
             return view('votante.propuestas_partido.index', [
                 'propuestas' => collect([]),
                 'mensaje' => 'No perteneces a ningún partido político. Solo los candidatos afiliados a un partido pueden gestionar propuestas de partido.'
             ]);
         }
 
-        $partido = Partido::findOrFail($candidato->idPartido);
-        $propuestas = PropuestaPartido::where('idPartido', $candidato->idPartido)
+        $propuestas = PropuestaPartido::where('idPartido', $partido->getKey())
             ->orderBy('idPropuesta', 'desc')
             ->get();
 
@@ -555,13 +555,12 @@ class VotanteController extends Controller
 
         // Verificar que pertenezca a un partido
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        $partido = $this->obtenerPartidoDeCandidato($candidato);
 
-        if (!$candidato || !$candidato->idPartido) {
+        if (!$partido) {
             return redirect()->route('votante.propuestas_partido.index')
                 ->with('error', 'No perteneces a ningún partido político.');
         }
-
-        $partido = Partido::findOrFail($candidato->idPartido);
 
         return view('votante.propuestas_partido.crear', compact('partido'));
     }
@@ -584,8 +583,9 @@ class VotanteController extends Controller
 
         // Verificar que pertenezca a un partido
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        $partido = $this->obtenerPartidoDeCandidato($candidato);
 
-        if (!$candidato || !$candidato->idPartido) {
+        if (!$partido) {
             return redirect()->route('votante.propuestas_partido.index')
                 ->with('error', 'No perteneces a ningún partido político.');
         }
@@ -599,7 +599,7 @@ class VotanteController extends Controller
             PropuestaPartido::create([
                 'propuesta' => $request->propuesta,
                 'descripcion' => $request->descripcion,
-                'idPartido' => $candidato->idPartido
+                'idPartido' => $partido->getKey()
             ]);
 
             return redirect()->route('votante.propuestas_partido.index')
@@ -630,12 +630,11 @@ class VotanteController extends Controller
 
         // Verificar que la propuesta pertenezca al partido del usuario
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        $partido = $this->obtenerPartidoDeCandidato($candidato);
 
-        if (!$candidato || $propuesta->idPartido != $candidato->idPartido) {
+        if (!$partido || $propuesta->idPartido != $partido->getKey()) {
             abort(403, 'Solo puedes editar propuestas de tu partido.');
         }
-
-        $partido = Partido::findOrFail($candidato->idPartido);
 
         return view('votante.propuestas_partido.editar', compact('propuesta', 'partido'));
     }
@@ -659,11 +658,10 @@ class VotanteController extends Controller
         }
 
         // Verificar que la propuesta pertenezca al partido del usuario
-        $candidato = Candidato::where('idUsuario', Auth::id())
-            ->with('usuario.perfil', 'cargo', 'partido')
-            ->first();
+        $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        $partido = $this->obtenerPartidoDeCandidato($candidato);
 
-        if (!$candidato || $propuesta->idPartido != $candidato->idPartido) {
+        if (!$partido || $propuesta->idPartido != $partido->getKey()) {
             abort(403, 'Solo puedes editar propuestas de tu partido.');
         }
 
@@ -706,8 +704,9 @@ class VotanteController extends Controller
 
         // Verificar que la propuesta pertenezca al partido del usuario
         $candidato = Candidato::where('idUsuario', Auth::id())->first();
+        $partido = $this->obtenerPartidoDeCandidato($candidato);
 
-        if (!$candidato || $propuesta->idPartido != $candidato->idPartido) {
+        if (!$partido || $propuesta->idPartido != $partido->getKey()) {
             abort(403, 'Solo puedes eliminar propuestas de tu partido.');
         }
 
@@ -743,7 +742,7 @@ class VotanteController extends Controller
 
         // Verificar si el usuario es candidato en alguna elección
         $candidato = Candidato::where('idUsuario', Auth::id())
-            ->with('usuario.perfil', 'cargo', 'partido')
+            ->with('usuario.perfil', 'candidatoElecciones.cargo', 'candidatoElecciones.partido')
             ->first();
 
         if (!$candidato) {
@@ -768,7 +767,12 @@ class VotanteController extends Controller
             ->orderBy('idPropuesta', 'desc')
             ->get();
 
-        return view('votante.propuestas_candidato.index', compact('propuestas', 'candidato', 'elecciones'));
+        // Obtener cargo y partido de la primera candidatura
+        $primeraCandidatura = $candidato->candidatoElecciones->first();
+        $cargo = $primeraCandidatura?->cargo;
+        $partido = $primeraCandidatura?->partido;
+
+        return view('votante.propuestas_candidato.index', compact('propuestas', 'candidato', 'elecciones', 'cargo', 'partido'));
     }
 
     /**
