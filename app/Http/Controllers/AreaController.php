@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Interfaces\Services\IAreaService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AreaController extends Controller
 {
@@ -27,11 +28,16 @@ class AreaController extends Controller
     {
         $request->validate([
             'area' => 'required|string|max:100|unique:Area,area',
+            'siglas' => 'required|string|max:10|unique:Area,siglas',
         ], [
             'area.required' => 'El nombre del área es obligatorio.',
             'area.string' => 'El nombre del área debe ser texto.',
             'area.max' => 'El nombre del área no puede exceder 100 caracteres.',
             'area.unique' => 'El nombre del área ya existe.',
+            'siglas.required' => 'Las siglas del área son obligatorias.',
+            'siglas.string' => 'Las siglas del área deben ser texto.',
+            'siglas.max' => 'Las siglas del área no pueden exceder 10 caracteres.',
+            'siglas.unique' => 'Las siglas del área ya existen.',
         ]);
 
         $this->areaService->crearArea($request->all());
@@ -65,12 +71,27 @@ class AreaController extends Controller
         $area = $this->areaService->obtenerAreaPorId($id);
 
         $request->validate([
-            'area' => 'required|string|max:100|unique:Area,area',
+            'area' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('Area', 'area')->ignore($area->getKey(), 'idArea')
+            ],
+            'siglas' => [
+                'required',
+                'string',
+                'max:10',
+                Rule::unique('Area', 'siglas')->ignore($area->getKey(), 'idArea')
+            ],
         ], [
             'area.required' => 'El nombre del área es obligatorio.',
             'area.string' => 'El nombre del área debe ser texto.',
             'area.max' => 'El nombre del área no puede exceder 100 caracteres.',
             'area.unique' => 'El nombre del área ya existe.',
+            'siglas.required' => 'Las siglas del área son obligatorias.',
+            'siglas.string' => 'Las siglas del área deben ser texto.',
+            'siglas.max' => 'Las siglas del área no pueden exceder 10 caracteres.',
+            'siglas.unique' => 'Las siglas del área ya existen.',
         ]);
 
         $this->areaService->editarArea($request->all(), $area);

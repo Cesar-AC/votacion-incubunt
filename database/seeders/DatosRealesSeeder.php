@@ -23,8 +23,8 @@ class DatosRealesSeeder extends Seeder
     {
 
         $areaPresidencia = Area::firstOrCreate(
+            ['area' => 'Presidencia', 'siglas' => 'PRES'],
             ['area' => 'Presidencia'],
-            ['area' => 'Presidencia']
         );
 
         $cargosPresidencia = [
@@ -41,12 +41,12 @@ class DatosRealesSeeder extends Seeder
         }
 
         $areas = [
-            'Sin área asignada',
-            'Marketing',
-            'Project Management Office',
-            'Tecnologías de la Información',
-            'Logística y Finanzas',
-            'Gestión del Talento Humano',
+            ['area' => 'Sin área asignada', 'siglas' => 'S/A'],
+            ['area' => 'Marketing', 'siglas' => 'MKT'],
+            ['area' => 'Project Management Office', 'siglas' => 'PMO'],
+            ['area' => 'Tecnologías de la Información', 'siglas' => 'TI'],
+            ['area' => 'Logística y Finanzas', 'siglas' => 'LTK'],
+            ['area' => 'Gestión del Talento Humano', 'siglas' => 'GTH'],
         ];
 
         $cargos = [
@@ -55,8 +55,8 @@ class DatosRealesSeeder extends Seeder
 
         foreach ($areas as $area) {
             $areaModelo = Area::firstOrCreate(
-                ['area' => $area],
-                ['area' => $area]
+                ['area' => $area['area'], 'siglas' => $area['siglas']],
+                ['area' => $area['area'], 'siglas' => $area['siglas']]
             );
 
             foreach ($cargos as $cargo) {
@@ -186,21 +186,6 @@ class DatosRealesSeeder extends Seeder
             TipoVoto::firstOrCreate(
                 ['idTipoVoto' => $tipoVoto['idTipoVoto']],
                 $tipoVoto
-            );
-        }
-
-        $partidos = [
-            ['partido' => 'Partido A', 'urlPartido' => 'https://ejemplo.com/partida-a', 'descripcion' => 'Descripción del Partido A'],
-            ['partido' => 'Partido B', 'urlPartido' => 'https://ejemplo.com/partida-b', 'descripcion' => 'Descripción del Partido B'],
-            ['partido' => 'Partido C', 'urlPartido' => 'https://ejemplo.com/partida-c', 'descripcion' => 'Descripción del Partido C'],
-            ['partido' => 'Partido D', 'urlPartido' => 'https://ejemplo.com/partida-d', 'descripcion' => 'Descripción del Partido D'],
-            ['partido' => 'Independiente', 'urlPartido' => 'https://ejemplo.com/independiente', 'descripcion' => 'Lista de candidatos independientes'],
-        ];
-
-        foreach ($partidos as $partido) {
-            Partido::firstOrCreate(
-                ['partido' => $partido['partido']],
-                $partido
             );
         }
     }

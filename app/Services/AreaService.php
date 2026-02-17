@@ -12,6 +12,11 @@ class AreaService implements IAreaService
 {
     public function __construct(protected EleccionesService $eleccionesService) {}
 
+    public function obtenerTodasLasAreas(): Collection
+    {
+        return Area::all();
+    }
+
     public function obtenerAreas(): Collection
     {
         return Area::where('idArea', '!=', Area::PRESIDENCIA)

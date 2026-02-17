@@ -17,7 +17,8 @@ class Area extends Model
 
     protected $fillable = [
         'idArea',
-        'area'
+        'area',
+        'siglas',
     ];
 
     public function cargos()

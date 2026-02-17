@@ -9,9 +9,15 @@ interface IAreaService
 {
     /**
      * @return Collection<Area>
-     *      Retorna la lista de áreas.
+     *      Retorna la lista de áreas, excluyendo la presidencia y el área sin asignar.
      */
     public function obtenerAreas(): Collection;
+
+    /**
+     * @return Collection<Area>
+     *      Retorna la lista de áreas, sin excluir la presidencia y el área sin asignar.
+     */
+    public function obtenerTodasLasAreas(): Collection;
 
     /**
      * @param int $id
