@@ -124,11 +124,11 @@
         @enderror
 
         <input 
-          name="password" 
+          name="contraseña" 
           type="password" 
-          class="form-control mb-2 @error('password') is-invalid @enderror" 
+          class="form-control mb-2 @error('contraseña') is-invalid @enderror" 
           placeholder="Contraseña (dejar vacío para mantener actual)">
-        @error('password')
+        @error('contraseña')
           <div class="invalid-feedback">{{ $message }}</div>
         @enderror
       </div>

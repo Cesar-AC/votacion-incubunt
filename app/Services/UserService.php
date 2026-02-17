@@ -54,7 +54,6 @@ class UserService implements IUserService
         $usuario->update([
             'correo' => $datosUsuario['correo'],
             'contraseña' => bcrypt($datosUsuario['contraseña']),
-            'idEstadoUsuario' => $datosUsuario['idEstadoUsuario'],
         ]);
 
         return $usuario;
