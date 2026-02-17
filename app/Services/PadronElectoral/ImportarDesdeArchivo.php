@@ -3,6 +3,7 @@
 namespace App\Services\PadronElectoral;
 
 use App\Interfaces\Services\ArchivosTabla\ILectorArchivoTabla;
+use App\Interfaces\Services\IAreaService;
 use App\Interfaces\Services\PadronElectoral\IImportarDesdeArchivo;
 use App\Models\Elecciones;
 use App\Models\EstadoUsuario;
@@ -20,15 +21,9 @@ class ImportarDesdeArchivo implements IImportarDesdeArchivo
 
     protected function obtenerAreas(): array
     {
-        return [
-            'PRES' => 2,
-            'MKT' => 3,
-            'PMO' => 4,
-            'TI' => 5,
-            'LTK' => 6,
-            'SIGE' => 7,
-            'GTH' => 8
-        ];
+        $areaService = app(IAreaService::class);
+
+        return $areaService->obtenerTodasLasAreas()->pluck('idArea', 'siglas')->toArray();
     }
 
     public function importar(string $ruta, Elecciones $eleccion): void

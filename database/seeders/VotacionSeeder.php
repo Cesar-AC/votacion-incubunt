@@ -32,6 +32,21 @@ class VotacionSeeder extends Seeder
      */
     public function run(): void
     {
+        $partidos = [
+            ['partido' => 'Partido A', 'urlPartido' => 'https://ejemplo.com/partida-a', 'descripcion' => 'Descripción del Partido A'],
+            ['partido' => 'Partido B', 'urlPartido' => 'https://ejemplo.com/partida-b', 'descripcion' => 'Descripción del Partido B'],
+            ['partido' => 'Partido C', 'urlPartido' => 'https://ejemplo.com/partida-c', 'descripcion' => 'Descripción del Partido C'],
+            ['partido' => 'Partido D', 'urlPartido' => 'https://ejemplo.com/partida-d', 'descripcion' => 'Descripción del Partido D'],
+            ['partido' => 'Independiente', 'urlPartido' => 'https://ejemplo.com/independiente', 'descripcion' => 'Lista de candidatos independientes'],
+        ];
+
+        foreach ($partidos as $partido) {
+            Partido::firstOrCreate(
+                ['partido' => $partido['partido']],
+                $partido
+            );
+        }
+
         $faker = Faker::create();
         $this->faker = $faker;
 

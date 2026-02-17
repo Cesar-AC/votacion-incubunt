@@ -9,6 +9,8 @@
         </a>
     </div>
 
+    @include('components.error-message')|
+
     <div class="card shadow mb-4">
         <div class="card-body">
             <div class="table-responsive">
@@ -17,6 +19,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Área</th>
+                            <th>Siglas</th>
                             <th style="width: 150px;">Acciones</th>
                         </tr>
                     </thead>
@@ -25,6 +28,7 @@
                             <tr>
                                 <td>{{ $area->getKey() }}</td>
                                 <td>{{ $area->area }}</td>
+                                <td>{{ $area->siglas }}</td>
                                 <td class="text-center">
                                     <a href="{{ route('crud.area.editar', $area->getKey()) }}"
                                        class="btn btn-sm btn-warning">

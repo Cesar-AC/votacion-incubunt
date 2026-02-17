@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('Area', function (Blueprint $table) {
             $table->increments('idArea');
             $table->string('area', 100);
+            $table->string('siglas', 10)->unique();
         });
     }
 
