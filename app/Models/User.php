@@ -93,21 +93,21 @@ class User extends Authenticatable
 
     public function estaActivo()
     {
-        return $this->idEstadoUsuario === EstadoUsuario::ACTIVO;
+        return $this->idEstadoUsuario == EstadoUsuario::ACTIVO;
     }
 
     public function estaInactivo()
     {
-        return $this->idEstadoUsuario === EstadoUsuario::INACTIVO;
+        return $this->idEstadoUsuario == EstadoUsuario::INACTIVO;
     }
 
     public function estaSuspendido()
     {
-        return $this->idEstadoUsuario === EstadoUsuario::SUSPENDIDO;
+        return $this->idEstadoUsuario == EstadoUsuario::SUSPENDIDO;
     }
 
     public function estaInhabilitado()
     {
-        return $this->idEstadoUsuario === EstadoUsuario::INHABILITADO;
+        return $this->idEstadoUsuario == EstadoUsuario::INHABILITADO;
     }
 }
