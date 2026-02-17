@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\PropuestaCandidato;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class PropuestaCandidatoPolicy
 {

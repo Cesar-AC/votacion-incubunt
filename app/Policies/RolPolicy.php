@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Rol;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class RolPolicy
 {
@@ -24,10 +22,9 @@ class RolPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Rol $rol): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "rol:crud:ver:{$rol->id}",
             'rol:crud:ver:*',
             'rol:crud:*',
             'rol:*'

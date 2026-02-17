@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Elecciones;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class EleccionesPolicy
 {
@@ -24,10 +22,9 @@ class EleccionesPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Elecciones $elecciones): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "elecciones:crud:ver:{$elecciones->id}",
             'elecciones:crud:ver:*',
             'elecciones:crud:*',
             'elecciones:*'

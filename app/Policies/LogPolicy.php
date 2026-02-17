@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Log;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class LogPolicy
 {
@@ -24,10 +22,9 @@ class LogPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Log $log): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "log:crud:ver:{$log->id}",
             'log:crud:ver:*',
             'log:crud:*',
             'log:*'

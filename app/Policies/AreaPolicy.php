@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Area;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class AreaPolicy
 {
@@ -24,10 +22,9 @@ class AreaPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Area $area): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "area:crud:ver:{$area->idArea}",
             'area:crud:ver:*',
             'area:crud:*',
             'area:*'

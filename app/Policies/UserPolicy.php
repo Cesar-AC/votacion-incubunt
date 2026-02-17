@@ -3,9 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\User as UserModel;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class UserPolicy
 {
@@ -24,10 +22,9 @@ class UserPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, UserModel $userModel): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "user:crud:ver:{$userModel->id}",
             'user:crud:ver:*',
             'user:crud:*',
             'user:*'

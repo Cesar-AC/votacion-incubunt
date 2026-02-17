@@ -2,10 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\Cargo;
 use App\Models\User;
 use App\Policies\Utils\ValidadorPermisos;
-use Illuminate\Auth\Access\Response;
 
 class CargoPolicy
 {
@@ -24,10 +22,9 @@ class CargoPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Cargo $cargo): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "cargo:crud:ver:{$cargo->id}",
             'cargo:crud:ver:*',
             'cargo:crud:*',
             'cargo:*'

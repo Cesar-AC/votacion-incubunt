@@ -25,11 +25,9 @@ class CandidatoPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Elecciones $eleccion, Candidato $candidato): bool
+    public function view(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
-            "candidato:crud:ver:{$candidato->id}:{$eleccion->id}",
-            "candidato:crud:ver:{$candidato->id}:*",
             'candidato:crud:ver:*',
             'candidato:crud:*',
             'candidato:*'
@@ -87,7 +85,7 @@ class CandidatoPolicy
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, Elecciones $eleccion, Candidato $candidato): bool
+    public function forceDelete(User $user): bool
     {
         return ValidadorPermisos::usuarioTienePermisos($user, [
             'candidato:crud:eliminar:*',
