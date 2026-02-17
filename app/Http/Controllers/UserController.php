@@ -268,4 +268,14 @@ class UserController extends Controller
             ->route('profile.show')
             ->with('success', 'Se ha actualizado la foto correctamente.');
     }
+
+    public function restaurar(Request $request, int $idUser)
+    {
+        $usuario = $this->userService->obtenerUsuarioPorId($idUser);
+        $this->userService->restaurarUsuario($usuario);
+
+        return redirect()
+            ->route('crud.user.ver')
+            ->with('success', 'Usuario restaurado correctamente');
+    }
 }

@@ -65,10 +65,9 @@ class UserService implements IUserService
 
     public function eliminarUsuario(User $usuario): void
     {
-        if ($usuario->perfil) {
-            $usuario->perfil()->delete();
-        }
-        $usuario->delete();
+        $usuario->update([
+            'idEstadoUsuario' => EstadoUsuario::INHABILITADO,
+        ]);
     }
 
     public function subirFoto(User $usuario, UploadedFile $archivo): void
@@ -111,5 +110,12 @@ class UserService implements IUserService
     public function obtenerFotoURL(User $usuario): string
     {
         return $usuario->perfil->obtenerFotoURL();
+    }
+
+    public function restaurarUsuario(User $usuario): void
+    {
+        $usuario->update([
+            'idEstadoUsuario' => EstadoUsuario::ACTIVO,
+        ]);
     }
 }

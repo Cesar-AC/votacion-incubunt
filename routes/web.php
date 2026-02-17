@@ -187,6 +187,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/users/{id}/permisos/{permisoId}', [UserController::class, 'quitarPermiso'])->name('crud.user.permisos.quitar')->middleware('can:update,App\Models\User');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('crud.user.eliminar')->middleware('can:delete,App\Models\User');
     Route::get('/users/{id}', [UserController::class, 'show'])->name('crud.user.ver_datos')->middleware('can:view,App\Models\User');
+    Route::post('/users/{id}/restaurar', [UserController::class, 'restaurar'])->name('crud.user.restaurar')->middleware('can:update,App\Models\User');
 });
 
 // Voto

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Log as LogModel;
 use App\Models\CategoriaLog;
+use App\Models\EstadoUsuario;
 use App\Models\NivelLog;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -27,6 +29,9 @@ class AutenticacionController extends Controller
         $request->validate([
             'email' => 'required|string',
             'password' => 'required|string',
+        ], [
+            'email.required' => 'El correo es obligatorio.',
+            'password.required' => 'La contraseña es obligatoria.',
         ]);
 
         $credenciales = [
@@ -34,11 +39,14 @@ class AutenticacionController extends Controller
             'password' => $request->password,
         ];
 
-        if (!Auth::attempt($credenciales)){
-            // Fetch category and level by name instead of hardcoded IDs
+        if (User::where('correo', '=', $credenciales['correo'])->first()->estaInhabilitado()) {
+            return back()->withErrors(['email' => 'El usuario ha sido deshabilitado.'])->withInput();
+        }
+
+        if (!Auth::attempt($credenciales)) {
             $categoria = CategoriaLog::where('nombre', 'Autenticación')->first();
             $nivel = NivelLog::where('nombre', 'Error')->first() ?? NivelLog::first();
-            
+
             if ($categoria && $nivel) {
                 LogModel::create([
                     'idCategoriaLog' => $categoria->idCategoriaLog,
@@ -55,7 +63,7 @@ class AutenticacionController extends Controller
         // Fetch category and level by name instead of hardcoded IDs
         $categoria = CategoriaLog::where('nombre', 'Autenticación')->first();
         $nivel = NivelLog::where('nombre', 'Éxito')->first() ?? NivelLog::first();
-        
+
         if ($categoria && $nivel) {
             LogModel::create([
                 'idCategoriaLog' => $categoria->idCategoriaLog,
