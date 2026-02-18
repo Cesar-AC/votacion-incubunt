@@ -145,7 +145,7 @@ class UserController extends Controller
 
         $datosUsuario = $request->validate([
             'correo' => 'email|max:255',
-            'contraseña' => 'string|min:8',
+            'contraseña' => 'nullable|string|min:8',
         ], [
             'correo.email' => 'El correo debe ser válido.',
             'correo.max' => 'El correo no puede exceder los 255 caracteres.',
@@ -159,7 +159,7 @@ class UserController extends Controller
             'nombre' => 'string|max:20',
             'otrosNombres' => 'nullable|string|max:40',
             'dni' => 'string|max:8',
-            'telefono' => 'string|max:20',
+            'telefono' => 'nullable|string|max:20',
             'idCarrera' => 'integer|exists:Carrera,idCarrera',
             'idArea' => 'integer|exists:Area,idArea',
         ], [

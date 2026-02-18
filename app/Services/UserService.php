@@ -51,10 +51,20 @@ class UserService implements IUserService
 
     public function editarUsuario(array $datosUsuario, User $usuario): User
     {
-        $usuario->update([
-            'correo' => $datosUsuario['correo'],
-            'contraseña' => bcrypt($datosUsuario['contraseña']),
-        ]);
+        if (!empty($datosUsuario['correo']) && !empty($datosUsuario['correo'])) {
+            $usuario->update([
+                'correo' => $datosUsuario['correo'],
+                'contraseña' => bcrypt($datosUsuario['contraseña']),
+            ]);
+        } else if (!empty($datosUsuario['correo'])) {
+            $usuario->update([
+                'correo' => $datosUsuario['correo'],
+            ]);
+        } else if (!empty($datosUsuario['contraseña'])) {
+            $usuario->update([
+                'contraseña' => bcrypt($datosUsuario['contraseña']),
+            ]);
+        }
 
         return $usuario;
     }
