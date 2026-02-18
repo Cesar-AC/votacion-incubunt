@@ -8,6 +8,8 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <link rel="icon" href="{{ asset('img/VOTAINCUBI_mobile.svg') }}" type="image/svg+xml">
+
     <!-- Font Awesome (opcional) -->
     <link rel="stylesheet" href="{{ asset('sbadmin/vendor/fontawesome-free/css/all.min.css') }}">
 </head>
