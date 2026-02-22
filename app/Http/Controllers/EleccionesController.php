@@ -104,7 +104,7 @@ class EleccionesController extends Controller
             [
                 'titulo' => 'string|max:255',
                 'descripcion' => 'string',
-                'fechaInicio' => 'date|after:now',
+                'fechaInicio' => 'date',
                 'fechaCierre' => 'date|after:fechaInicio',
                 'idEstado' => 'integer|exists:EstadoElecciones,idEstado',
             ],
@@ -113,7 +113,6 @@ class EleccionesController extends Controller
                 'titulo.max' => 'El título no puede exceder los 255 caracteres.',
                 'descripcion.string' => 'La descripción debe ser una cadena de texto.',
                 'fechaInicio.date' => 'La fecha de inicio debe ser una fecha válida.',
-                'fechaInicio.after' => 'La fecha de inicio debe ser posterior a la fecha de hoy.',
                 'fechaCierre.date' => 'La fecha de cierre debe ser una fecha válida.',
                 'fechaCierre.after' => 'La fecha de cierre debe ser posterior a la fecha de inicio.',
                 'idEstado.integer' => 'El estado debe ser un número entero.',
