@@ -175,7 +175,7 @@
                         <tr>
                             <td x-text="tipos[candidato.idTipo]"></td>
                             <td x-text="usuarios[candidato.idUsuario]"></td>
-                            <td x-text="partidos[candidato.idPartido] || 'N/A'"></td>
+                            <td x-text="candidato.idTipo == 'grupal' ? (partidos[$store.candidatos.idEleccion]?.[candidato.idPartido] || 'N/A') : 'N/A'"></td>
                             <td x-show="candidato.idTipo == 'individual'" x-text="areas[candidato.idArea]"></td>
                             <td x-show="candidato.idTipo == 'grupal'">Presidencia</td>
                             <td x-show="candidato.idTipo == 'individual'" x-text="cargosPorArea[candidato.idArea].filter(cargo => cargo.idCargo == candidato.idCargo)[0].cargo"></td>
@@ -223,7 +223,7 @@ document.addEventListener('alpine:init', function () {
     })
     @else
     console.warn('No hay elección activa');
-    Alpha.store('candidatos', {
+    Alpine.store('candidatos', {
         idEleccion: null,
         candidatos: [],
     })
