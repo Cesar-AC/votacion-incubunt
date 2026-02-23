@@ -34,6 +34,7 @@ class CandidatoService implements ICandidatoService
     {
         $candidato = Candidato::create([
             'idUsuario' => $datos['idUsuario'],
+            'planTrabajo' => $datos['planTrabajo'] ?? null,
         ]);
 
         return $candidato;
@@ -43,6 +44,7 @@ class CandidatoService implements ICandidatoService
     {
         $candidato->update([
             'idUsuario' => $datos['idUsuario'],
+            'planTrabajo' => $datos['planTrabajo'] ?? $candidato->planTrabajo,
         ]);
 
         return $candidato;

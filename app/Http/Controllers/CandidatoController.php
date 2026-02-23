@@ -130,7 +130,7 @@ class CandidatoController extends Controller
             foreach ($individuales as $candidato) {
                 $modeloCandidato = $this->candidatoService->crearCandidato([
                     'idUsuario' => $candidato['idUsuario'],
-                    'planTrabajo' => $candidato['planTrabajo']
+                    'planTrabajo' => $candidato['planTrabajo'] ?? null
                 ]);
 
                 $this->candidatoService->vincularCandidatoAEleccion([
@@ -141,7 +141,7 @@ class CandidatoController extends Controller
             foreach ($grupales as $candidato) {
                 $modeloCandidato = $this->candidatoService->crearCandidato([
                     'idUsuario' => $candidato['idUsuario'],
-                    'planTrabajo' => $candidato['planTrabajo']
+                    'planTrabajo' => $candidato['planTrabajo'] ?? null
                 ]);
 
                 $this->candidatoService->vincularCandidatoAEleccion([

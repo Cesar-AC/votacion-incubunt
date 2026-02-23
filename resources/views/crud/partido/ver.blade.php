@@ -36,6 +36,16 @@
               <p class="mb-2">
                 {{ $partido->descripcion }}
               </p>
+              <p class="mb-2">
+                <strong>Plan de trabajo:</strong>
+                @if ($partido->planTrabajo)
+                  <a href="{{ $partido->planTrabajo }}" target="_blank" rel="noopener noreferrer">
+                    {{ $partido->planTrabajo }}
+                  </a>
+                @else
+                  Sin plan de trabajo
+                @endif
+              </p>
               <span class="badge badge-info">
                 Tipo: {{ $partido->tipo }}
               </span>

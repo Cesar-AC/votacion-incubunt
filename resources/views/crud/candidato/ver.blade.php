@@ -91,12 +91,13 @@
                                 @foreach ($grupales as $grupal)
                                     @php
                                         $candidatoEleccion = $eleccionesService->obtenerCandidatoEleccion($grupal, $eleccion);
+                                        $planTrabajoGrupal = $grupal->planTrabajo ?: $candidatoEleccion->partido?->planTrabajo;
                                     @endphp
                                     <tr>
                                         <td>{{ $grupal->usuario->perfil?->obtenerNombreApellido() . ' <' . $grupal->usuario->correo . '>' }}</td>
                                         <td>{{ $candidatoEleccion->partido?->partido }}</td>
                                         <td>{{ $candidatoEleccion->cargo?->cargo }}</td>
-                                        <td>{{ $grupal->planTrabajo }}</td>
+                                        <td>{{ $planTrabajoGrupal }}</td>
                                         <td>
                                             <a href="{{ route('crud.candidato.editar', [$eleccion->getKey(), $grupal->getKey()]) }}"
                                                 class="btn btn-sm btn-warning">
