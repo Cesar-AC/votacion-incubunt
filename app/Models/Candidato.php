@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enum\Config;
 use App\Models\Enum\TablasVoto;
 use App\Models\Interfaces\IElegibleAVoto;
 use App\Models\Traits\ElegibleAVoto;
@@ -53,25 +54,8 @@ class Candidato extends Model implements IElegibleAVoto
 
     public function obtenerTipoVoto(User $votante): TipoVoto
     {
-        // Cargar relaciones si no están cargadas
-        if (!$this->relationLoaded('usuario')) {
-            $this->load('usuario.perfil.area');
-        }
         if (!$votante->relationLoaded('perfil')) {
             $votante->load('perfil.area');
-        }
-
-        // Validar que las relaciones existan
-        if (!$this->usuario) {
-            return TipoVoto::otraArea();
-        }
-
-        if (!$this->usuario->perfil) {
-            return TipoVoto::otraArea();
-        }
-
-        if (!$this->usuario->perfil->area) {
-            return TipoVoto::otraArea();
         }
 
         if (!$votante->perfil) {
@@ -82,8 +66,22 @@ class Candidato extends Model implements IElegibleAVoto
             return TipoVoto::otraArea();
         }
 
-        // Comparar áreas
-        $mismaArea = $this->usuario->perfil->area->getKey() == $votante->perfil->area->getKey();
+        $eleccionId = Configuracion::obtenerValor(Config::ELECCION_ACTIVA);
+        if (!$eleccionId || $eleccionId === '-1') {
+            return TipoVoto::otraArea();
+        }
+
+        $candidatoEleccion = $this->candidatoElecciones()
+            ->where('idElecciones', '=', $eleccionId)
+            ->with('cargo.area')
+            ->first();
+
+        if (!$candidatoEleccion || !$candidatoEleccion->cargo || !$candidatoEleccion->cargo->area) {
+            return TipoVoto::otraArea();
+        }
+
+        // Comparar área del votante con el área de la postulación del candidato
+        $mismaArea = $candidatoEleccion->cargo->area->getKey() == $votante->perfil->area->getKey();
 
         return $mismaArea ? TipoVoto::mismaArea() : TipoVoto::otraArea();
     }
