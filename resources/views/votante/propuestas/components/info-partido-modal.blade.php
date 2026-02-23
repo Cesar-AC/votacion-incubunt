@@ -153,9 +153,6 @@
                     data.forEach(candidato => {
                         const candidatoHTML = document.createElement('div');
                         candidatoHTML.className = 'flex items-center gap-3 sm:gap-4 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all cursor-pointer';
-                        candidatoHTML.onclick = function() {
-                            document.dispatchEvent(new CustomEvent('abrirCandidatoModal', {detail: {candidatoId: candidato.id}}));
-                        };
                         
                         let fotoHTML = '';
                         if (candidato.foto) {
