@@ -17,10 +17,16 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    protected $table = 'User';
+
+    protected $primaryKey = 'idUser';
+
+    public $timestamps = false;
+
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'correo',
+        'contraseña',
+        'idEstadoUsuario',
     ];
 
     /**
@@ -29,7 +35,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'password',
+        'contraseña',
         'remember_token',
     ];
 
@@ -41,8 +47,67 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'contraseña' => 'hashed',
         ];
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Rol::class, 'RolUser', 'idUser', 'idRol');
+    }
+
+    public function permisos()
+    {
+        return $this->belongsToMany(Permiso::class, 'UserPermiso', 'idUser', 'idPermiso');
+    }
+
+    public function excepciones_permisos()
+    {
+        return $this->belongsToMany(Permiso::class, 'ExcepcionPermiso', 'idUser', 'idPermiso');
+    }
+
+    public function perfil()
+    {
+        return $this->hasOne(PerfilUsuario::class, 'idUser');
+    }
+
+    public function estadoUsuario()
+    {
+        return $this->belongsTo(EstadoUsuario::class, 'idEstadoUsuario');
+    }
+
+    public function padronElectoral()
+    {
+        return $this->hasMany(PadronElectoral::class, 'idUsuario', 'idUser');
+    }
+
+    public function getAuthPassword()
+    {
+        return $this->contraseña;
+    }
+
+    public function username()
+    {
+        return 'correo';
+    }
+
+    public function estaActivo()
+    {
+        return $this->idEstadoUsuario == EstadoUsuario::ACTIVO;
+    }
+
+    public function estaInactivo()
+    {
+        return $this->idEstadoUsuario == EstadoUsuario::INACTIVO;
+    }
+
+    public function estaSuspendido()
+    {
+        return $this->idEstadoUsuario == EstadoUsuario::SUSPENDIDO;
+    }
+
+    public function estaInhabilitado()
+    {
+        return $this->idEstadoUsuario == EstadoUsuario::INHABILITADO;
     }
 }

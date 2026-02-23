@@ -1,0 +1,115 @@
+@extends('layouts.admin')
+
+@section('content')
+<div class="container-fluid px-3">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="font-weight-bold mb-0">Gestionar Padrones</h5>
+    <div>
+      <a href="{{ route('crud.padron_electoral.importar') }}" class="btn btn-secondary btn-sm shadow mr-2">
+        <i class="fas fa-upload"></i> Importar
+      </a>
+      <a href="{{ route('crud.padron_electoral.crear') }}" class="btn btn-primary btn-sm shadow">
+        Nuevo Padrón
+      </a>
+    </div>
+  </div>
+
+  <!-- Mensajes flash -->
+  @if(session('success'))
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ session('success') }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  @endif
+
+  @if(session('error'))
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ session('error') }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  @endif
+
+  @if(session('warning'))
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    {{ session('warning') }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  @endif
+
+  <!-- Mostrar resultados de importación -->
+  @if(session('import_result'))
+  @php $result = session('import_result') @endphp
+  <div class="alert alert-info">
+    <h6>Resultado de la importación:</h6>
+    <p>{{ $result['message'] }}</p>
+    @if(!empty($result['data']['registrosOmitidos']))
+    <details>
+      <summary>Ver registros omitidos ({{ count($result['data']['registrosOmitidos']) }})</summary>
+      <ul>
+        @foreach($result['data']['registrosOmitidos'] as $omitido)
+        <li>
+          Fila {{ $omitido['indice'] }}: {{ $omitido['correo'] }} - {{ $omitido['razon'] }}
+        </li>
+        @endforeach
+      </ul>
+    </details>
+    @endif
+  </div>
+  @php session()->forget('import_result') @endphp
+  @endif
+
+  @forelse ($elecciones as $eleccion)
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-3">
+      <div class="d-flex justify-content-between">
+
+        <div>
+          <h6 class="font-weight-bold mb-1">
+            {{ $eleccion->titulo }}
+          </h6>
+          <small class="text-muted">
+            {{ $eleccion->padronElectoral()->count() }} participantes
+          </small>
+        </div>
+
+        <div class="text-right">
+          <a href="{{ route('crud.padron_electoral.ver_datos', $eleccion->idElecciones) }}"
+            class="btn btn-outline-info btn-sm mb-1">
+            <i class="fas fa-users"></i> Ver Participantes
+          </a>
+
+          <a href="{{ route('crud.padron_electoral.editar', $eleccion->idElecciones) }}"
+            class="btn btn-outline-primary btn-sm mb-1">
+            <i class="fas fa-edit"></i> Editar
+          </a><br>
+
+          <form method="POST"
+            action="{{ route('crud.padron_electoral.eliminar', $eleccion->idElecciones) }}"
+            class="d-inline">
+            @csrf
+            @method('DELETE')
+            <button class="btn btn-outline-danger btn-sm"
+              onclick="return confirm('¿Eliminar padrón?')">
+              <i class="fas fa-trash"></i> Eliminar
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  @empty
+  <div class="alert alert-info">
+    No existen padrones creados aún.
+  </div>
+  @endforelse
+
+</div>
+@endsection
