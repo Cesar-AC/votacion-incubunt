@@ -6,6 +6,8 @@ use App\Models\Elecciones;
 use App\Models\EstadoElecciones;
 use Illuminate\Http\Request;
 use App\Interfaces\Services\IEleccionesService;
+use Carbon\Carbon;
+use Exception;
 
 class EleccionesController extends Controller
 {
@@ -61,7 +63,7 @@ class EleccionesController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(
+        $datos = $request->validate(
             [
                 'titulo' => 'required|string|max:255',
                 'descripcion' => 'required|string',
@@ -83,7 +85,7 @@ class EleccionesController extends Controller
             ]
         );
 
-        $this->eleccionesService->crearElecciones($request->all());
+        $this->eleccionesService->crearElecciones($datos);
 
         return redirect()->route('crud.elecciones.ver')->with('success', 'Elección creada correctamente');
     }
@@ -100,7 +102,7 @@ class EleccionesController extends Controller
     {
         $eleccion = $this->eleccionesService->obtenerEleccionPorId($id);
 
-        $request->validate(
+        $datos = $request->validate(
             [
                 'titulo' => 'string|max:255',
                 'descripcion' => 'string',
@@ -120,7 +122,13 @@ class EleccionesController extends Controller
             ]
         );
 
-        $this->eleccionesService->editarElecciones($request->all(), $eleccion);
+        try {
+            $this->eleccionesService->editarElecciones($datos, $eleccion);
+        } catch (Exception $e) {
+            return back()
+                ->withErrors('No se puede modificar la elección: ' . $e->getMessage())
+                ->withInput();
+        }
 
         return redirect()->route('crud.elecciones.ver')->with('success', 'Elección actualizada correctamente');
     }
