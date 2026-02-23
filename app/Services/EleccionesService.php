@@ -182,7 +182,7 @@ class EleccionesService implements IEleccionesService
     {
         $datos['idEstado'] = EstadoElecciones::PROGRAMADO;
 
-        $this->validarFechas($datos['fechaInicio'], $datos['fechaCierre']);
+        $this->validarFechas(Carbon::parse($datos['fechaInicio']), Carbon::parse($datos['fechaCierre']));
 
         $eleccion = Elecciones::create($datos);
         return $eleccion;
