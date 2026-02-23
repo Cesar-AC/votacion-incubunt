@@ -184,6 +184,10 @@ class VotoService implements IVotoService
             return false;
         }
 
+        if (!$this->eleccionesService->votacionHabilitada()) {
+            return false;
+        }
+
         if (!$this->tienePermisoVotar($votante)) {
             return false;
         }
