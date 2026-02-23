@@ -14,6 +14,7 @@ use App\Models\Cargo;
 use App\Models\EstadoElecciones;
 use App\Models\Partido;
 use Carbon\Carbon;
+use Exception;
 
 class EleccionesService implements IEleccionesService
 {
@@ -143,16 +144,45 @@ class EleccionesService implements IEleccionesService
         return Elecciones::findOrFail($id);
     }
 
+    protected function validarFechaInicio(Carbon $fechaInicio)
+    {
+        if ($fechaInicio->isPast()) {
+            throw new Exception('La fecha de inicio debe ser posterior a la fecha de hoy.');
+        }
+    }
+
+    protected function validarFechaCierre(Carbon $fechaCierre)
+    {
+        if ($fechaCierre->isPast()) {
+            throw new Exception('La fecha de cierre debe ser posterior a la fecha de hoy.');
+        }
+    }
+
+    protected function validarFechas(Carbon $fechaInicio, Carbon $fechaCierre)
+    {
+        $this->validarFechaInicio($fechaInicio);
+        $this->validarFechaCierre($fechaCierre);
+
+        if ($fechaCierre->isBefore($fechaInicio)) {
+            throw new Exception('La fecha de cierre debe ser posterior a la fecha de inicio.');
+        }
+    }
+
     /**
      * @param array{'titulo': string, 'descripcion': string, 'fechaInicio': Carbon|string, 'fechaCierre': Carbon|string} $datos
      *      Obligatorio.
      *      Los datos de la elección que se desea crear.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws Exception 
+     * - Si la fecha de inicio es anterior a hoy.
+     * - Si la fecha de cierre es anterior a hoy.
+     * - Si la fecha de inicio es posterior a la fecha de cierre. 
      */
     public function crearElecciones(array $datos): Elecciones
     {
         $datos['idEstado'] = EstadoElecciones::PROGRAMADO;
+
+        $this->validarFechas($datos['fechaInicio'], $datos['fechaCierre']);
 
         $eleccion = Elecciones::create($datos);
         return $eleccion;
@@ -162,12 +192,29 @@ class EleccionesService implements IEleccionesService
      * @param array{'titulo': string, 'descripcion': string, 'fechaInicio': Carbon|string, 'fechaCierre': Carbon|string} $datos
      *      Obligatorio.
      *      Los datos de la elección que se desea editar.
-     *
-     * @throws \Illuminate\Validation\ValidationException
+     * 
+     * @throws Exception 
+     * - Si la fecha de inicio es anterior a hoy.
+     * - Si la fecha de cierre es anterior a hoy.
+     * - Si la fecha de inicio es posterior a la fecha de cierre. 
      */
     public function editarElecciones(array $datos, ?Elecciones $eleccion = null): Elecciones
     {
         $eleccion = $eleccion ?? $this->obtenerEleccionActiva();
+
+        $fechaInicioPropuesta = Carbon::parse($datos['fechaInicio']);
+
+        if ($eleccion->fechaInicio->isPast() && !$eleccion->fechaInicio->equalTo($fechaInicioPropuesta)) {
+            throw new Exception('No se puede modificar la fecha de inicio de la elección, porque esta ya empezó.');
+        }
+
+        $fechaCierrePropuesta = Carbon::parse($datos['fechaCierre']);
+
+        $this->validarFechaCierre($fechaCierrePropuesta);
+
+        if ($fechaCierrePropuesta->isBefore($fechaInicioPropuesta)) {
+            throw new Exception('La fecha de cierre debe ser posterior a la fecha de inicio.');
+        }
 
         $eleccion->update([
             'titulo' => $datos['titulo'],
