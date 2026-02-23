@@ -39,7 +39,9 @@ class AutenticacionController extends Controller
             'password' => $request->password,
         ];
 
-        if (User::where('correo', '=', $credenciales['correo'])->first()->estaInhabilitado()) {
+        $usuario = User::where('correo', '=', $credenciales['correo'])->first();
+
+        if ($usuario && $usuario->estaInhabilitado()) {
             return back()->withErrors(['email' => 'El usuario ha sido deshabilitado.'])->withInput();
         }
 
